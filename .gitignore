@@ -7,3 +7,6 @@ coverage/
 
 # Atelier de l'exécution du plan (journal, briefs, rapports, paquets de revue).
 .superpowers/
+
+# Worktrees créés par les agents.
+.claude/worktrees/
