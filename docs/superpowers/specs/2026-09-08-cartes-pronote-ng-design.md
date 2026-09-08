@@ -374,7 +374,7 @@ qui contiendrait un nom réel fait échouer la garde.
 ## 8. Chaîne de livraison
 
 - **`hacs.json`** — `name`, `render_readme: true`, `filename:
-  "pronote-ng-cards.js"`, `homeassistant: "2026.8.0"`. La catégorie `plugin`
+  "pronote-ng-cards.js"`, `homeassistant: "2026.9.0"`. La catégorie `plugin`
   est portée par le dépôt, pas par le fichier.
 - **Build** — un `dist/pronote-ng-cards.js` unique, module ES, Lit *bundlé* et
   aucune dépendance externe (Home Assistant ne garantit pas d'*import map*).

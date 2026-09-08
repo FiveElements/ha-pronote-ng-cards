@@ -19,11 +19,13 @@ Ces contraintes s'appliquent à **toutes** les tâches. Elles ne sont pas répé
 - **Aucune collecte au montage ou au rendu.** Une carte lit `hass.states`, rien d'autre.
 - **La documentation ne mentionne jamais** l'activation du journaliseur `pronotepy`. Le seul journaliseur recommandable est `custom_components.pronote_ng`.
 - **Aucune donnée réelle** — nom d'élève, nom d'établissement, identifiant, URL d'instance — dans le code, les tests, les fixtures, la documentation, les captures d'écran ou les messages de commit. Valeurs synthétiques imposées : `demo.example.invalid`, `<enfant>`, `sensor.<enfant>_prochain_cours`.
-- **Toute la rédaction visible est en français** : libellés de cartes, messages d'erreur, README, documentation, descriptions d'options. Le code, les noms de symboles et les `translation_key` restent en anglais.
+- **La rédaction du dépôt est en français** : README, documentation, messages de commit, descriptions d'options. Le code, les noms de symboles et les `translation_key` restent en anglais.
+- **Les chaînes visibles dans l'interface sont traduites en quatre langues** — français, italien, portugais (européen), espagnol (d'Espagne) — dans `src/localize/`. Le français est la langue de repli. Aucune chaîne visible n'est écrite en dur dans un composant : elle passe par `ctx.t()` ou `localize()`.
 - **Clés d'entités toujours qualifiées** par leur domaine : `sensor:next_lesson`, `todo:homework`, `image:photo`. Un `translation_key` n'est unique qu'à l'intérieur d'un domaine.
-- `homeassistant` minimal : **2026.8.0**. Node **22+**.
+- `homeassistant` minimal : **2026.9.0**. Node **22+**.
 - **`npm audit` ne doit rapporter aucune vulnérabilité `critical` ni `high`.** Les versions de dépendances données ici sont celles publiées en septembre 2026 ; ne pas les rétrograder.
 - **Zéro dépendance externe dans le *bundle*** hors Lit, qui est empaqueté : `rolldownOptions.external` reste vide. Home Assistant ne garantit pas d'*import map*.
+- **Le *bundle* produit ne doit pas être vide.** Tant que `src/index.ts` n'exporte que des types, `vite build` réussit en écrivant un fichier de 0 octet — et la chaîne de publication l'attacherait silencieusement à une *release*. Dès qu'une carte est enregistrée (tâche 6), vérifier que `dist/pronote-ng-cards.js` est non vide fait partie de la vérification de la tâche.
 - Messages de commit en français, préfixés `feat:` / `fix:` / `docs:` / `test:` / `chore:`, et terminés par la ligne `Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`.
 
 ## Structure des fichiers
@@ -898,9 +900,13 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 - Consumes: rien.
 - Produces: `localize(path, vars?)`, `sharedStyles` (`CSSResult`), et les fonctions de rendu `emptyState(message)`, `missingState(keys, t)`, `unavailableState(t)`, `listRow(opts)`, `chip(label, tone)`.
 
-- [ ] **Step 1: Écrire `src/localize/fr.json`**
+- [ ] **Step 1: Installer les quatre catalogues `src/localize/{fr,it,pt,es}.json`**
 
-Toutes les chaînes visibles du projet vivent ici. Les huit tâches de cartes y ajoutent leurs entrées.
+Toutes les chaînes visibles du projet vivent là. Les huit tâches de cartes y ajoutent leurs entrées — **dans les quatre langues**.
+
+Les quatre fichiers sont **déjà rédigés et vérifiés** (parité des clés et des variables `{...}` contrôlée) dans `.superpowers/sdd/2026-09-08-cartes-pronote-ng/i18n/`. **Copie-les tels quels** vers `src/localize/` ; ne les retraduis pas, ne les réordonne pas. Ils contiennent déjà les dix clés racines : `common`, `editor`, et une par carte.
+
+Le bloc ci-dessous reproduit la seule clé `common` du fichier français, pour que tu saches à quoi ressemble le contenu attendu.
 
 ```json
 {
@@ -921,10 +927,18 @@ Toutes les chaînes visibles du projet vivent ici. Les huit tâches de cartes y 
 
 ```ts
 import fr from './fr.json';
+import it from './it.json';
+import pt from './pt.json';
+import es from './es.json';
 
 type Dict = { [k: string]: string | Dict };
 
-const CATALOGS: Record<string, Dict> = { fr: fr as Dict };
+const CATALOGS: Record<string, Dict> = {
+  fr: fr as Dict,
+  it: it as Dict,
+  pt: pt as Dict,
+  es: es as Dict,
+};
 const FALLBACK = 'fr';
 
 /**
@@ -959,6 +973,10 @@ function lookup(dict: Dict | undefined, path: string): string | Dict | undefined
 ```ts
 import { describe, expect, it } from 'vitest';
 import { localize } from '../src/localize';
+import fr from '../src/localize/fr.json';
+import it from '../src/localize/it.json';
+import pt from '../src/localize/pt.json';
+import es from '../src/localize/es.json';
 
 describe('localize', () => {
   it('résout un chemin pointé', () => {
@@ -976,6 +994,54 @@ describe('localize', () => {
     expect(localize('common.unavailable', undefined, 'de')).toBe(
       'Donnée pas encore collectée.'
     );
+  });
+
+  it('traduit dans les trois autres langues', () => {
+    expect(localize('menu.main_meal', undefined, 'it')).not.toBe('Plat');
+    expect(localize('menu.main_meal', undefined, 'pt')).not.toBe('Plat');
+    expect(localize('menu.main_meal', undefined, 'es')).not.toBe('Plat');
+  });
+});
+
+/**
+ * Une clé présente en français et absente d'une autre langue ne se manifeste
+ * qu'à l'exécution, chez un utilisateur dont personne ici ne lit la langue.
+ * Ce test est ce qui rend la contrainte tenable quand huit cartes ajoutent
+ * leurs chaînes.
+ */
+describe('parité des catalogues', () => {
+  const paths = (d: unknown, prefix = ''): string[] =>
+    typeof d === 'object' && d !== null
+      ? Object.entries(d).flatMap(([k, v]) =>
+          typeof v === 'string' ? [`${prefix}${k}`] : paths(v, `${prefix}${k}.`)
+        )
+      : [];
+
+  const reference = paths(fr).sort();
+
+  it.each([
+    ['it', it],
+    ['pt', pt],
+    ['es', es],
+  ])('%s a exactement les mêmes clés que le français', (_lang, catalog) => {
+    expect(paths(catalog).sort()).toEqual(reference);
+  });
+
+  it.each([
+    ['it', it],
+    ['pt', pt],
+    ['es', es],
+  ])('%s reproduit les mêmes variables que le français', (_lang, catalog) => {
+    const vars = (d: unknown): Record<string, string[]> =>
+      Object.fromEntries(
+        paths(d).map((path) => {
+          const value = path
+            .split('.')
+            .reduce<unknown>((acc, part) => (acc as Record<string, unknown>)[part], d);
+          return [path, [...String(value).matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort()];
+        })
+      );
+    expect(vars(catalog)).toEqual(vars(fr));
   });
 });
 ```
@@ -1857,7 +1923,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 Chaque tâche de carte suit exactement la même forme. Elle est décrite ici une fois ; les tâches donnent le contenu propre à chaque carte.
 
-1. Ajouter les chaînes de la carte dans `src/localize/fr.json`, sous une clé égale au nom court de la carte.
+1. Ajouter les chaînes de la carte dans **les quatre catalogues** `src/localize/{fr,it,pt,es}.json`, sous une clé racine égale au nom court de la carte. Le test de parité de la tâche 5 échoue si une langue manque une clé, ou si une substitution `{variable}` diffère d'une langue à l'autre. Les chaînes des huit cartes sont **déjà rédigées dans les quatre langues** dans `.superpowers/sdd/2026-09-08-cartes-pronote-ng/i18n/` : reprends-les de là plutôt que de traduire toi-même.
 2. Écrire `test/cards/<nom>.test.ts` avec **au minimum** quatre cas : données présentes, liste vide, entité indisponible, entité absente de l'appareil. Utiliser `makeHass` et le montage de `test/base-card.test.ts` (extraire l'utilitaire `mountCard` dans `test/fixtures/mount.ts` à la première carte, puis le réutiliser).
 3. Lancer les tests, vérifier qu'ils échouent.
 4. Écrire `src/cards/<nom>.ts` exportant un `CardSpec`.
@@ -4095,7 +4161,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 {
   "name": "Pronote NG — Cartes",
   "render_readme": true,
-  "homeassistant": "2026.8.0",
+  "homeassistant": "2026.9.0",
   "filename": "pronote-ng-cards.js"
 }
 ```
