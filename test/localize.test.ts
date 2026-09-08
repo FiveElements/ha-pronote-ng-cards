@@ -30,6 +30,9 @@ describe('localize', () => {
 
 const byLocale = (a: string, b: string): number => a.localeCompare(b);
 
+// oxlint-disable-next-line unicorn/no-array-sort -- `sort` mute son receveur, d'où la règle ; ici le receveur est une copie fraîche que personne d'autre ne détient. `toSorted` imposerait `lib: ES2023` à tout le projet — donc à src/, où il légaliserait en silence des méthodes d'exécution que le bundle ne peut pas polyfiller — pour une commodité de test qui ne s'expédie jamais.
+const sortedCopy = <T,>(xs: readonly T[], cmp?: (a: T, b: T) => number): T[] => [...xs].sort(cmp);
+
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null;
 
@@ -47,14 +50,14 @@ const paths = (d: unknown, prefix = ''): string[] =>
  * leurs chaînes.
  */
 describe('parité des catalogues', () => {
-  const reference = paths(fr).toSorted(byLocale);
+  const reference = sortedCopy(paths(fr), byLocale);
 
   it.each([
     ['it', itCatalog],
     ['pt', pt],
     ['es', es],
   ])('%s a exactement les mêmes clés que le français', (_lang, catalog) => {
-    expect(paths(catalog).toSorted(byLocale)).toEqual(reference);
+    expect(sortedCopy(paths(catalog), byLocale)).toEqual(reference);
   });
 
   it.each([
@@ -70,7 +73,10 @@ describe('parité des catalogues', () => {
             .reduce<unknown>((acc, part) => (isRecord(acc) ? acc[part] : undefined), d);
           return [
             path,
-            [...String(value).matchAll(/\{(\w+)\}/g)].map((m) => m[1] ?? '').toSorted(byLocale),
+            sortedCopy(
+              [...String(value).matchAll(/\{(\w+)\}/g)].map((m) => m[1] ?? ''),
+              byLocale
+            ),
           ];
         })
       );
