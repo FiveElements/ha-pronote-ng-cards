@@ -24,7 +24,7 @@ customElements.define('decorator-probe-element', DecoratorProbeElement);
 
 describe('réactivité des décorateurs Lit', () => {
   it('met à jour le rendu quand une propriété décorée change après le montage', async () => {
-    const host = document.createElement('decorator-probe-element') as DecoratorProbeElement;
+    const host = new DecoratorProbeElement();
     document.body.appendChild(host);
 
     await host.updateComplete;

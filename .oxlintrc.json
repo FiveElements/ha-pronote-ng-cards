@@ -2,7 +2,9 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc"],
   "categories": {
-    "correctness": "error"
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error"
   },
   "rules": {},
   "env": {
@@ -11,5 +13,13 @@
   "options": {
     "typeAware": true
   },
-  "ignorePatterns": ["dist", "node_modules"]
+  "ignorePatterns": ["dist", "node_modules"],
+  "overrides": [
+    {
+      "files": ["src/core/**"],
+      "rules": {
+        "typescript/no-unnecessary-type-parameters": "off"
+      }
+    }
+  ]
 }
