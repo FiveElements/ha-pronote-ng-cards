@@ -65,7 +65,12 @@ site/
 coverage/
 *.log
 .DS_Store
+
+# Atelier de l'exécution du plan (journal, briefs, rapports, paquets de revue).
+.superpowers/
 ```
+
+Ce fichier **existe déjà** dans le dépôt : il a été créé avant la tâche 1 parce que `git add -A` à l'étape 9 aurait sinon committé `.superpowers/`. Le vérifier, pas le réécrire.
 
 `.nvmrc` :
 
@@ -669,7 +674,7 @@ export function resolveEntities(
 - [ ] **Step 4: Lancer les tests**
 
 Run: `npx vitest run test/resolve.test.ts && npm run typecheck && npm run lint`
-Expected: `12 passed`, aucun message de typecheck ni de lint.
+Expected: `14 passed`, aucun message de typecheck ni de lint.
 
 - [ ] **Step 5: Commit**
 
@@ -895,8 +900,7 @@ Toutes les chaînes visibles du projet vivent ici. Les huit tâches de cartes y 
 ```json
 {
   "common": {
-    "missing_title": "Entité manquante",
-    "missing_body": "Cette carte a besoin de {keys}, introuvable sur cet appareil.",
+    "missing_body": "Entité introuvable sur cet appareil :",
     "missing_hint": "Vérifiez que le palier correspondant est activé dans les options de l'intégration.",
     "unavailable": "Donnée pas encore collectée.",
     "no_device": "Choisissez un enfant dans les options de la carte.",
@@ -1082,7 +1086,7 @@ export const unavailableState = (): TemplateResult =>
 /** État « entité absente » : demande une action de l'utilisateur. */
 export const missingState = (keys: readonly string[]): TemplateResult => html`
   <div class="notice problem">
-    ${localize('common.missing_body', { keys: '' })}
+    ${localize('common.missing_body')}
     ${keys.map((k) => html`<code>${k}</code> `)}
   </div>
   <div class="notice">${localize('common.missing_hint')}</div>
@@ -2491,7 +2495,11 @@ const ALL: EntityKey = 'sensor:homework';
 const OVERDUE: EntityKey = 'binary_sensor:homework_overdue';
 const TODO_LIST: EntityKey = 'todo:homework';
 
-/** todo.TodoListEntityFeature.UPDATE_TODO_ITEM */
+/**
+ * Bit UPDATE_TODO_ITEM de TodoListEntityFeature, côté Home Assistant.
+ * Écrit sans point après le nom du domaine : la garde « aucun identifiant en
+ * dur » de la tâche 8 déclenche sur `todo.` suivi de minuscules.
+ */
 const UPDATE_ITEM = 2;
 
 const keyFor = (c: Config): EntityKey =>

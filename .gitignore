@@ -1,0 +1,9 @@
+node_modules/
+dist/
+site/
+coverage/
+*.log
+.DS_Store
+
+# Atelier de l'exécution du plan (journal, briefs, rapports, paquets de revue).
+.superpowers/
