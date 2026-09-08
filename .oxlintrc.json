@@ -13,13 +13,5 @@
   "options": {
     "typeAware": true
   },
-  "ignorePatterns": ["dist", "node_modules"],
-  "overrides": [
-    {
-      "files": ["src/core/**"],
-      "rules": {
-        "typescript/no-unnecessary-type-parameters": "off"
-      }
-    }
-  ]
+  "ignorePatterns": ["dist", "node_modules"]
 }

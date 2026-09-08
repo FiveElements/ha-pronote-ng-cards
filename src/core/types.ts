@@ -26,6 +26,7 @@ export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
   entityId(key: EntityKey): string | undefined;
   entity(key: EntityKey): HassEntity | undefined;
   status(key: EntityKey): EntityStatus;
+  // oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- `T` est une commodité d'écriture pour lire un attribut d'entité Home Assistant, qui n'est typé nulle part : ce n'est pas une garantie de type, l'appelant reste responsable de ce qu'il annonce.
   attr<T = unknown>(key: EntityKey, name: string): T | undefined;
   /** Chaîne localisée depuis src/localize. */
   t(path: string, vars?: Record<string, string | number>): string;
