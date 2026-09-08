@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   build: {
@@ -7,9 +7,9 @@ export default defineConfig({
       formats: ['es'],
       fileName: () => 'pronote-ng-cards.js',
     },
-    rollupOptions: { external: [] },
+    rolldownOptions: { external: [] },
     target: 'es2021',
-    minify: 'esbuild',
+    minify: 'oxc',
     emptyOutDir: true,
   },
   test: {
