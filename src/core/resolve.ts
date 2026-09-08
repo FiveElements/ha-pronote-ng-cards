@@ -25,6 +25,13 @@ export function resolveDevice(
   return device.id;
 }
 
+/**
+ * Rend, pour chaque clé demandée, l'identifiant de la PREMIÈRE entité qui
+ * correspond. Aucune détection de conflit : si deux entités du même appareil
+ * partagent domaine et `translation_key` — ce que fait l'intégration pour les
+ * périodes closes — celle qui est rendue dépend de l'ordre du registre. C'est
+ * la raison pour laquelle aucune carte n'expose d'option de période (spec §4.1).
+ */
 export function resolveEntities(
   hass: HomeAssistant,
   deviceId: string | undefined,

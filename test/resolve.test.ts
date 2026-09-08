@@ -104,9 +104,18 @@ describe('resolveEntities', () => {
     expect(r.get('sensor:next_lesson')).toBe('sensor.abc_prochain_cours');
   });
 
-  it('résout les clés de période close', () => {
-    const hass = makeHass([enfant('sensor:grades_period', 'sensor.abc_notes_p1')]);
+  it('ne sait pas distinguer deux entités qui partagent domaine et clé', () => {
+    // L'intégration crée une entité par période close, toutes avec le même
+    // translation_key sur le même appareil. La résolution en rend une, sans
+    // moyen de choisir laquelle — c'est pourquoi aucune carte n'expose
+    // d'option de période (spec §4.1).
+    const hass = makeHass([
+      enfant('sensor:grades_period', 'sensor.abc_notes_p1'),
+      enfant('sensor:grades_period', 'sensor.abc_notes_p2'),
+    ]);
     const r = resolveEntities(hass, 'dev_enfant', 'child', ['sensor:grades_period']);
-    expect(r.get('sensor:grades_period')).toBe('sensor.abc_notes_p1');
+    expect(['sensor.abc_notes_p1', 'sensor.abc_notes_p2']).toContain(
+      r.get('sensor:grades_period')
+    );
   });
 });
