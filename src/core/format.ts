@@ -1,0 +1,112 @@
+const ABSENT = new Set(['unknown', 'unavailable', 'none', '']);
+
+export function parseTimestamp(value: string | undefined): Date | undefined {
+  if (!value || ABSENT.has(value)) return undefined;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? undefined : d;
+}
+
+export function formatTime(
+  value: string | undefined,
+  language: string,
+  timeZone: string
+): string {
+  const d = parseTimestamp(value);
+  if (!d) return '';
+  return new Intl.DateTimeFormat(language, {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone,
+  }).format(d);
+}
+
+export function formatDayLabel(
+  value: string | undefined,
+  language: string,
+  timeZone: string
+): string {
+  const d = parseTimestamp(value);
+  if (!d) return '';
+  return new Intl.DateTimeFormat(language, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    timeZone,
+  }).format(d);
+}
+
+export function formatRelative(
+  value: string | undefined,
+  language: string,
+  now: Date = new Date()
+): string {
+  const d = parseTimestamp(value);
+  if (!d) return '';
+  const deltaMs = d.getTime() - now.getTime();
+  // Un écart de 30 s arrondirait à 1 min : le seuil « sous la minute » doit
+  // donc porter sur le delta brut en millisecondes, pas sur deltaMin arrondi.
+  if (Math.abs(deltaMs) < 60000) return relativeNow();
+  const deltaMin = Math.round(deltaMs / 60000);
+  const rtf = new Intl.RelativeTimeFormat(language, { numeric: 'always', style: 'short' });
+  if (Math.abs(deltaMin) < 60) return normalize(rtf.format(deltaMin, 'minute'));
+  const deltaH = Math.round(deltaMin / 60);
+  if (Math.abs(deltaH) < 24) return normalize(rtf.format(deltaH, 'hour'));
+  return normalize(rtf.format(Math.round(deltaH / 24), 'day'));
+
+  /**
+   * « maintenant » localisé : seul le cas « sous la minute » n'a pas de forme
+   * relative naturelle avec `numeric: 'always'` (qui rendrait « dans 0 min »).
+   * On délègue à `numeric: 'auto'` sur un delta nul, qui rend le mot propre à
+   * chaque langue (« maintenant », « ora », « ahora », « agora »).
+   */
+  function relativeNow(): string {
+    return new Intl.RelativeTimeFormat(language, { numeric: 'auto' }).format(0, 'second');
+  }
+}
+
+/**
+ * Intl rend « dans 30 min. » selon la version d'ICU (point final variable) et
+ * insère une espace insécable entre le nombre et l'unité (« dans 2 h ») ; on
+ * uniformise vers une espace normale et on retire le point final pour une
+ * sortie stable entre versions d'ICU.
+ */
+function normalize(s: string): string {
+  return s
+    .replace(/[  ]/g, ' ')
+    .replace(/\.$/, '')
+    .trim();
+}
+
+export function formatGrade(
+  grade: number | string | undefined,
+  outOf: number | string | undefined
+): string {
+  if (grade === undefined || grade === null || grade === '' || ABSENT.has(String(grade))) {
+    return '—';
+  }
+  const g = formatGradeValue(grade);
+  if (outOf === undefined || outOf === null || outOf === '') return g;
+  return `${g}/${outOf}`;
+}
+
+/**
+ * Une note reçue en `number` vient d'un appelant déjà typé ; une note reçue en
+ * `string` vient toujours d'un état hass (`entity.state`), qui est toujours
+ * une chaîne. Une chaîne numérique ("14.5") se formate donc comme un nombre ;
+ * une chaîne non numérique (note textuelle PRONOTE : "Absent", "Non noté")
+ * est rendue telle quelle.
+ */
+function formatGradeValue(grade: number | string): string {
+  if (typeof grade === 'number') return grade.toLocaleString('fr-FR');
+  const n = Number(grade);
+  return grade.trim() !== '' && !Number.isNaN(n) ? n.toLocaleString('fr-FR') : grade;
+}
+
+export function formatDuration(minutes: number | undefined): string {
+  if (minutes === undefined || minutes < 0) return '';
+  if (minutes < 60) return `${minutes} min`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}`;
+}
