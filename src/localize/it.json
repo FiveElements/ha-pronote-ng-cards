@@ -4,14 +4,15 @@
     "missing_hint": "Verifichi che il livello corrispondente sia attivato nelle opzioni dell'integrazione.",
     "unavailable": "Dato non ancora raccolto.",
     "no_device": "Selezioni un alunno nelle opzioni della scheda.",
+    "bad_config": "Configurazione della scheda non valida.",
     "unknown_device": "Questo dispositivo non esiste più.",
     "refresh": "Aggiorna",
     "refresh_pending": "Richiesta inviata",
     "of": "su"
   },
   "editor": {
-    "device": "Alunno",
-    "device_helper": "Tutte le schede si configurano con il dispositivo dell'alunno, comprese quelle che mostrano dati dell'account.",
+    "device_id": "Alunno",
+    "device_id_helper": "Tutte le schede si configurano con il dispositivo dell'alunno, comprese quelle che mostrano dati dell'account.",
     "title": "Titolo",
     "overrides": "Sostituzioni di entità",
     "overrides_helper": "Non necessario nel caso normale. Da usare solo se la risoluzione automatica fallisce.",

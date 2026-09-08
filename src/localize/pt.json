@@ -4,14 +4,15 @@
     "missing_hint": "Verifique se o nível correspondente está ativado nas opções da integração.",
     "unavailable": "Dado ainda não recolhido.",
     "no_device": "Selecione um aluno nas opções do cartão.",
+    "bad_config": "Configuração de cartão inválida.",
     "unknown_device": "Este dispositivo já não existe.",
     "refresh": "Atualizar",
     "refresh_pending": "Pedido enviado",
     "of": "de"
   },
   "editor": {
-    "device": "Aluno",
-    "device_helper": "Todos os cartões se configuram com o dispositivo do aluno, incluindo os que mostram dados da conta.",
+    "device_id": "Aluno",
+    "device_id_helper": "Todos os cartões se configuram com o dispositivo do aluno, incluindo os que mostram dados da conta.",
     "title": "Título",
     "overrides": "Substituições de entidades",
     "overrides_helper": "Desnecessário no caso normal. Utilizar apenas se a resolução automática falhar.",

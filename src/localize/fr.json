@@ -4,14 +4,15 @@
     "missing_hint": "Vérifiez que le palier correspondant est activé dans les options de l'intégration.",
     "unavailable": "Donnée pas encore collectée.",
     "no_device": "Choisissez un enfant dans les options de la carte.",
+    "bad_config": "Configuration de carte invalide.",
     "unknown_device": "Cet appareil n'existe plus.",
     "refresh": "Rafraîchir",
     "refresh_pending": "Demande envoyée",
     "of": "sur"
   },
   "editor": {
-    "device": "Enfant",
-    "device_helper": "Toutes les cartes se configurent avec l'appareil de l'enfant, y compris celles qui affichent des données de compte.",
+    "device_id": "Enfant",
+    "device_id_helper": "Toutes les cartes se configurent avec l'appareil de l'enfant, y compris celles qui affichent des données de compte.",
     "title": "Titre",
     "overrides": "Surcharges d'entités",
     "overrides_helper": "Inutile dans le cas nominal. À n'employer que si la résolution automatique échoue.",
