@@ -1,4 +1,4 @@
-import { LitElement, html, nothing, type TemplateResult } from 'lit';
+import { LitElement, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { HassEntity, HomeAssistant } from './ha-types';
 import { resolveDevice, resolveEntities } from './resolve';
@@ -32,8 +32,20 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
     // en setConfig, où hass n'est pas encore posé (voir cette méthode).
     private t: Translate = (path, vars) => localize(path, vars, this.hass?.language);
 
+    // Mémoïse le balayage du registre (Object.values(hass.entities).filter(...))
+    // sur l'identité de hass.entities : Home Assistant remplace tout l'objet
+    // hass à chaque mise à jour d'état, mais le sous-objet entities ne change
+    // que si le registre lui-même a changé.
+    private resolveCache?: {
+      entities: HomeAssistant['entities'];
+      deviceId: string | undefined;
+      overrides: PronoteCardConfig['entities'];
+      keys: string;
+      result: Map<EntityKey, string>;
+    };
+
     setConfig(config: PronoteCardConfig): void {
-      if (!config || typeof config !== 'object') {
+      if (!config || typeof config !== 'object' || typeof config.type !== 'string') {
         throw new Error(this.t('common.bad_config'));
       }
       this.config = config;
@@ -65,6 +77,57 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       return { required, any, all: [...required, ...any, ...spec.optional(config)] };
     }
 
+    /**
+     * Home Assistant remplace l'objet `hass` à chaque mise à jour d'état, et
+     * le `hasChanged` par défaut de Lit est `!==` : sans ce garde-fou,
+     * `render()` — et donc le balayage du registre — partirait à chaque
+     * évènement d'état de la maison, y compris sans rapport avec cette carte.
+     * On ne laisse passer que : la config a changé, un refresh vient d'avoir
+     * lieu, ou l'état d'une entité déjà résolue par cette carte a changé.
+     */
+    protected shouldUpdate(changed: PropertyValues): boolean {
+      if (!this.hasUpdated) return true;
+      if (changed.has('config') || changed.has('refreshedAt')) return true;
+      if (!changed.has('hass')) return true;
+      const oldHass = changed.get('hass');
+      const hass = this.hass;
+      if (!hass || typeof oldHass !== 'object' || oldHass === null || !('states' in oldHass)) {
+        return true;
+      }
+      const oldStates = oldHass.states;
+      for (const id of this.resolved.values()) {
+        if (oldStates[id] !== hass.states[id]) return true;
+      }
+      return false;
+    }
+
+    private resolveAll(
+      hass: HomeAssistant,
+      config: PronoteCardConfig,
+      keys: EntityKey[]
+    ): Map<EntityKey, string> {
+      const cache = this.resolveCache;
+      const keysJoined = keys.join(',');
+      if (
+        cache &&
+        cache.entities === hass.entities &&
+        cache.deviceId === config.device_id &&
+        cache.overrides === config.entities &&
+        cache.keys === keysJoined
+      ) {
+        return cache.result;
+      }
+      const result = resolveEntities(hass, config.device_id, spec.scope, keys, config.entities);
+      this.resolveCache = {
+        entities: hass.entities,
+        deviceId: config.device_id,
+        overrides: config.entities,
+        keys: keysJoined,
+        result,
+      };
+      return result;
+    }
+
     protected render(): TemplateResult | typeof nothing {
       const hass = this.hass;
       const config = this.config;
@@ -80,7 +143,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       }
 
       const { required, any, all } = this.entityKeys(config);
-      this.resolved = resolveEntities(hass, config.device_id, spec.scope, all, config.entities);
+      this.resolved = this.resolveAll(hass, config, all);
 
       // État 1 — entité absente du registre pour cet appareil.
       const missingRequired = required.filter((k) => !this.resolved.has(k));

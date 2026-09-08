@@ -1,9 +1,10 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { html } from 'lit';
 import { PronoteCardEditor } from '../src/core/editor';
 import { localize } from '../src/localize';
 import type { CardSpec } from '../src/core/types';
 import { makeHass } from './fixtures/hass';
+import { mountCard, text } from './fixtures/mount';
 
 const SPEC: CardSpec = {
   type: 'pronote-ng-test-editor',
@@ -17,29 +18,32 @@ const SPEC: CardSpec = {
   render: () => html``,
 };
 
-beforeAll(() => {
-  if (!customElements.get('pronote-ng-card-editor-test')) {
-    customElements.define('pronote-ng-card-editor-test', class extends PronoteCardEditor {});
+/**
+ * Ré-expose computeLabel/computeHelper (protégés) pour les tests, plutôt que
+ * de les lire depuis l'extérieur par une conversion de type qui contourne
+ * TypeScript.
+ */
+class TestEditor extends PronoteCardEditor {
+  labelFor(name: string): string {
+    return this.computeLabel({ name, selector: {} });
   }
-});
+  helperFor(name: string): string | undefined {
+    return this.computeHelper({ name, selector: {} });
+  }
+}
 
-const mount = async (config: Record<string, unknown>, hass: unknown) => {
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- document.createElement ne connaît que HTMLElement ; les propriétés propres à l'élément personnalisé (setConfig, hass, spec) ne peuvent être annoncées que par une assertion.
-  const el = document.createElement('pronote-ng-card-editor-test') as HTMLElement & {
-    setConfig: (c: unknown) => void;
-    hass: unknown;
-    spec: CardSpec;
-  };
-  el.spec = SPEC;
-  el.setConfig({ type: 'custom:pronote-ng-test-editor', ...config });
-  el.hass = hass;
-  document.body.appendChild(el);
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- `updateComplete` appartient à LitElement, invisible du type HTMLElement ci-dessus.
-  await (el as unknown as { updateComplete: Promise<unknown> }).updateComplete;
-  return el;
-};
+if (!customElements.get('pronote-ng-card-editor-test')) {
+  customElements.define('pronote-ng-card-editor-test', TestEditor);
+}
 
-const text = (el: HTMLElement) => el.shadowRoot?.textContent ?? '';
+declare global {
+  interface HTMLElementTagNameMap {
+    'pronote-ng-card-editor-test': TestEditor;
+  }
+}
+
+const mount = (config: Record<string, unknown>, hass: unknown) =>
+  mountCard('pronote-ng-card-editor-test', config, hass, { spec: SPEC });
 
 describe('PronoteCardEditor — diagnostic de résolution', () => {
   it('signale les clés trouvées et les clés introuvables', async () => {
@@ -49,6 +53,7 @@ describe('PronoteCardEditor — diagnostic de résolution', () => {
     const el = await mount({ device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('sensor:next_lesson');
     expect(text(el)).toContain('sensor:menu_today');
+    expect(text(el)).toContain('trouvée');
     expect(text(el)).toContain('introuvable');
   });
 
@@ -57,9 +62,15 @@ describe('PronoteCardEditor — diagnostic de résolution', () => {
     expect(text(el)).toContain('est un compte, pas un enfant');
   });
 
+  it("dit que l'appareil n'existe plus plutôt que d'accuser à tort un appareil de compte", async () => {
+    const el = await mount({ device_id: 'dev_disparu' }, makeHass([]));
+    expect(text(el)).toContain("n'existe plus");
+    expect(text(el)).not.toContain('est un compte, pas un enfant');
+  });
+
   it("n'affiche pas de diagnostic sans appareil choisi", async () => {
     const el = await mount({}, makeHass([]));
-    expect(text(el)).not.toContain('introuvable');
+    expect(text(el)).not.toContain(localize('editor.diagnosis'));
   });
 
   it('émet config-changed quand ha-form remonte une valeur', async () => {
@@ -95,9 +106,13 @@ describe('PronoteCardEditor — diagnostic de résolution', () => {
 
   it('résout le libellé d’un champ propre à la carte via sa racine de catalogue, et retombe sur editor. pour un champ de base', async () => {
     const el = await mount({ device_id: 'dev_enfant' }, makeHass([]));
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- accès délibéré à un membre privé pour prouver le repli de libellé ; `computeLabel` n'est pas exposé autrement.
-    const withLabel = el as unknown as { computeLabel: (s: { name: string }) => string };
-    expect(withLabel.computeLabel({ name: 'sections' })).toBe(localize('notes.sections'));
-    expect(withLabel.computeLabel({ name: 'title' })).toBe(localize('editor.title'));
+    expect(el.labelFor('sections')).toBe(localize('notes.sections'));
+    expect(el.labelFor('title')).toBe(localize('editor.title'));
+  });
+
+  it("résout l'aide d'un champ (device_id) et rend undefined quand aucune aide n'existe", async () => {
+    const el = await mount({ device_id: 'dev_enfant' }, makeHass([]));
+    expect(el.helperFor('device_id')).toBe(localize('editor.device_id_helper'));
+    expect(el.helperFor('title')).toBeUndefined();
   });
 });

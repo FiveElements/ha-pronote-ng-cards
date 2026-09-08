@@ -14,8 +14,6 @@
     "device_id": "Alunno",
     "device_id_helper": "Tutte le schede si configurano con il dispositivo dell'alunno, comprese quelle che mostrano dati dell'account.",
     "title": "Titolo",
-    "overrides": "Sostituzioni di entità",
-    "overrides_helper": "Non necessario nel caso normale. Da usare solo se la risoluzione automatica fallisce.",
     "diagnosis": "Risoluzione",
     "found": "trovata",
     "not_found": "non trovata",

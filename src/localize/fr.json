@@ -14,8 +14,6 @@
     "device_id": "Enfant",
     "device_id_helper": "Toutes les cartes se configurent avec l'appareil de l'enfant, y compris celles qui affichent des données de compte.",
     "title": "Titre",
-    "overrides": "Surcharges d'entités",
-    "overrides_helper": "Inutile dans le cas nominal. À n'employer que si la résolution automatique échoue.",
     "diagnosis": "Résolution",
     "found": "trouvée",
     "not_found": "introuvable",

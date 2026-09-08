@@ -14,8 +14,6 @@
     "device_id": "Aluno",
     "device_id_helper": "Todos os cartões se configuram com o dispositivo do aluno, incluindo os que mostram dados da conta.",
     "title": "Título",
-    "overrides": "Substituições de entidades",
-    "overrides_helper": "Desnecessário no caso normal. Utilizar apenas se a resolução automática falhar.",
     "diagnosis": "Resolução",
     "found": "encontrada",
     "not_found": "não encontrada",

@@ -36,8 +36,12 @@ export class PronoteCardEditor extends LitElement {
    * `devoirs.filter`…) et ne retombe sur `editor.` que pour les deux champs
    * de base (`device_id`, `title`). `localize` rend le chemin lui-même
    * quand la clé manque : c'est le signal du repli.
+   *
+   * Protégé (pas privé) : le test de repli l'expose via une sous-classe,
+   * plutôt que de le lire par une conversion de type qui contourne
+   * TypeScript.
    */
-  private computeLabel = (s: HaFormSchema): string => {
+  protected computeLabel = (s: HaFormSchema): string => {
     const spec = this.spec;
     if (spec) {
       const path = `${spec.key}.${s.name}`;
@@ -45,6 +49,24 @@ export class PronoteCardEditor extends LitElement {
       if (own !== path) return own;
     }
     return this.t(`editor.${s.name}`);
+  };
+
+  /**
+   * Même repli que `computeLabel`, mais sur les clés `*_helper` — et rend
+   * `undefined` plutôt que le chemin brut quand aucune aide n'existe, pour
+   * que `ha-form` n'affiche rien plutôt qu'une clé de traduction. Protégé
+   * pour la même raison que `computeLabel`.
+   */
+  protected computeHelper = (s: HaFormSchema): string | undefined => {
+    const spec = this.spec;
+    if (spec) {
+      const path = `${spec.key}.${s.name}_helper`;
+      const own = this.t(path);
+      if (own !== path) return own;
+    }
+    const path = `editor.${s.name}_helper`;
+    const value = this.t(path);
+    return value === path ? undefined : value;
   };
 
   protected render(): TemplateResult | typeof nothing {
@@ -58,6 +80,7 @@ export class PronoteCardEditor extends LitElement {
         .data=${config}
         .schema=${this.formSchema(config)}
         .computeLabel=${this.computeLabel}
+        .computeHelper=${this.computeHelper}
         @value-changed=${this.valueChanged}
       ></ha-form>
       ${this.diagnosis(hass, spec, config)}
@@ -90,6 +113,12 @@ export class PronoteCardEditor extends LitElement {
   ): TemplateResult | typeof nothing {
     if (!config.device_id) return nothing;
 
+    // isChildDevice rend faux aussi bien pour un appareil de compte que pour
+    // un appareil disparu du registre : il faut écarter ce second cas en
+    // premier, sous peine d'accuser à tort « c'est un compte, pas un enfant ».
+    if (!hass.devices[config.device_id]) {
+      return html`<div class="notice problem">${this.t('common.unknown_device')}</div>`;
+    }
     if (!isChildDevice(hass, config.device_id)) {
       return html`<div class="notice problem">${this.t('editor.account_device_picked')}</div>`;
     }
