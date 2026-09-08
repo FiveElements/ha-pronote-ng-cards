@@ -1,0 +1,27 @@
+# Les issues vierges sont désactivées, et c'est délibéré. Un rapport sans
+# version de Home Assistant, sans configuration YAML de carte et sans
+# diagnostic coûte deux allers-retours avant de pouvoir être lu -- et, plus
+# grave sur ce projet, une issue vierge n'affiche aucun avertissement sur ce
+# qu'il ne faut pas coller. Les formulaires, eux, le rappellent avant la
+# première ligne.
+blank_issues_enabled: false
+
+contact_links:
+  - name: 📖 Documentation
+    url: https://fiveelements.github.io/ha-pronote-ng-cards/
+    about: >-
+      Installation, catalogue des cartes, options d'éditeur et un tableau de
+      dépannage symptôme → cause → remède. La réponse y est souvent déjà.
+
+  - name: 🧩 Intégration Pronote NG
+    url: https://github.com/FiveElements/ha-pronote-ng
+    about: >-
+      Le dépôt sœur qui fournit les entités : capteurs, calendriers, listes
+      de tâches. Une entité absente ou une donnée fausse se règle souvent là,
+      pas dans une carte.
+
+  - name: 🤝 Guide de contribution
+    url: https://github.com/FiveElements/ha-pronote-ng-cards/blob/main/CONTRIBUTING.md
+    about: >-
+      Comment monter l'environnement, faire tourner la suite de tests, et les
+      règles non négociables sur les identifiants.
