@@ -22,7 +22,8 @@ Ces contraintes s'appliquent à **toutes** les tâches. Elles ne sont pas répé
 - **Toute la rédaction visible est en français** : libellés de cartes, messages d'erreur, README, documentation, descriptions d'options. Le code, les noms de symboles et les `translation_key` restent en anglais.
 - **Clés d'entités toujours qualifiées** par leur domaine : `sensor:next_lesson`, `todo:homework`, `image:photo`. Un `translation_key` n'est unique qu'à l'intérieur d'un domaine.
 - `homeassistant` minimal : **2026.8.0**. Node **22+**.
-- **Zéro dépendance externe dans le *bundle*** hors Lit, qui est empaqueté. Home Assistant ne garantit pas d'*import map*.
+- **`npm audit` ne doit rapporter aucune vulnérabilité `critical` ni `high`.** Les versions de dépendances données ici sont celles publiées en septembre 2026 ; ne pas les rétrograder.
+- **Zéro dépendance externe dans le *bundle*** hors Lit, qui est empaqueté : `rolldownOptions.external` reste vide. Home Assistant ne garantit pas d'*import map*.
 - Messages de commit en français, préfixés `feat:` / `fix:` / `docs:` / `test:` / `chore:`, et terminés par la ligne `Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>`.
 
 ## Structure des fichiers
@@ -100,17 +101,17 @@ Ce fichier **existe déjà** dans le dépôt : il a été créé avant la tâche
     "format": "prettier --write src test"
   },
   "dependencies": {
-    "lit": "^3.2.1"
+    "lit": "^3.3.3"
   },
   "devDependencies": {
-    "@eslint/js": "^9.15.0",
-    "eslint": "^9.15.0",
-    "happy-dom": "^15.11.6",
-    "prettier": "^3.4.1",
-    "typescript": "^5.7.2",
-    "typescript-eslint": "^8.16.0",
-    "vite": "^6.0.3",
-    "vitest": "^2.1.8"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.10.0",
+    "happy-dom": "^20.14.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.70.0",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0"
   }
 }
 ```
@@ -142,8 +143,12 @@ Ce fichier **existe déjà** dans le dépôt : il a été créé avant la tâche
 
 - [ ] **Step 4: Créer `vite.config.ts`**
 
+**TypeScript est plafonné à la majeure 6 volontairement.** `typescript-eslint` 8.70.0 est sa dernière version stable et refuse explicitement TypeScript 7 (« typescript-eslint does not support TS 7.0 ») : `npm run lint` échoue. Ne pas monter TypeScript tant que `typescript-eslint` n'a pas de majeure compatible.
+
+Importer `defineConfig` depuis **`vitest/config`** et non `vite` : c'est ce qui type la clé `test` pour l'éditeur et pour toute vérification qui couvrirait ce fichier. Noter que `vite.config.ts` n'est **pas** dans le `include` de `tsconfig.json`, donc `npm run typecheck` ne le couvre pas aujourd'hui — l'import reste néanmoins le bon, et le rendre correct maintenant évite un piège si le périmètre du typecheck s'élargit.
+
 ```ts
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   build: {
@@ -152,9 +157,9 @@ export default defineConfig({
       formats: ['es'],
       fileName: () => 'pronote-ng-cards.js',
     },
-    rollupOptions: { external: [] },
+    rolldownOptions: { external: [] },
     target: 'es2021',
-    minify: 'esbuild',
+    minify: 'oxc',
     emptyOutDir: true,
   },
   test: {
@@ -165,7 +170,7 @@ export default defineConfig({
 });
 ```
 
-`external: []` est délibéré : Lit doit être empaqueté (contrainte globale).
+`external: []` est délibéré : Lit doit être empaqueté (contrainte globale). Vite 8 s'appuie sur Rolldown : la clé est `rolldownOptions`, `rollupOptions` est déprécié, et `minify: 'esbuild'` n'est plus disponible par défaut — `'oxc'` le remplace.
 
 - [ ] **Step 5: Créer `eslint.config.js` et `.prettierrc`**
 
