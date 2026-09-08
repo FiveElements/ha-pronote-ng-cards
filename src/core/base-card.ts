@@ -33,11 +33,14 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
     private t: Translate = (path, vars) => localize(path, vars, this.hass?.language);
 
     // Mémoïse le balayage du registre (Object.values(hass.entities).filter(...))
-    // sur l'identité de hass.entities : Home Assistant remplace tout l'objet
-    // hass à chaque mise à jour d'état, mais le sous-objet entities ne change
-    // que si le registre lui-même a changé.
+    // sur l'identité de hass.entities ET hass.devices : Home Assistant
+    // remplace tout l'objet hass à chaque mise à jour d'état, mais ces deux
+    // sous-objets ne changent que si le registre lui-même a changé.
+    // resolveEntities consulte les deux (via resolveDevice) : oublier devices
+    // rendrait une résolution périmée quand un appareil apparaît/disparaît.
     private resolveCache?: {
       entities: HomeAssistant['entities'];
+      devices: HomeAssistant['devices'];
       deviceId: string | undefined;
       overrides: PronoteCardConfig['entities'];
       keys: string;
@@ -83,7 +86,14 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
      * `render()` — et donc le balayage du registre — partirait à chaque
      * évènement d'état de la maison, y compris sans rapport avec cette carte.
      * On ne laisse passer que : la config a changé, un refresh vient d'avoir
-     * lieu, ou l'état d'une entité déjà résolue par cette carte a changé.
+     * lieu, le registre (entities/devices) a changé d'identité, ou l'état
+     * d'une entité déjà résolue par cette carte a changé.
+     *
+     * Le registre compte au moins autant que les états : une carte qui
+     * affiche « entité introuvable » attend précisément que l'entité
+     * apparaisse au registre (le propriétaire active le palier concerné) ;
+     * sans ce déclencheur, elle ne se repeindrait jamais. Même chose pour
+     * `devices`, qui alimente la branche « appareil introuvable ».
      */
     protected shouldUpdate(changed: PropertyValues): boolean {
       if (!this.hasUpdated) return true;
@@ -91,9 +101,17 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       if (!changed.has('hass')) return true;
       const oldHass = changed.get('hass');
       const hass = this.hass;
-      if (!hass || typeof oldHass !== 'object' || oldHass === null || !('states' in oldHass)) {
+      if (
+        !hass ||
+        typeof oldHass !== 'object' ||
+        oldHass === null ||
+        !('states' in oldHass) ||
+        !('entities' in oldHass) ||
+        !('devices' in oldHass)
+      ) {
         return true;
       }
+      if (oldHass.entities !== hass.entities || oldHass.devices !== hass.devices) return true;
       const oldStates = oldHass.states;
       for (const id of this.resolved.values()) {
         if (oldStates[id] !== hass.states[id]) return true;
@@ -111,6 +129,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       if (
         cache &&
         cache.entities === hass.entities &&
+        cache.devices === hass.devices &&
         cache.deviceId === config.device_id &&
         cache.overrides === config.entities &&
         cache.keys === keysJoined
@@ -120,6 +139,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       const result = resolveEntities(hass, config.device_id, spec.scope, keys, config.entities);
       this.resolveCache = {
         entities: hass.entities,
+        devices: hass.devices,
         deviceId: config.device_id,
         overrides: config.entities,
         keys: keysJoined,

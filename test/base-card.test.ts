@@ -73,6 +73,30 @@ describe('PronoteCardBase — les trois états', () => {
     expect(el.shadowRoot?.querySelector('.ok')).toBeNull();
   });
 
+  it('se repeint quand l’entité apparaît au registre après coup — pas seulement quand son état change', async () => {
+    // Reproduit exactement la boucle frustrante que shouldUpdate doit éviter :
+    // le propriétaire active le palier correspondant, l'entité apparaît au
+    // registre. hass.entities change d'identité ; hass.states aussi, pour une
+    // entité qui n'était même pas dans l'ancien this.resolved (elle en était
+    // absente). Si shouldUpdate ignore le registre, ce test échoue.
+    const el = await mountCard('pronote-ng-test', { device_id: 'dev_enfant' }, makeHass([]));
+    expect(text(el)).toContain('sensor:next_lesson');
+    expect(el.shadowRoot?.querySelector('.ok')).toBeNull();
+
+    el.hass = makeHass([
+      {
+        key: 'sensor:next_lesson',
+        entity_id: 'sensor.abc_prochain_cours',
+        device: 'dev_enfant',
+        state: '2026-09-08T08:30:00+02:00',
+      },
+    ]);
+    await el.updateComplete;
+
+    expect(el.shadowRoot?.querySelector('.ok')).not.toBeNull();
+    expect(text(el)).not.toContain('sensor:next_lesson');
+  });
+
   it('dit « indisponible » quand l’entité existe mais n’a pas d’état', async () => {
     const hass = makeHass([
       {
