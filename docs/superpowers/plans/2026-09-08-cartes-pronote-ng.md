@@ -4330,6 +4330,14 @@ device_id: <identifiant de l'appareil de l'enfant>
 
 En français. Titre, une phrase de description, la liste des huit cartes, l'installation HACS en trois lignes, un lien vers la documentation, un lien vers `docs/limites.md`, et la licence. `render_readme: true` dans `hacs.json` fait que c'est ce fichier que HACS affiche.
 
+**Attention à l'encodage.** Le `README.md` d'amorçage du dépôt (commit `9f182d2`) est en **UTF-16LE avec BOM et fins de ligne CRLF** — l'écriture par défaut d'une redirection PowerShell. HACS et GitHub le rendraient en charabia. Écrire le nouveau fichier en **UTF-8 sans BOM**, puis vérifier :
+
+```bash
+file README.md   # doit dire « UTF-8 Unicode text », jamais « UTF-16 »
+```
+
+Sous PowerShell, ne pas employer `>` ni `Out-File` sans `-Encoding utf8NoBOM` ; l'outil d'écriture de fichiers de l'agent produit de l'UTF-8 et convient.
+
 - [ ] **Step 7: Écrire `.github/workflows/docs.yml`**
 
 ```yaml
