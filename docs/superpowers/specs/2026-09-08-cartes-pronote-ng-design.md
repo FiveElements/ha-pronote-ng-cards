@@ -153,11 +153,32 @@ Conséquence : **les huit cartes se configurent toutes avec le seul `device_id`
 de l'enfant**, y compris la carte « limiteur ». L'utilisateur n'a jamais à
 distinguer les deux appareils.
 
-**Entités des périodes closes.** Les entités suffixées `_p<n>` portent les
-`translation_key` en `*_period` (`grades_period`, `averages_period`,
-`overall_average_period`…). La carte `notes` accepte une option `period` et
-résout alors sur ces clés. Le socle expose la liste des périodes disponibles à
-l'éditeur.
+**Entités des périodes closes — hors périmètre, et pourquoi.** L'intégration
+crée, pour chaque période close suivie, un jeu d'entités suffixées par l'index
+(`sensor.<enfant>_notes_p1`, `_p2`…). Toutes portent le **même**
+`translation_key` (`grades_period`, `averages_period`, `overall_average_period`…)
+sur le **même** appareil.
+
+La résolution décrite ci-dessus ne peut donc pas les distinguer : la clé
+`domaine:translation_key` n'a structurellement aucune place pour un axe
+« période », et `Array.find` en rendrait une au hasard de l'ordre du registre.
+L'échappatoire `entities:` ne comble pas ce trou non plus : elle attend un
+`entity_id` complet, dont le préfixe dérive du nom affiché de l'enfant —
+exactement l'information que la carte ne connaît pas, et que ce mécanisme
+existe pour contourner.
+
+**Aucune carte n'expose donc d'option de période.** Les cartes lisent la
+période en cours. Les quatre corrections possibles — étendre la clé d'un
+segment de période, ajouter un résolveur dédié filtrant sur le suffixe
+`_p<n>`, faire porter l'index par le `translation_key` côté intégration, ou
+rendre un tableau de candidats au lieu d'un identifiant — coûtent toutes une
+complication permanente du socle, portée par les huit cartes, au service d'une
+option que deux cartes exposeraient. La plus propre (des `translation_key`
+distincts côté intégration) ne dépend pas de ce dépôt.
+
+C'est un choix réversible : si la consultation des périodes closes devient un
+besoin, elle sera conçue pour elle-même, pas greffée sur un mécanisme qui ne
+la porte pas.
 
 **Échappatoire.** Toute carte accepte un `entities:` optionnel qui surcharge la
 résolution clé par clé :
@@ -287,9 +308,8 @@ surcharge. Les colonnes « clés » donnent les `translation_key`.
 ### 5.5 `pronote-ng-notes`
 
 - **Requises** : au moins une de `sensor:grades`, `sensor:averages`, `sensor:overall_average`
-- **Optionnelles** : `sensor:class_average`, `sensor:latest_grade`, `sensor:current_period`,
-  `sensor:report_card`, et les variantes `*_period` quand l'option `period` cible une
-  période close
+- **Optionnelles** : `sensor:class_average`, `sensor:latest_grade`,
+  `sensor:current_period`, `sensor:report_card`
 - **Rendu** : trois blocs activables par l'option `sections` —
   moyenne générale élève contre classe · dernières notes
   (matière, note, barème, coefficient, date) · moyennes par matière avec écart à
@@ -313,7 +333,7 @@ surcharge. Les colonnes « clés » donnent les `translation_key`.
 - **Requises** : au moins une de `sensor:absences`, `sensor:delays`, `sensor:punishments`,
   `sensor:unjustified_absences`
 - **Optionnelles** : `binary_sensor:absence_in_progress`, `binary_sensor:punishment_upcoming`,
-  `sensor:next_punishment`, variantes `*_period`
+  `sensor:next_punishment`
 - **Rendu** : compteurs en tête, puis le détail par section activable —
   absences (dates, heures, justifiée ou non), retards (durée, motif),
   punitions (nature, donneur, durée, exclusion). Alerte visible si
@@ -405,6 +425,9 @@ Le répertoire `docs/superpowers/` est exclu de la navigation MkDocs.
 
 ## 10. Ce qui est hors périmètre
 
+- **La consultation des périodes closes** (§4.1) : le mécanisme de résolution
+  ne peut pas distinguer deux périodes, et aucune des corrections possibles ne
+  vaut son coût permanent sur le socle.
 - Toute carte reposant sur un service à réponse (§2).
 - Une carte « messagerie » permettant d'envoyer un message : le service
   `send_message` existe, mais une surface d'écriture vers l'établissement

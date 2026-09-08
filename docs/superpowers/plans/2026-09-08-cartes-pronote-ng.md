@@ -351,7 +351,7 @@ export interface CardSpec<C extends PronoteCardConfig = PronoteCardConfig> {
   name: string;
   description: string;
   scope: CardScope;
-  /** Toutes obligatoires. Fonction de la config : `range` et `period` changent les clés. */
+  /** Toutes obligatoires. Fonction de la config : `range` change les clés. */
   requires(config: C): EntityKey[];
   /** Au moins une doit être résolue. Vide si sans objet. */
   requiresAny?(config: C): EntityKey[];
@@ -595,10 +595,19 @@ describe('resolveEntities', () => {
     expect(r.get('sensor:next_lesson')).toBe('sensor.abc_prochain_cours');
   });
 
-  it('résout les clés de période close', () => {
-    const hass = makeHass([enfant('sensor:grades_period', 'sensor.abc_notes_p1')]);
+  it('ne sait pas distinguer deux entités qui partagent domaine et clé', () => {
+    // L'intégration crée une entité par période close, toutes avec le même
+    // translation_key sur le même appareil. La résolution en rend une, sans
+    // moyen de choisir laquelle — c'est pourquoi aucune carte n'expose
+    // d'option de période (spec §4.1).
+    const hass = makeHass([
+      enfant('sensor:grades_period', 'sensor.abc_notes_p1'),
+      enfant('sensor:grades_period', 'sensor.abc_notes_p2'),
+    ]);
     const r = resolveEntities(hass, 'dev_enfant', 'child', ['sensor:grades_period']);
-    expect(r.get('sensor:grades_period')).toBe('sensor.abc_notes_p1');
+    expect(['sensor.abc_notes_p1', 'sensor.abc_notes_p2']).toContain(
+      r.get('sensor:grades_period')
+    );
   });
 });
 ```
@@ -640,6 +649,13 @@ export function resolveDevice(
   return device.id;
 }
 
+/**
+ * Rend, pour chaque clé demandée, l'identifiant de la PREMIÈRE entité qui
+ * correspond. Aucune détection de conflit : si deux entités du même appareil
+ * partagent domaine et `translation_key` — ce que fait l'intégration pour les
+ * périodes closes — celle qui est rendue dépend de l'ordre du registre. C'est
+ * la raison pour laquelle aucune carte n'expose d'option de période (spec §4.1).
+ */
 export function resolveEntities(
   hass: HomeAssistant,
   deviceId: string | undefined,
@@ -2705,7 +2721,7 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 **Interfaces:**
 - Consumes: identiques à la tâche 9, plus `formatGrade`.
-- Produces: `export const SPEC: CardSpec` depuis `src/cards/notes.ts`. Première carte à utiliser `requiresAny` et les clés `*_period`.
+- Produces: `export const SPEC: CardSpec` depuis `src/cards/notes.ts`. Première carte à utiliser `requiresAny`.
 
 **Attributs consommés** : `sensor:overall_average` (état = moyenne, attributs `out_of`, `period`), `sensor:class_average`, `sensor:grades` (attribut `items` : `subject`, `grade`, `out_of`, `coefficient`, `date`, `class_average`, `status`), `sensor:averages` (attribut `items` : `subject`, `average` ou `student`, `class_average`), `sensor:latest_grade` (état numérique **ou** `unknown` avec attribut `status` portant le motif d'une sentinelle `|1` à `|8`).
 
@@ -2723,7 +2739,6 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
   "section_average": "Moyenne générale",
   "section_latest": "Dernières notes",
   "section_subjects": "Par matière",
-  "period": "Période close (index)",
   "limit": "Nombre maximum de notes"
 }
 ```
@@ -2838,18 +2853,10 @@ describe('carte notes', () => {
     expect(cardText(el)).toContain('introuvable');
   });
 
-  it('cible les entités de période close quand period est renseigné', async () => {
-    const hass = makeHass([
-      {
-        key: 'sensor:overall_average_period',
-        entity_id: 'sensor.abc_moyenne_generale_p1',
-        device: 'dev_enfant',
-        state: '11,8',
-        attributes: { out_of: 20 },
-      },
-    ]);
-    const el = await mountCard(SPEC, { period: 1, sections: ['average'] }, hass);
-    expect(cardText(el)).toContain('11,8');
+  it('n\'expose aucune option de période', () => {
+    // La résolution ne sait pas distinguer deux périodes closes (spec §4.1).
+    // Ce test échoue si quelqu'un réintroduit l'option sans traiter le fond.
+    expect(SPEC.schema({ type: 'x' }).map((f) => f.name)).not.toContain('period');
   });
 });
 ```
@@ -2872,8 +2879,6 @@ type Section = 'average' | 'latest' | 'subjects';
 interface Config extends PronoteCardConfig {
   sections?: Section[];
   limit?: number;
-  /** Index d'une période close. Absent = période en cours. */
-  period?: number;
 }
 
 interface Grade {
@@ -2893,21 +2898,11 @@ interface Average {
   class_average?: number | string;
 }
 
-/** Les entités de période close portent les clés suffixées `_period`. */
-const k = (c: Config, base: string): EntityKey =>
-  (c.period === undefined ? `sensor:${base}` : `sensor:${base}_period`) as EntityKey;
-
-const OVERALL = (c: Config) => k(c, 'overall_average');
-const GRADES = (c: Config) => k(c, 'grades');
-const AVERAGES = (c: Config) => k(c, 'averages');
+const OVERALL: EntityKey = 'sensor:overall_average';
+const GRADES: EntityKey = 'sensor:grades';
+const AVERAGES: EntityKey = 'sensor:averages';
+const CLASS: EntityKey = 'sensor:class_average';
 const LATEST: EntityKey = 'sensor:latest_grade';
-/**
- * L'intégration ne crée pas de `class_average_period` : la moyenne de classe
- * n'existe que pour la période en cours. On ne la cherche donc pas quand une
- * période close est ciblée, plutôt que de chercher une clé inexistante.
- */
-const CLASS = (c: Config): EntityKey | undefined =>
-  c.period === undefined ? 'sensor:class_average' : undefined;
 
 const sectionsOf = (c: Config): Section[] =>
   c.sections && c.sections.length > 0 ? c.sections : ['average', 'latest', 'subjects'];
@@ -2920,8 +2915,8 @@ export const SPEC: CardSpec<Config> = {
   size: 6,
   stub: { sections: ['average', 'latest', 'subjects'] },
   requires: () => [],
-  requiresAny: (c) => [OVERALL(c), GRADES(c), AVERAGES(c)],
-  optional: (c) => [...(CLASS(c) ? [CLASS(c) as EntityKey] : []), LATEST],
+  requiresAny: () => [OVERALL, GRADES, AVERAGES],
+  optional: () => [CLASS, LATEST],
   schema: () => [
     {
       name: 'sections',
@@ -2937,30 +2932,25 @@ export const SPEC: CardSpec<Config> = {
       },
     },
     { name: 'limit', selector: { number: { min: 1, max: 50, mode: 'box' } } },
-    { name: 'period', selector: { number: { min: 1, max: 6, mode: 'box' } } },
   ],
   render(ctx: RenderCtx<Config>) {
     const c = ctx.config;
     const wanted = sectionsOf(c);
     const blocks: TemplateResult[] = [];
 
-    if (wanted.includes('average') && ctx.status(OVERALL(c)) === 'ok') {
-      const e = ctx.entity(OVERALL(c));
+    if (wanted.includes('average') && ctx.status(OVERALL) === 'ok') {
+      const e = ctx.entity(OVERALL);
       blocks.push(
         listRow({
           primary: ctx.t('notes.student'),
-          trailing: formatGrade(e?.state, ctx.attr<number>(OVERALL(c), 'out_of')),
+          trailing: formatGrade(e?.state, ctx.attr<number>(OVERALL, 'out_of')),
         })
       );
-      const classKey = CLASS(c);
-      if (classKey && ctx.status(classKey) === 'ok') {
+      if (ctx.status(CLASS) === 'ok') {
         blocks.push(
           listRow({
             primary: ctx.t('notes.class'),
-            trailing: formatGrade(
-              ctx.entity(classKey)?.state,
-              ctx.attr<number>(classKey, 'out_of')
-            ),
+            trailing: formatGrade(ctx.entity(CLASS)?.state, ctx.attr<number>(CLASS, 'out_of')),
           })
         );
       }
@@ -2978,7 +2968,7 @@ export const SPEC: CardSpec<Config> = {
           })
         );
       }
-      const items = ctx.attr<Grade[]>(GRADES(c), 'items') ?? [];
+      const items = ctx.attr<Grade[]>(GRADES, 'items') ?? [];
       const limited = [...items].reverse().slice(0, c.limit ?? 8);
       for (const g of limited) {
         blocks.push(
@@ -2991,13 +2981,13 @@ export const SPEC: CardSpec<Config> = {
           })
         );
       }
-      if (items.length === 0 && ctx.status(GRADES(c)) === 'ok' && blocks.length === 0) {
+      if (items.length === 0 && ctx.status(GRADES) === 'ok' && blocks.length === 0) {
         return emptyState(ctx.t('notes.empty'));
       }
     }
 
     if (wanted.includes('subjects')) {
-      const items = ctx.attr<Average[]>(AVERAGES(c), 'items') ?? [];
+      const items = ctx.attr<Average[]>(AVERAGES, 'items') ?? [];
       for (const a of items) {
         blocks.push(
           listRow({
@@ -3501,7 +3491,6 @@ type Section = 'absences' | 'delays' | 'punishments';
 interface Config extends PronoteCardConfig {
   sections?: Section[];
   limit?: number;
-  period?: number;
 }
 
 interface Absence {
@@ -3523,9 +3512,9 @@ interface Punishment {
   exclusion?: boolean;
 }
 
-const k = (c: Config, base: string): EntityKey =>
-  (c.period === undefined ? `sensor:${base}` : `sensor:${base}_period`) as EntityKey;
-
+const ABSENCES: EntityKey = 'sensor:absences';
+const DELAYS: EntityKey = 'sensor:delays';
+const PUNISHMENTS: EntityKey = 'sensor:punishments';
 const IN_PROGRESS: EntityKey = 'binary_sensor:absence_in_progress';
 const UPCOMING: EntityKey = 'binary_sensor:punishment_upcoming';
 
@@ -3540,7 +3529,7 @@ export const SPEC: CardSpec<Config> = {
   size: 6,
   stub: { sections: ['absences', 'delays', 'punishments'] },
   requires: () => [],
-  requiresAny: (c) => [k(c, 'absences'), k(c, 'delays'), k(c, 'punishments')],
+  requiresAny: () => [ABSENCES, DELAYS, PUNISHMENTS],
   optional: () => [IN_PROGRESS, UPCOMING],
   schema: () => [
     {
@@ -3557,7 +3546,6 @@ export const SPEC: CardSpec<Config> = {
       },
     },
     { name: 'limit', selector: { number: { min: 1, max: 50, mode: 'box' } } },
-    { name: 'period', selector: { number: { min: 1, max: 6, mode: 'box' } } },
   ],
   render(ctx: RenderCtx<Config>) {
     const c = ctx.config;
@@ -3575,7 +3563,7 @@ export const SPEC: CardSpec<Config> = {
     let rows = 0;
 
     if (wanted.includes('absences')) {
-      const items = (ctx.attr<Absence[]>(k(c, 'absences'), 'items') ?? []).slice(-limit).reverse();
+      const items = (ctx.attr<Absence[]>(ABSENCES, 'items') ?? []).slice(-limit).reverse();
       if (items.length > 0) {
         out.push(html`<div class="title">${ctx.t('vie_scolaire.absences')}</div>`);
         for (const a of items) {
@@ -3595,7 +3583,7 @@ export const SPEC: CardSpec<Config> = {
     }
 
     if (wanted.includes('delays')) {
-      const items = (ctx.attr<Delay[]>(k(c, 'delays'), 'items') ?? []).slice(-limit).reverse();
+      const items = (ctx.attr<Delay[]>(DELAYS, 'items') ?? []).slice(-limit).reverse();
       if (items.length > 0) {
         out.push(html`<div class="title">${ctx.t('vie_scolaire.delays')}</div>`);
         for (const d of items) {
@@ -3615,7 +3603,7 @@ export const SPEC: CardSpec<Config> = {
     }
 
     if (wanted.includes('punishments')) {
-      const items = (ctx.attr<Punishment[]>(k(c, 'punishments'), 'items') ?? [])
+      const items = (ctx.attr<Punishment[]>(PUNISHMENTS, 'items') ?? [])
         .slice(-limit)
         .reverse();
       if (items.length > 0) {
