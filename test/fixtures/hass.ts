@@ -18,7 +18,7 @@ export interface EntitySpec {
   unloaded?: boolean;
 }
 
-export function makeHass(entities: EntitySpec[] = []): HomeAssistant {
+export function makeHass(entities: EntitySpec[] = [], language = 'fr'): HomeAssistant {
   const devices: Record<string, DeviceRegistryEntry> = {
     dev_compte: {
       id: 'dev_compte',
@@ -72,8 +72,8 @@ export function makeHass(entities: EntitySpec[] = []): HomeAssistant {
     states,
     entities: registry,
     devices,
-    language: 'fr',
-    locale: { language: 'fr', time_zone: 'Europe/Paris' },
+    language,
+    locale: { language, time_zone: 'Europe/Paris' },
     callService: async () => undefined,
   };
 }

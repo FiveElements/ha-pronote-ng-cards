@@ -44,6 +44,8 @@ export interface CardSpec<C extends PronoteCardConfig = PronoteCardConfig> {
   type: string;
   name: string;
   description: string;
+  /** Racine de catalogue de la carte : 'notes', 'devoirs'… Sert aux libellés de l'éditeur. */
+  key: string;
   scope: CardScope;
   /** Toutes obligatoires. Fonction de la config : `range` et `period` changent les clés. */
   requires(config: C): EntityKey[];
