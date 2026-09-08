@@ -1,0 +1,98 @@
+name: ✨ Proposer une fonctionnalité
+description: Une carte, une option d'affichage ou un réglage d'éditeur qui manque.
+title: "[idée] "
+labels: ["enhancement"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Ce qui décide, sur ce projet
+
+        Une carte ne fait **jamais** de collecte au montage ou au rendu :
+        elle lit `hass.states`, rien d'autre. Une proposition qui suppose une
+        collecte à la demande (un bouton « recalculer », un rafraîchissement
+        au survol) revient en réalité sur le budget de requêtes de
+        l'intégration `pronote_ng`, pas sur cette carte — voyez le [chapitre
+        sur la
+        cadence](https://fiveelements.github.io/ha-pronote-ng/GUIDE-UTILISATEUR/#8-r%C3%A9glages-et-cadence)
+        du dépôt sœur si vous voulez chiffrer vous-même.
+
+        Ça ne veut pas dire non : ça veut dire que la question utile est
+        souvent « quelle entité existante affiche déjà cette donnée ? » avant
+        « quelle nouvelle carte faudrait-il ? ».
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Le problème que vous cherchez à résoudre
+      description: >-
+        Décrivez l'usage, pas la solution. « Je veux voir en un coup d'œil si
+        un devoir est en retard » se conçoit de plusieurs façons ; « ajoutez
+        une carte "devoirs en retard" » n'en laisse qu'une, et pas forcément
+        la meilleure.
+    validations:
+      required: true
+
+  - type: textarea
+    id: today
+    attributes:
+      label: Comment vous vous en sortez aujourd'hui
+      description: >-
+        Une carte `markdown` avec un gabarit Jinja, une combinaison des
+        cartes existantes, ou rien du tout. Si vous y arrivez déjà, dites
+        comment : ça aide à juger si le manque est une carte absente ou
+        seulement une option d'affichage perfectible.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Ce que vous imaginez
+      options:
+        - Une nouvelle carte
+        - Une option d'affichage sur une carte existante
+        - Un champ supplémentaire dans l'éditeur d'une carte
+        - Une mise en forme différente (thème, densité, icônes)
+        - Autre chose, ou je ne sais pas
+    validations:
+      required: true
+
+  - type: textarea
+    id: entity_source
+    attributes:
+      label: Savez-vous d'où viendrait la donnée
+      description: >-
+        Optionnel, et très utile si vous le savez. Le nom du capteur ou de
+        l'entité côté intégration `pronote_ng`, ou simplement l'endroit du
+        tableau de bord actuel où l'information apparaît déjà, sous une autre
+        forme. Si elle est déjà dans un attribut d'une entité existante,
+        dites lequel.
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Ce que vous avez envisagé d'autre
+      description: >-
+        Y compris les solutions que vous avez écartées, et pourquoi. C'est
+        souvent la partie qui fait avancer la discussion le plus vite.
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Vérifications
+      options:
+        - label: >-
+            J'ai regardé le catalogue des cartes de la documentation — ce que
+            je demande n'y est pas déjà.
+          required: true
+        - label: >-
+            J'ai compris qu'une carte ne collecte jamais de donnée
+            elle-même, et qu'une proposition qui en aurait besoin se discute
+            d'abord côté intégration `pronote_ng`.
+          required: true
+        - label: >-
+            Cette description ne contient aucun identifiant, nom d'élève ni
+            nom d'établissement réels.
+          required: true

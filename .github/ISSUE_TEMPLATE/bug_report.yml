@@ -1,0 +1,155 @@
+name: 🐞 Signaler un bug
+description: Une carte ne s'affiche pas comme le guide le décrit.
+title: "[bug] "
+labels: ["bug"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⛔ Avant tout : ce qu'il ne faut jamais coller ici
+
+        Cette issue est **publique et indexée**.
+
+        ⚠️ Ne collez jamais l'URL iCal, le bloc d'identité, ni de journaux du
+        module `pronotepy` : ils contiennent des identifiants. Une URL iCal
+        donne accès à l'emploi du temps complet d'un élève *sans aucune
+        authentification* — traitez-la comme un mot de passe.
+
+        Ne collez pas non plus :
+
+        * un identifiant ou un mot de passe PRONOTE ;
+        * le nom de votre enfant, celui de l'établissement, ou une capture
+          d'écran où ils apparaissent ;
+        * un identifiant d'entité complet — remplacez la partie qui nomme
+          l'enfant, par exemple `sensor.<enfant>_prochain_cours`.
+
+        Si le problème vient des **données** plutôt que de l'**affichage**,
+        le fichier de diagnostic de l'intégration est fait pour être joint
+        ici : les identifiants y sont rédigés.
+
+        *Paramètres → Appareils et services → Pronote NG → ⋯ → Télécharger
+        les diagnostics*
+
+  - type: input
+    id: cards_version
+    attributes:
+      label: Version des cartes Pronote NG
+      description: HACS, ou le champ `version` affiché dans `hacs.json`.
+      placeholder: "0.0.3"
+    validations:
+      required: true
+
+  - type: input
+    id: ha_version
+    attributes:
+      label: Version de Home Assistant
+      description: >-
+        *Paramètres → Système → Réparations → ⋯ → Informations système*, ligne
+        « Core ».
+      placeholder: "2026.9.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: Mode d'installation
+      options:
+        - HACS (dépôt personnalisé)
+        - Copie manuelle dans www/community/
+    validations:
+      required: true
+
+  - type: input
+    id: card_type
+    attributes:
+      label: Quelle carte
+      description: >-
+        Le `type` déclaré dans la configuration YAML de la carte.
+      placeholder: "custom:pronote-ng-next-lesson-card"
+    validations:
+      required: true
+
+  - type: textarea
+    id: card_yaml
+    attributes:
+      label: Configuration YAML de la carte
+      description: >-
+        Depuis l'éditeur de tableau de bord : ⋯ → Modifier en YAML, sur la
+        carte concernée. Remplacez le `device_id` par une valeur fictive s'il
+        vous semble sensible.
+      render: yaml
+    validations:
+      required: true
+
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: Ce que la carte affiche
+      description: >-
+        Le symptôme, tel que vous le voyez. « La carte affiche "Entité
+        manquante" », « la ligne de note reste vide », « le bouton
+        Rafraîchir ne réagit plus ».
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ce que vous attendiez à la place
+      description: >-
+        Utile plus souvent qu'il n'y paraît : certains affichages sont
+        délibérés — un état « indisponible » avant la première collecte, une
+        liste vide pendant les vacances — et cette ligne permet de distinguer
+        un bug d'une intention.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Comment le reproduire
+      description: >-
+        Les étapes, ou « c'est apparu comme ça dès l'ajout de la carte » — qui
+        est une réponse valable et une information en soi.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: entities
+    attributes:
+      label: Entités concernées
+      description: L'identifiant d'entité, avec le nom de l'enfant remplacé.
+      placeholder: "sensor.<enfant>_prochain_cours"
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console du navigateur
+      description: >-
+        F12 → Console, en rechargeant le tableau de bord. Une carte ne voit
+        jamais d'identifiant PRONOTE : cette console peut se coller sans
+        précaution particulière.
+      render: text
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Vérifications
+      options:
+        - label: >-
+            J'ai relu ce que je colle : il ne contient ni l'URL iCal, ni le
+            bloc d'identité, ni de journal du module `pronotepy`, ni aucun
+            autre identifiant réel.
+          required: true
+        - label: >-
+            Je n'ai pas activé le journaliseur `pronotepy`, et je n'ai pas
+            collé de journal produit avec lui.
+          required: true
+        - label: J'ai regardé le tableau de dépannage de la documentation.
+          required: true
