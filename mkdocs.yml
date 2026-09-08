@@ -1,0 +1,26 @@
+site_name: Pronote NG — Cartes
+site_url: https://fiveelements.github.io/ha-pronote-ng-cards/
+repo_url: https://github.com/FiveElements/ha-pronote-ng-cards
+theme:
+  name: material
+  language: fr
+  palette:
+    - scheme: default
+      toggle: { icon: material/brightness-7, name: Mode sombre }
+    - scheme: slate
+      toggle: { icon: material/brightness-4, name: Mode clair }
+exclude_docs: |
+  superpowers/
+nav:
+  - Accueil: index.md
+  - Installation: installation.md
+  - Cartes:
+      - Élève: cartes/eleve.md
+      - Prochain cours: cartes/prochain-cours.md
+      - Emploi du temps: cartes/emploi-du-temps.md
+      - Devoirs: cartes/devoirs.md
+      - Notes: cartes/notes.md
+      - Cantine: cartes/menu.md
+      - Vie scolaire: cartes/vie-scolaire.md
+      - Limiteur: cartes/limiteur.md
+  - Ce que ces cartes ne feront jamais: limites.md
