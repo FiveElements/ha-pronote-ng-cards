@@ -84,6 +84,29 @@ describe('garde : le journaliseur pronotepy n’est jamais recommandé', () => {
   });
 });
 
+describe('garde : src/ ne dépend d’aucun module Node natif', () => {
+  // import … from 'node:xxx', import 'node:xxx' (effet de bord),
+  // require('node:xxx'). tsconfig.json élargit "types" à ["…", "node"]
+  // pour que test/guards.test.ts (qui lit l'arborescence) type
+  // node:fs/node:path — cet élargissement ne vaut que pour les tests :
+  // il ne doit jamais rendre compilable une carte qui s'exécute dans un
+  // navigateur, pas dans Node.
+  const NODE_IMPORT = /(?:\bfrom\s+|\bimport\s+|\brequire\(\s*)['"]node:[a-z0-9/_-]+['"]/;
+
+  it("aucun fichier de src/ n'importe un module node:", () => {
+    for (const [file, body] of read(walk('src', ['.ts', '.json']))) {
+      const hit = body.match(NODE_IMPORT);
+      expect(
+        hit,
+        `${file} importe « ${hit?.[0]} » : src/ part dans un navigateur, ` +
+          `pas dans Node. L'élargissement de "types" à "node" dans ` +
+          `tsconfig.json n'est justifié que par les tests, jamais par le ` +
+          `code de carte.`
+      ).toBeNull();
+    }
+  });
+});
+
 describe('garde : aucune donnée réelle', () => {
   // Liste blanche délibérée : élargir ici, jamais en affaiblissant la garde.
   const ALLOWED_HOSTS = new Set([
