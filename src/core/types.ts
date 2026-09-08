@@ -9,6 +9,9 @@ export type EntityStatus = 'missing' | 'unavailable' | 'ok';
 
 export type CardScope = 'child' | 'account';
 
+/** Signature de la fonction de traduction telle que consommée par les primitives d'affichage. */
+export type Translate = (path: string, vars?: Record<string, string | number>) => string;
+
 export interface PronoteCardConfig {
   type: string;
   device_id?: string;
