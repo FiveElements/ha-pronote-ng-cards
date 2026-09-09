@@ -28,12 +28,22 @@
  * exactement ce qu'elle rendait avant. C'est la propriété qui permet d'être
  * aussi strict — le pire cas est une ligne sans accent de couleur.
  *
- * ## Ce que la fonction ne fait pas
+ * ## Ce qu'elle tolère, et ce qu'elle ne fait toujours pas
  *
- * Elle ne normalise pas la casse et ne développe pas la forme courte : ce
- * serait en faire un formateur alors qu'elle n'est qu'un filtre, et une valeur
- * rendue telle quelle se retrouve à l'identique dans le DOM inspecté, ce qui
- * facilite le diagnostic.
+ * Elle admet le `#` **manquant** : `1e88e5` est accepté et rendu `#1e88e5`.
+ * C'est un revirement assumé — une version antérieure de ce commentaire
+ * refusait toute normalisation, au motif qu'une valeur rendue telle quelle se
+ * retrouve à l'identique dans le DOM inspecté, ce qui facilite le diagnostic.
+ * L'argument était bon et il a perdu : une table écrite `1e88e5` laissait la
+ * ligne grise **sans un mot**, exactement l'échec silencieux que le repli des
+ * accents existe pour tuer, et rien ne distinguait « j'ai oublié le dièse » de
+ * « cette matière n'a pas de couleur ». Un dièse ajouté coûte un caractère de
+ * différence entre la configuration et le DOM ; l'échec silencieux coûte une
+ * demi-heure à celui qui le cherche.
+ *
+ * Elle ne touche à **rien d'autre** : ni la casse, ni la forme à trois
+ * chiffres, qui sont toutes deux valides en CSS et se lisent telles quelles.
+ * La sortie reste donc au plus proche de ce que l'utilisateur a écrit.
  *
  * Elle ne juge pas non plus le CONTRASTE. Les couleurs PRONOTE sont choisies
  * pour le fond blanc de l'interface officielle : un bleu nuit posé sur un
@@ -44,16 +54,20 @@
  */
 
 /**
- * `#` suivi de trois ou six chiffres hexadécimaux, et rien d'autre.
+ * Un `#` **facultatif** suivi de trois ou six chiffres hexadécimaux, et rien
+ * d'autre.
  *
  * Les ancres `^` et `$` sont ce qui fait le travail : sans elles,
- * `#fff; position: fixed` correspondrait par son préfixe.
+ * `#fff; position: fixed` correspondrait par son préfixe, et
+ * `#336699 (rouge)` passerait pour une couleur. Rendre le `#` facultatif ne
+ * touche pas à cette propriété — c'est le nombre de chiffres qui reste ancré
+ * des deux côtés.
  *
  * Les formes à quatre et huit chiffres (avec canal alpha) sont volontairement
  * hors du contrat : le serveur ne les envoie pas, et une transparence sur un
  * accent de couleur ne servirait qu'à le rendre moins lisible.
  */
-const STRICT_HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const STRICT_HEX = /^#?(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 /**
  * La couleur si elle est exploitable, `undefined` sinon.
@@ -65,7 +79,12 @@ const STRICT_HEX = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 export function subjectColor(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
-  return STRICT_HEX.test(trimmed) ? trimmed : undefined;
+  if (!STRICT_HEX.test(trimmed)) return undefined;
+  // Le dièse est ajouté s'il manque, et rien de plus. La valeur atteint un
+  // attribut `style` : sans lui, `1e88e5` y serait une couleur invalide, donc
+  // silencieusement ignorée par le navigateur — le même échec muet que le
+  // filtre est censé rendre impossible.
+  return trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
 }
 
 

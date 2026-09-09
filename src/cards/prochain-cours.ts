@@ -2,11 +2,19 @@ import { html } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
 import { formatDayLabel, formatRelative, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState, listRow } from '../core/ui/parts';
+import { subjectAccent } from '../core/subject-color';
 
 interface Config extends PronoteCardConfig {
   show_wake_up?: boolean;
   show_end_of_day?: boolean;
   show_next_test?: boolean;
+  /**
+   * La table de couleurs de matière, en YAML seulement — comme sur les cinq
+   * autres cartes qui portent une matière. Absente de l'éditeur visuel : un
+   * dictionnaire dont les clés varient d'un établissement à l'autre ne se
+   * modélise pas dans `ha-form`. Voir `subjectAccent`.
+   */
+  subject_colors?: Record<string, string>;
 }
 
 const NEXT: EntityKey = 'sensor:next_lesson';
@@ -84,6 +92,16 @@ export const SPEC: CardSpec<Config> = {
     const tz = ctx.timeZone;
     const lang = ctx.language;
     const subject = (ctx.attr<string>(NEXT, 'subject') ?? '').trim();
+    // La couleur de matière, résolue comme sur les cinq autres cartes :
+    // serveur, puis table de l'utilisateur, puis rien. Les lignes qui ne
+    // portent pas de matière — salle, professeurs, réveil, fin de journée —
+    // réservent la gouttière sans la colorer, pour rester alignées sous
+    // celle qui la porte.
+    const accent = subjectAccent(
+      ctx.attr(NEXT, 'background_color'),
+      subject,
+      ctx.config.subject_colors
+    );
     const room = ctx.attr<string>(NEXT, 'classroom');
     const teachers = teachersOf(ctx.attr(NEXT, 'teachers'));
     const canceled = ctx.attr<boolean>(NEXT, 'canceled') === true;
@@ -144,14 +162,16 @@ export const SPEC: CardSpec<Config> = {
           : undefined,
         trailing: canceled ? chip(ctx.t('prochain_cours.canceled'), 'problem') : undefined,
         canceled,
+        accent: accent ?? null,
       })}
-      ${room ? listRow({ primary: ctx.t('prochain_cours.room', { room }) }) : ''}
-      ${teachers ? listRow({ primary: teachers }) : ''}
+      ${room ? listRow({ primary: ctx.t('prochain_cours.room', { room }), accent: null }) : ''}
+      ${teachers ? listRow({ primary: teachers, accent: null }) : ''}
       ${ctx.config.show_wake_up && ctx.status(WAKE) === 'ok'
         ? listRow({
             primary: ctx.t('prochain_cours.wake_up', {
               time: formatTime(ctx.entity(WAKE)?.state, lang, tz),
             }),
+            accent: null,
           })
         : ''}
       ${ctx.config.show_end_of_day && ctx.status(END) === 'ok'
@@ -163,6 +183,7 @@ export const SPEC: CardSpec<Config> = {
             })}${ctx.attr<boolean>(END, 'end_inferred') === true
               ? html` <span title=${ctx.t('common.inferred_time')}>≈</span>`
               : ''}`,
+            accent: null,
           })
         : ''}
       ${ctx.config.show_next_test && ctx.status(TEST) === 'ok'
@@ -181,6 +202,7 @@ export const SPEC: CardSpec<Config> = {
             ]
               .filter(Boolean)
               .join(' · '),
+            accent: null,
           })
         : ''}
     `;

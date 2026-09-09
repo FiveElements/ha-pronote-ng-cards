@@ -1,12 +1,18 @@
 import { html, type TemplateResult } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
 import { emptyState, listRow } from '../core/ui/parts';
+import { subjectAccent } from '../core/subject-color';
 import { latestFirst, listAttr, sortedBy } from '../core/list';
 import { formatDayLabel, parseTimestamp } from '../core/format';
 
 interface Config extends PronoteCardConfig {
   limit?: number;
   show_acquisitions?: boolean;
+  /**
+   * La table de couleurs de matière, en YAML seulement — comme sur les cinq
+   * autres cartes qui portent une matière. Voir `subjectAccent`.
+   */
+  subject_colors?: Record<string, string>;
 }
 
 /**
@@ -30,6 +36,12 @@ interface Acquisition {
  * affiche.
  */
 interface Evaluation {
+  /**
+   * La couleur de matière telle que le serveur l'écrit, si un jour il
+   * l'écrit. `unknown` par honnêteté : un attribut d'entité n'est typé
+   * nulle part, et `subjectColor` est ce qui décide de son innocuité.
+   */
+  background_color?: unknown;
   name?: string;
   subject?: string;
   date?: string;
@@ -91,6 +103,7 @@ export const SPEC: CardSpec<Config> = {
           primary: e.subject ?? ctx.t('evaluations.name'),
           secondary: e.name,
           trailing: when || undefined,
+          accent: subjectAccent(e.background_color, e.subject, c.subject_colors) ?? null,
         })
       );
       if (c.show_acquisitions === false) continue;
@@ -103,6 +116,9 @@ export const SPEC: CardSpec<Config> = {
           listRow({
             primary: html`<span class="secondary">${a.name ?? ''}</span>`,
             trailing: level,
+            // Gouttière réservée et transparente : une compétence n'est pas une
+            // matière, mais elle doit rester alignée sous la ligne qui l'est.
+            accent: null,
           })
         );
       }

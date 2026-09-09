@@ -47,8 +47,28 @@ describe('subjectColor', () => {
       expect(subjectColor('#1234567')).toBeUndefined();
     });
 
-    it('refuse un hexadécimal sans dièse', () => {
-      expect(subjectColor('1e88e5')).toBeUndefined();
+    it('accepte un hexadécimal sans dièse et le rend AVEC', () => {
+      // Ce test affirmait l'inverse jusqu'au 9 septembre 2026, et le
+      // renversement est délibéré. L'ancienne règle refusait toute
+      // normalisation pour qu'une valeur se retrouve à l'identique dans le
+      // DOM inspecté. L'argument était bon et il a perdu contre un fait
+      // mesuré : une table écrite « 1e88e5 » laissait la ligne grise SANS un
+      // mot, parce qu'un navigateur ignore silencieusement une couleur
+      // invalide dans un attribut `style`. Rien ne distinguait alors l'oubli
+      // du dièse d'une matière sans couleur — le même échec muet que le repli
+      // des accents existe pour tuer.
+      expect(subjectColor('1e88e5')).toBe('#1e88e5');
+      expect(subjectColor('f80')).toBe('#f80');
+    });
+
+    it('garde les ancres : la longueur reste le vrai filtre', () => {
+      // Rendre le dièse facultatif ne desserre PAS la frontière de confiance.
+      // Ce qui protège n'a jamais été le dièse, c'est le nombre de chiffres
+      // ancré des deux côtés — sans quoi « 1e88e5 (bleu) » passerait.
+      expect(subjectColor('1e88e5 (bleu)')).toBeUndefined();
+      expect(subjectColor('#336699 (rouge)')).toBeUndefined();
+      expect(subjectColor('1e88e5; position: fixed')).toBeUndefined();
+      expect(subjectColor('abcd')).toBeUndefined();
     });
 
     it('refuse une injection de propriété par point-virgule', () => {

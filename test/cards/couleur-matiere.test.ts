@@ -3,6 +3,8 @@ import { defineCard } from '../../src/core/registry';
 import { SPEC as EDT } from '../../src/cards/emploi-du-temps';
 import { SPEC as DEVOIRS } from '../../src/cards/devoirs';
 import { SPEC as NOTES } from '../../src/cards/notes';
+import { SPEC as PROCHAIN } from '../../src/cards/prochain-cours';
+import { SPEC as EVALUATIONS } from '../../src/cards/evaluations';
 import { makeHass } from '../fixtures/hass';
 import { mountCard } from '../fixtures/mount';
 
@@ -47,6 +49,16 @@ declare global {
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
     };
+    'pronote-ng-prochain-cours': HTMLElement & {
+      setConfig(c: unknown): void;
+      hass: unknown;
+      readonly updateComplete: Promise<unknown>;
+    };
+    'pronote-ng-evaluations': HTMLElement & {
+      setConfig(c: unknown): void;
+      hass: unknown;
+      readonly updateComplete: Promise<unknown>;
+    };
   }
 }
 
@@ -54,6 +66,8 @@ beforeAll(() => {
   defineCard(EDT);
   defineCard(DEVOIRS);
   defineCard(NOTES);
+  defineCard(PROCHAIN);
+  defineCard(EVALUATIONS);
 });
 
 /** Les gouttières colorées d'une carte, dans l'ordre du rendu. */
@@ -454,5 +468,195 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
     );
     expect(accents(el)).toEqual(['#1e88e5', null]);
     expect(el.shadowRoot?.textContent).toContain('MATHEMATIQUES');
+  });
+});
+
+/**
+ * Les fixtures des trois blocs qui suivent, au niveau module. Déclarées ici
+ * plutôt que réutilisées depuis le bloc de la table : celui-là garde les
+ * siennes dans sa propre portée, et les hisser aurait élargi une portée pour
+ * une commodité.
+ */
+const PALETTE = { MATHEMATIQUES: '#1e88e5', 'histoire-geographie': '#43a047' };
+
+const UN_COURS = [
+  {
+    subject: 'MATHEMATIQUES',
+    start: '2026-09-08T08:00:00+02:00',
+    end: '2026-09-08T09:00:00+02:00',
+  },
+];
+
+const prochain = (attributes: Record<string, unknown>): ReturnType<typeof makeHass> =>
+  makeHass([
+    {
+      key: 'sensor:next_lesson',
+      entity_id: 'sensor.abc_prochain_cours',
+      device: 'dev_enfant',
+      state: '2026-09-10T08:00:00+02:00',
+      attributes,
+    },
+  ]);
+
+const troisEvaluations = (): ReturnType<typeof makeHass> =>
+  makeHass([
+    {
+      key: 'sensor:evaluations',
+      entity_id: 'sensor.abc_evaluations',
+      device: 'dev_enfant',
+      state: '2',
+      attributes: {
+        items: [
+          {
+            subject: 'MATHEMATIQUES',
+            name: 'Théorème de Pythagore',
+            date: '2026-09-08T08:00:00+02:00',
+            acquisitions: [{ name: 'Calculer une longueur', level: 'Bonne maîtrise' }],
+          },
+          {
+            subject: 'Permanence',
+            name: 'Sans matière connue',
+            date: '2026-09-07T08:00:00+02:00',
+          },
+        ],
+      },
+    },
+  ]);
+
+/**
+ * Le prochain cours ne montre qu'UNE matière, mais plusieurs lignes : la
+ * salle, les professeurs, le réveil, la fin de journée, le prochain contrôle.
+ * Aucune de celles-là n'est une matière, et toutes réservent pourtant la
+ * gouttière — sinon la ligne de matière colorée serait décalée de trois pixels
+ * par rapport à ses voisines, ce qui se lit comme un défaut d'affichage plutôt
+ * que comme une absence de donnée.
+ *
+ * Les noms d'attributs viennent de la source de la carte et de la forme
+ * mesurée sur instance : `classroom` et non `room`, et `teachers` est une
+ * liste. Une première version de ces fixtures inventait `room: 'B12'` et
+ * `teachers: 'M. X'` — le test l'a attrapé, ce qui est exactement ce qu'on
+ * attend d'une fixture qui ne répète pas l'hypothèse du code.
+ */
+describe('code couleur des matières — prochain cours', () => {
+  it('reprend la couleur publiée par le serveur', async () => {
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant' },
+      prochain({ subject: 'Maths', classroom: 'B12', background_color: '#1e88e5' })
+    );
+
+    expect(accents(el)).toContain('#1e88e5');
+    expect(el.shadowRoot?.textContent).toContain('Maths');
+  });
+
+  it('colore depuis la table, sans casse ni accents', async () => {
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant', subject_colors: PALETTE },
+      prochain({ subject: 'mathematiques' })
+    );
+
+    expect(accents(el)).toContain('#1e88e5');
+  });
+
+  it('réserve la gouttière des lignes qui ne portent pas de matière', async () => {
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant', subject_colors: PALETTE },
+      prochain({ subject: 'MATHEMATIQUES', classroom: 'B12', teachers: ['M. X'] })
+    );
+
+    // La matière colorée, puis la salle et les professeurs réservés : c'est
+    // l'ordre qui prouve l'alignement, pas le simple décompte.
+    expect(accents(el)).toEqual(['#1e88e5', null, null]);
+    // Appariée à un positif : sans elle, un rendu entièrement cassé passerait.
+    expect(plainRows(el)).toBe(0);
+  });
+});
+
+describe('code couleur des matières — évaluations', () => {
+  it('colore la matière et réserve la gouttière des compétences', async () => {
+    const el = await mountCard(
+      'pronote-ng-evaluations',
+      { device_id: 'dev_enfant', subject_colors: PALETTE },
+      troisEvaluations()
+    );
+
+    // Matière colorée, sa compétence réservée, puis la seconde matière sans
+    // couleur : une compétence n'est pas une matière, mais elle doit rester
+    // alignée sous la ligne qui l'est.
+    expect(accents(el)).toEqual(['#1e88e5', null, null]);
+    expect(el.shadowRoot?.textContent).toContain('Théorème de Pythagore');
+  });
+
+  it('reprend la couleur du serveur quand elle existe', async () => {
+    const el = await mountCard(
+      'pronote-ng-evaluations',
+      { device_id: 'dev_enfant', show_acquisitions: false },
+      makeHass([
+        {
+          key: 'sensor:evaluations',
+          entity_id: 'sensor.abc_evaluations',
+          device: 'dev_enfant',
+          state: '1',
+          attributes: {
+            items: [
+              {
+                subject: 'Maths',
+                name: 'Fractions',
+                date: '2026-09-08T08:00:00+02:00',
+                background_color: '#43a047',
+              },
+            ],
+          },
+        },
+      ])
+    );
+
+    expect(accents(el)).toEqual(['#43a047']);
+    expect(el.shadowRoot?.textContent).toContain('Fractions');
+  });
+});
+
+describe('code couleur des matières — le dièse facultatif', () => {
+  it('accepte une couleur écrite sans dièse et la rend avec', async () => {
+    // Sans cette tolérance, une table écrite « 1e88e5 » laissait la ligne
+    // grise SANS un mot : le navigateur ignore silencieusement une couleur
+    // invalide dans un attribut `style`, et rien ne distinguait l'oubli du
+    // dièse d'une matière sans couleur.
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant', range: 'today', subject_colors: { MATHEMATIQUES: '1e88e5' } },
+      withLessons(UN_COURS)
+    );
+    expect(accents(el)).toEqual(['#1e88e5']);
+  });
+
+  it('accepte aussi la forme courte sans dièse', async () => {
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant', range: 'today', subject_colors: { MATHEMATIQUES: 'f80' } },
+      withLessons(UN_COURS)
+    );
+    expect(accents(el)).toEqual(['#f80']);
+  });
+
+  it('refuse toujours ce qui n’est pas de l’hexadécimal, dièse ou pas', async () => {
+    // Les ancres tiennent : ce qui est refusé l'est parce que la LONGUEUR est
+    // ancrée des deux côtés, et rendre le dièse facultatif n'y touche pas.
+    const invalides = ['red', 'rgb(30,136,229)', '1e88e5 (bleu)', '#336699 (rouge)', 'abcd'];
+    const rendus = await Promise.all(
+      invalides.map(async (invalide) =>
+        mountCard(
+          'pronote-ng-emploi-du-temps',
+          { device_id: 'dev_enfant', range: 'today', subject_colors: { MATHEMATIQUES: invalide } },
+          withLessons(UN_COURS)
+        )
+      )
+    );
+    // Toutes les valeurs sont éprouvées avant d'assérer : une assertion posée
+    // dans la boucle s'arrêterait à la première fautive et cacherait les
+    // suivantes, ce qui transforme une correction en va-et-vient.
+    expect(rendus.map((el) => accents(el))).toEqual(invalides.map(() => [null]));
   });
 });
