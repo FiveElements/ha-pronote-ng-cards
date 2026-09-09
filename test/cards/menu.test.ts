@@ -137,7 +137,7 @@ describe('carte menu', () => {
     const hass = makeHass([
       {
         key: 'sensor:menu_tomorrow',
-        entity_id: 'sensor.abc_menu_demain',
+        entity_id: 'sensor.abc_menu_de_demain',
         device: 'dev_enfant',
         state: '1',
         attributes: { main_meal: 'Poisson' },

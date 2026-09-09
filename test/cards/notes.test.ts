@@ -46,7 +46,7 @@ const base = () =>
     },
     {
       key: 'sensor:averages',
-      entity_id: 'sensor.abc_moyennes',
+      entity_id: 'sensor.abc_moyennes_par_matiere',
       device: 'dev_enfant',
       state: '2',
       attributes: {
@@ -83,7 +83,7 @@ describe('carte notes', () => {
       },
       {
         key: 'sensor:averages',
-        entity_id: 'sensor.abc_moyennes',
+        entity_id: 'sensor.abc_moyennes_par_matiere',
         device: 'dev_enfant',
         state: '1',
         attributes: {
@@ -106,7 +106,7 @@ describe('carte notes', () => {
     const hass = makeHass([
       {
         key: 'sensor:averages',
-        entity_id: 'sensor.abc_moyennes',
+        entity_id: 'sensor.abc_moyennes_par_matiere',
         device: 'dev_enfant',
         state: '0',
         attributes: { items: [] },

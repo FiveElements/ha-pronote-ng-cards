@@ -165,7 +165,7 @@ const monterSemaine = (
       },
       {
         key: 'sensor:timetable_week',
-        entity_id: 'sensor.abc_emploi_du_temps_semaine',
+        entity_id: 'sensor.abc_emploi_du_temps_de_la_semaine',
         device: 'dev_enfant',
         state: String(semaine.length),
         attributes: { lessons: semaine },
