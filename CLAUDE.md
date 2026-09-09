@@ -44,7 +44,11 @@ La qualification par domaine est nécessaire : un `translation_key` n'est unique
 
 **`resolveEntities` ne consulte jamais `hass.states`.** C'est l'invariant porteur du projet : une entité inscrite au registre mais non chargée doit se résoudre quand même, pour tomber en « pas encore collectée » et non en « introuvable ».
 
-Elle rend la **première** correspondance, sans détection de conflit. C'est pourquoi aucune carte n'expose de sélecteur de période : l'intégration crée une entité par période close, toutes avec le même `translation_key` sur le même appareil, et rien ne permet de les distinguer.
+Elle rend la **première** correspondance, sans détection de conflit. C'est pourquoi aucune carte n'expose de sélecteur de période : l'intégration crée un jeu d'entités par période close, et les jeux sont **mutuellement** indiscernables — huit clés, répétées à l'identique pour chaque période suivie.
+
+Ce que cette ambiguïté ne touche **pas** : les cartes de la période en cours. Les capteurs de période close portent des clés suffixées (`grades_period`, `report_card_period`, `evaluations_period`…), et la résolution compare en **égalité stricte** — `grades` ne peut donc jamais tomber sur `grades_period`. La propriété n'est pas gratuite : une correspondance par préfixe suffirait à la casser, et le suffixe la casserait *silencieusement*, une carte se liant à une période fermée en affichant des données plausibles et périmées. Ne remplacez pas le `===` de `resolve.ts` par autre chose.
+
+Et si un sélecteur de période voit le jour un jour, sachez que **trois** notions changent de forme entre la période courante et une période close : la moyenne générale perd son barème, le bulletin perd `id`, `coefficient` et `teachers`, et les évaluations perdent `date` **et `acquisitions`** — donc tout leur contenu. Les cinq autres (notes, moyennes par matière, absences, retards, punitions) sont identiques, parce que l'extracteur d'historique appelle le même constructeur. Le critère est là : l'extracteur réutilise-t-il le constructeur de la période courante, oui ou non.
 
 ### Les appareils et le `scope`
 
