@@ -24,8 +24,9 @@ grid_options:
 
 ![La carte Agenda en vue listWeek : la semaine en liste, groupée par jour](assets/ha-calendar/semaine.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.* Le rendu est
-celui du YAML ci-dessus. Les deux cours préfixés de ❌ sont annulés : l'agenda
+*Illustration synthétique : la semaine, les dates et les horaires sont
+inventés ; les intitulés sont des matières de programme, pas ceux d'un
+élève.* Le rendu est celui du YAML ci-dessus. Les deux cours préfixés de ❌ sont annulés : l'agenda
 les garde à leur place au lieu de les effacer.
 
 Remplacez `enfant_un` par ce qui figure dans **vos** identifiants d'entité :
@@ -48,9 +49,11 @@ configuration : `initial_view` ne fixe que celle de l'ouverture. En
 `dayGridDay`, la même carte se réduit à la journée du jour — utile en colonne
 étroite, à côté d'autres cartes :
 
-![La même carte en vue jour : les cours du lundi seuls](assets/ha-calendar/jour.svg)
+![La même carte en vue jour : les cours du lundi seuls, dont un annulé](assets/ha-calendar/jour.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.*
+*Illustration synthétique : la semaine, les dates et les horaires sont
+inventés ; les intitulés sont des matières de programme, pas ceux d'un
+élève.*
 
 `grid_options` n'existe que dans les vues en **sections**, la disposition par
 défaut des tableaux de bord récents. Dans une vue en masonry (l'ancienne),

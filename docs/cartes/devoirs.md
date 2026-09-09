@@ -42,7 +42,14 @@ limit: 12
 
 ## Les couleurs de matière
 
-Chaque devoir porte un filet dans la couleur de sa matière. Il n'y en a aucune tant que vous n'avez pas écrit de table
+Chaque devoir porte un filet dans la couleur de sa matière, posé **après
+l'intitulé de la matière**, dans la ligne — les trois autres cartes le
+gardent en gouttière à gauche. Ce placement n'a **pas de troisième cas** :
+un devoir sans couleur n'a simplement pas de filet. Une gouttière a besoin
+d'un repli transparent pour réserver sa place, sinon la ligne se décale de
+quelques pixels par rapport à sa voisine colorée ; un filet posé après un
+intitulé de longueur variable ne décale rien, et un filet gris de repli
+affirmerait que la matière a une couleur, et que cette couleur est grise. Il n'y en a aucune tant que vous n'avez pas écrit de table
 `subject_colors` : l'intégration ne publie pas encore la couleur de
 votre établissement.
 
