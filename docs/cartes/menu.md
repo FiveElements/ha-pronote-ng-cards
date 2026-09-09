@@ -44,10 +44,46 @@ qui les combine, chaque carte lit une entité et une seule.
 | `sensor:menu_tomorrow` | Requise avec `day: tomorrow`. |
 
 Un menu n'est pas une liste plate : il a des services. Les attributs sont
-donc sept listes — entrée, plat, accompagnement, fromage, dessert, autre —
-plus un booléen `is_lunch`, et non un `items[]`. La carte affiche une ligne
-par service non vide, et tolère les trois formes rencontrées dans la
-nature : une chaîne, un tableau de chaînes, un tableau d'objets nommés.
+donc **six** listes — `first_meal`, `main_meal`, `side_meal`, `cheese`,
+`dessert`, `other_meal` — plus deux booléens, `is_lunch` et `published`. Il
+n'y a pas d'`items[]`.
+
+La carte affiche une ligne par service non vide, toujours dans cet ordre, et
+tolère les trois formes rencontrées dans la nature : une chaîne, un tableau
+de chaînes, un tableau d'objets nommés. Un service vide ne produit pas de
+ligne vide : il disparaît.
+
+## Le menu du jour n'est pas forcément le déjeuner
+
+L'entité porte **un** menu par jour, et c'est l'intégration qui le choisit :
+le déjeuner s'il est publié, sinon le premier repas trouvé ce jour-là. Un
+établissement qui ne publie que le dîner d'internat renseigne donc la même
+entité, et la carte l'affiche sous « Aujourd'hui ».
+
+L'attribut `is_lunch` dit lequel des trois cas s'applique.
+
+| `is_lunch` | Ce que le menu affiché est |
+| --- | --- |
+| `true` | Le déjeuner. |
+| `false` | Un autre repas de la journée. L'intégration ne publie pas lequel. |
+| `null` | Rien n'est publié ce jour-là. |
+
+C'est pourquoi l'intitulé de la carte dit « Aujourd'hui » et jamais « ce
+midi » : la journée est une affirmation que la donnée soutient, le service
+ne l'est pas. Si vous reprenez ces attributs dans un message vocal ou un
+modèle, gardez la même prudence — annoncer « au menu ce midi » peut
+énoncer quelque chose de faux.
+
+## Les allergènes ne sont pas disponibles
+
+PRONOTE attache à chaque plat des **étiquettes** — allergènes, régimes,
+origine. L'intégration ne les publie pas : elle réduit chaque plat à son nom
+avant de construire ses entités, et l'information est perdue à ce
+moment-là. Aucune carte ne peut donc les afficher, et ce n'est pas un
+réglage à chercher.
+
+**Ne vous servez pas de cette carte pour décider si un enfant peut manger un
+plat.** Elle donne l'intitulé du service, rien de plus.
 
 ## La seule carte pilotée par ses attributs
 
@@ -65,7 +101,9 @@ qu'elle est la seule à pouvoir les distinguer.
 | Ce que la carte dit | Ce que ça veut dire |
 | --- | --- |
 | « Pas de menu publié pour ce jour » | La collecte a réussi. L'établissement ne publie rien ce jour-là — mercredi après-midi, vacances, ou cantine sans service. |
-| « Donnée pas encore collectée » | Rien n'est encore arrivé : ni l'indicateur de publication, ni aucun des sept services. |
+| « Donnée pas encore collectée » | Rien n'est encore arrivé : ni l'indicateur de publication, ni aucun des six services. |
 
-La distinction repose sur l'attribut `published`. Sur une intégration
-antérieure à celui-ci, la carte se rabat sur la présence des sept clés.
+La distinction repose sur l'attribut `published` : à `false`, la collecte a
+réussi et l'établissement ne publie rien. Sur une intégration antérieure à
+cet attribut, la carte se rabat sur la présence des six clés de service —
+au moins une présente signifie que quelque chose est arrivé.

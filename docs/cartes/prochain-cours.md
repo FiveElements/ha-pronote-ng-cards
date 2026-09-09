@@ -56,6 +56,16 @@ Quand `binary_sensor:in_class` est à `on`, un intitulé « Prochain cours »
 sépare la mention du cours affiché : la pastille décrit **maintenant**, la
 ligne décrit **la suite**. Sans cet intitulé, on lisait l'une pour l'autre.
 
+« Cours annulés » ne parle pas non plus du cours affiché. Cette mention dit
+qu'**un** cours de la journée est annulé, quelque part ; elle ne dit pas
+lequel. Seul l'attribut d'annulation du prochain cours décide si la ligne
+affichée est barrée, et il est strictement plus précis pour ce cours-là.
+
+Le compte à rebours — « dans 22 min » — est recalculé **toutes les
+minutes** par la carte, pas à chaque collecte. Sans cela il resterait figé
+pendant des heures entre deux cycles, puisque aucune donnée ne change
+entre-temps.
+
 Une heure de fin peut être **déduite** plutôt que fournie. Elle porte alors
 un `≈`, dont le sens est donné en infobulle.
 
@@ -74,6 +84,15 @@ remplace aussi une fin **impossible** — à l'heure de début ou avant — par
 un créneau d'une heure, et ce remplacement-là ne lève pas le drapeau : si
 un serveur envoyait une fin inversée, l'heure affichée serait fabriquée
 sans le `≈`. Aucun créneau de ce genre n'a été observé.
+
+La fin de journée, sous `show_end_of_day`, peut porter son propre `≈` :
+elle se déduit du dernier créneau, dont la fin peut elle-même être déduite.
+
+Le prochain contrôle, sous `show_next_test`, s'affiche avec **le jour et
+l'heure**, contrairement au réveil et à la fin de journée : rien ne dit
+qu'un contrôle tombe le jour même. La matière n'y figure pas, l'intégration
+ne publiant aucun attribut de matière sur cette entité — une ligne juste
+vaut mieux qu'une ligne enrichie d'une donnée supposée.
 
 ## Si la carte est vide
 

@@ -48,6 +48,38 @@ traduire inventerait une échelle qui n'est pas la sienne. Quand il
 manque, la carte affiche l'abréviation à sa place, et rien si les deux
 manquent.
 
+## L'ordre et le plafond
+
+Les évaluations sont triées sur l'**instant**, jamais sur le texte de la
+date : deux horodatages à décalages horaires différents ne se comparent pas
+correctement caractère à caractère. La plus récente est en tête. Une date
+illisible ne s'intercale pas au hasard, elle part en fin de liste.
+
+`limit` compte des **évaluations**, pas des lignes. Avec les compétences
+détaillées, huit évaluations peuvent occuper trente lignes : c'est le
+réglage à baisser si la carte devient trop haute, plus sûrement que
+d'éteindre les compétences.
+
+`show_acquisitions` change aussi la **hauteur annoncée** à Home Assistant —
+huit unités avec le détail, quatre sans. Home Assistant s'en sert pour
+répartir les cartes en colonnes : basculer l'option peut donc réorganiser
+votre tableau de bord, et ce n'est pas un défaut d'affichage.
+
+## Ce que la carte n'affiche pas
+
+Une compétence publiée porte quatre champs : son intitulé, son niveau de
+maîtrise, son abréviation et son **domaine**. La carte rend l'intitulé et le
+niveau ; le domaine est publié et n'apparaît nulle part. L'évaluation
+elle-même porte un identifiant, que la carte n'utilise pas non plus.
+
+Une compétence qui n'a **ni** intitulé **ni** niveau est passée en silence :
+une ligne vide sous une évaluation se lirait comme une compétence non
+évaluée, ce qui serait une affirmation de plus que ce que la donnée permet.
+
+L'intégration ne publie ni l'énoncé de l'évaluation, ni son enseignant, ni
+le coefficient d'une compétence. Ces champs existent chez PRONOTE et
+s'arrêtent avant les entités : aucune carte ne peut les montrer.
+
 ## Si la carte est vide
 
 « Aucune évaluation » veut dire ce qu'il dit : la collecte fonctionne,
