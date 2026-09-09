@@ -87,6 +87,13 @@ dimanche placé devant une semaine qui commence le mardi serait un cul-de-sac :
 flèche éteinte alors que quatre jours sont en mémoire. Un lundi férié produit
 exactement cette situation.
 
+### Le bouton de retour n'apparaît que si vous êtes parti
+
+Un bouton « Aujourd'hui » se pose à côté des flèches **seulement** quand le
+jour affiché n'est pas le jour courant. C'est pour cela que l'aperçu en tête
+de page montre les deux flèches sans ce bouton : il illustre aujourd'hui, et
+un bouton qui ramène là où l'on est déjà n'apprendrait rien.
+
 ### Sans le palier hebdomadaire, pas de flèches
 
 Si `sensor:timetable_week` n'existe pas chez vous — le palier peut être

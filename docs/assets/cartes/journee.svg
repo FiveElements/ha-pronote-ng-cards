@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 404" width="372" height="404" role="img" aria-label="Aperçu de la carte Vue journée : bornes de la journée, cours en grille avec couleur de matière, zone repas et cours annulé.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 370" width="372" height="370" role="img" aria-label="Aperçu de la carte Vue journée : flèches de navigation, bornes de la journée, cours en grille avec couleur de matière, zone repas et cours annulé.">
   <title>Carte Vue journée</title>
   <desc>Illustration synthétique. Aucune donnée réelle : les matières, les noms, la classe et les horaires sont inventés pour cette image.</desc>
 
@@ -16,40 +16,41 @@
     .strike { text-decoration: line-through; }
   </style>
 
-  <rect class="bg" width="372" height="404"/>
+  <rect class="bg" width="372" height="370"/>
   <g transform="translate(16 16)">
-    <rect class="shadow" x="1" y="3" width="340" height="372" rx="12"/>
-    <rect class="card" width="340" height="372" rx="12"/>
-    <text class="h" x="18" y="26">Jeudi 10 septembre</text>
-    <text class="p" x="18" y="48">Journée de classe</text>
-    <text class="s" x="18" y="64">08:30 → ≈16:30</text>
-    <line class="rule" x1="18" y1="74" x2="322" y2="74"/>
-    <rect x="18" y="83" width="3" height="28" rx="1.5" fill="#2e90fa"/>
-    <text class="p" x="28" y="96">Mathématiques</text>
-    <text class="s" x="28" y="112">08:30 – 09:30 · Salle 1.4 · M. B.</text>
-    <line class="rule" x1="18" y1="122" x2="322" y2="122"/>
-    <rect x="18" y="131" width="3" height="28" rx="1.5" fill="#f79009"/>
-    <text class="p" x="28" y="144">Histoire-géographie</text>
-    <text class="s" x="28" y="160">09:30 – 10:30 · Salle 1.4</text>
-    <line class="rule" x1="18" y1="170" x2="322" y2="170"/>
-    <rect x="18" y="179" width="3" height="28" rx="1.5" fill="#12b76a"/>
-    <text class="p" x="28" y="192">Français</text>
-    <rect x="261" y="179" width="61" height="19" rx="9.5" fill="#eaf3ff"/>
-    <text class="chip" x="268" y="192" fill="#175cd3">en cours</text>
-    <text class="s" x="28" y="208">10:30 – ≈11:30 · Salle 2.9 · Mme A.</text>
-    <line class="rule" x1="18" y1="218" x2="322" y2="218"/>
-    <rect x="18" y="227" width="3" height="28" rx="1.5" fill="#98a2b3"/>
-    <text class="p" x="28" y="240">Repas</text>
-    <text class="s" x="28" y="256">11:30 → 13:30</text>
-    <line class="rule" x1="18" y1="266" x2="322" y2="266"/>
-    <rect x="18" y="275" width="3" height="28" rx="1.5" fill="#7a5af8"/>
-    <text class="p strike" x="28" y="288">Anglais</text>
-    <rect x="273" y="275" width="49" height="19" rx="9.5" fill="#fef3f2"/>
-    <text class="chip" x="280" y="288" fill="#b42318">annulé</text>
-    <text class="s" x="28" y="304">13:30 – 14:30 · Salle 3.1</text>
-    <line class="rule" x1="18" y1="314" x2="322" y2="314"/>
-    <rect x="18" y="323" width="3" height="28" rx="1.5" fill="#ee46bc"/>
-    <text class="p" x="28" y="336">SVT</text>
-    <text class="s" x="28" y="352">14:30 – ≈15:30 · Salle 0.2</text>
+    <rect class="shadow" x="1" y="3" width="340" height="338" rx="12"/>
+    <rect class="card" width="340" height="338" rx="12"/>
+    <text class="h" x="18" y="28" fill="#175cd3">‹</text>
+    <text class="h" x="38" y="28">Jeudi 10 septembre</text>
+    <text class="h" x="176" y="28" fill="#175cd3">›</text>
+    <text class="t" x="322" y="28" text-anchor="end">08:30 – ≈16:30</text>
+    <line class="rule" x1="18" y1="40" x2="322" y2="40"/>
+    <rect x="18" y="49" width="3" height="28" rx="1.5" fill="#2e90fa"/>
+    <text class="p" x="28" y="62">Mathématiques</text>
+    <text class="s" x="28" y="78">08:30 – 09:30 · Salle 1.4 · M. B.</text>
+    <line class="rule" x1="18" y1="88" x2="322" y2="88"/>
+    <rect x="18" y="97" width="3" height="28" rx="1.5" fill="#f79009"/>
+    <text class="p" x="28" y="110">Histoire-géographie</text>
+    <text class="s" x="28" y="126">09:30 – 10:30 · Salle 1.4</text>
+    <line class="rule" x1="18" y1="136" x2="322" y2="136"/>
+    <rect x="18" y="145" width="3" height="28" rx="1.5" fill="#12b76a"/>
+    <text class="p" x="28" y="158">Français</text>
+    <rect x="261" y="145" width="61" height="19" rx="9.5" fill="#eaf3ff"/>
+    <text class="chip" x="268" y="158" fill="#175cd3">en cours</text>
+    <text class="s" x="28" y="174">10:30 – ≈11:30 · Salle 2.9 · Mme A.</text>
+    <line class="rule" x1="18" y1="184" x2="322" y2="184"/>
+    <rect x="18" y="193" width="3" height="28" rx="1.5" fill="#98a2b3"/>
+    <text class="p" x="28" y="206">Repas</text>
+    <text class="s" x="28" y="222">11:30 → 13:30</text>
+    <line class="rule" x1="18" y1="232" x2="322" y2="232"/>
+    <rect x="18" y="241" width="3" height="28" rx="1.5" fill="#7a5af8"/>
+    <text class="p strike" x="28" y="254">Anglais</text>
+    <rect x="273" y="241" width="49" height="19" rx="9.5" fill="#fef3f2"/>
+    <text class="chip" x="280" y="254" fill="#b42318">annulé</text>
+    <text class="s" x="28" y="270">13:30 – 14:30 · Salle 3.1</text>
+    <line class="rule" x1="18" y1="280" x2="322" y2="280"/>
+    <rect x="18" y="289" width="3" height="28" rx="1.5" fill="#ee46bc"/>
+    <text class="p" x="28" y="302">SVT</text>
+    <text class="s" x="28" y="318">14:30 – ≈15:30 · Salle 0.2</text>
   </g>
 </svg>
