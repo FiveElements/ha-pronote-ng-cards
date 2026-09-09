@@ -1,8 +1,9 @@
 import { LitElement, html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { HassEntity, HomeAssistant } from './ha-types';
-import { resolveDevice, resolveEntities } from './resolve';
+import { createResolveCache, resolveDevice } from './resolve';
 import type {
+  AllowedCall,
   CardSpec,
   EntityKey,
   EntityStatus,
@@ -26,6 +27,13 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
     @property({ attribute: false }) hass?: HomeAssistant;
     @state() private config?: PronoteCardConfig;
     @state() private refreshedAt = 0;
+    @state() private refreshFailed = false;
+    // Bascule à chaque tour de la minuterie déclarative (spec.tickMs) : sa
+    // seule fonction est de forcer un repeint pour les cartes qui dépendent
+    // de Date.now() sans qu'aucune propriété réactive ne change (compte à
+    // rebours, créneau en cours, bouton grisé du limiteur).
+    @state() private tick = 0;
+    private tickTimer?: ReturnType<typeof setInterval>;
 
     private resolved = new Map<EntityKey, string>();
     // Langue de Home Assistant, jamais un repli français codé en dur — sauf
@@ -33,19 +41,32 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
     private t: Translate = (path, vars) => localize(path, vars, this.hass?.language);
 
     // Mémoïse le balayage du registre (Object.values(hass.entities).filter(...))
-    // sur l'identité de hass.entities ET hass.devices : Home Assistant
-    // remplace tout l'objet hass à chaque mise à jour d'état, mais ces deux
-    // sous-objets ne changent que si le registre lui-même a changé.
-    // resolveEntities consulte les deux (via resolveDevice) : oublier devices
-    // rendrait une résolution périmée quand un appareil apparaît/disparaît.
-    private resolveCache?: {
-      entities: HomeAssistant['entities'];
-      devices: HomeAssistant['devices'];
-      deviceId: string | undefined;
-      overrides: PronoteCardConfig['entities'];
-      keys: string;
-      result: Map<EntityKey, string>;
-    };
+    // sur l'identité de hass.entities ET hass.devices, partagé avec
+    // l'éditeur (voir editor.ts) : Home Assistant remplace tout l'objet hass
+    // à chaque mise à jour d'état, mais ces deux sous-objets ne changent que
+    // si le registre lui-même a changé. resolveEntities consulte les deux
+    // (via resolveDevice) : oublier devices rendrait une résolution périmée
+    // quand un appareil apparaît/disparaît.
+    private resolveCache = createResolveCache();
+
+    connectedCallback(): void {
+      super.connectedCallback();
+      if (spec.tickMs !== undefined) {
+        this.tickTimer = setInterval(() => {
+          this.tick++;
+        }, spec.tickMs);
+      }
+    }
+
+    disconnectedCallback(): void {
+      super.disconnectedCallback();
+      // Une fuite d'intervalle sur un tableau de bord ouvert en permanence
+      // est un vrai défaut : la minuterie ne doit jamais survivre à la carte.
+      if (this.tickTimer !== undefined) {
+        clearInterval(this.tickTimer);
+        this.tickTimer = undefined;
+      }
+    }
 
     setConfig(config: PronoteCardConfig): void {
       if (!config || typeof config !== 'object' || typeof config.type !== 'string') {
@@ -97,7 +118,18 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
      */
     protected shouldUpdate(changed: PropertyValues): boolean {
       if (!this.hasUpdated) return true;
-      if (changed.has('config') || changed.has('refreshedAt')) return true;
+      // Ces changements locaux doivent toujours repeindre, qu'ils
+      // s'accompagnent ou non d'un changement de `hass` : la config, un
+      // refresh qui vient d'aboutir ou d'échouer, et un tour de la
+      // minuterie déclarative (spec.tickMs).
+      if (
+        changed.has('config') ||
+        changed.has('refreshedAt') ||
+        changed.has('refreshFailed') ||
+        changed.has('tick')
+      ) {
+        return true;
+      }
       if (!changed.has('hass')) return true;
       const oldHass = changed.get('hass');
       const hass = this.hass;
@@ -124,28 +156,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       config: PronoteCardConfig,
       keys: EntityKey[]
     ): Map<EntityKey, string> {
-      const cache = this.resolveCache;
-      const keysJoined = keys.join(',');
-      if (
-        cache &&
-        cache.entities === hass.entities &&
-        cache.devices === hass.devices &&
-        cache.deviceId === config.device_id &&
-        cache.overrides === config.entities &&
-        cache.keys === keysJoined
-      ) {
-        return cache.result;
-      }
-      const result = resolveEntities(hass, config.device_id, spec.scope, keys, config.entities);
-      this.resolveCache = {
-        entities: hass.entities,
-        devices: hass.devices,
-        deviceId: config.device_id,
-        overrides: config.entities,
-        keys: keysJoined,
-        result,
-      };
-      return result;
+      return this.resolveCache.resolve(hass, config.device_id, spec.scope, keys, config.entities);
     }
 
     protected render(): TemplateResult | typeof nothing {
@@ -205,9 +216,28 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
     private makeCtx(hass: HomeAssistant, config: PronoteCardConfig): RenderCtx {
       const deviceId = resolveDevice(hass, config.device_id, spec.scope);
       const device = deviceId ? hass.devices[deviceId] : undefined;
+
+      // Seul point d'appel de service ouvert à la carte : `AllowedCall`
+      // ferme la liste à la compilation. `hass.callService` lui-même reste
+      // hors de `ctx.hass` (voir HassView dans types.ts) : ce découpage sur
+      // le point est le seul endroit du socle qui reconstitue domaine et
+      // service.
+      const callService = async (
+        call: AllowedCall,
+        data?: Record<string, unknown>,
+        target?: Record<string, unknown>
+      ): Promise<void> => {
+        const sep = call.indexOf('.');
+        const domain = call.slice(0, sep);
+        const service = call.slice(sep + 1);
+        await hass.callService(domain, service, data, target);
+      };
+
       return {
         hass,
         config,
+        language: hass.language,
+        timeZone: hass.locale.time_zone,
         deviceName: device?.name_by_user ?? device?.name ?? '',
         entityId: (k) => this.resolved.get(k),
         entity: (k) => this.entityFor(k),
@@ -223,18 +253,27 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
           this.entityFor(k)?.attributes[name] as T | undefined,
         // Site correct : hass est déjà connu ici, sa langue toujours définie.
         t: (path, vars) => localize(path, vars, hass.language),
+        callService,
         refresh: async (tier?: string) => {
-          // Ne place aucun appel PRONOTE : relève une priorité auprès de
-          // l'ordonnanceur, qui reste soumis au limiteur.
-          await hass.callService(
-            'pronote_ng',
-            'refresh',
-            tier ? { tier } : {},
-            config.device_id ? { device_id: config.device_id } : undefined
-          );
+          // Posé AVANT l'appel : un double-clic pendant l'attente doit
+          // retomber sous le refroidissement, pas en envoyer un second — la
+          // seule carte qui touche au budget de requêtes en dépend.
           this.refreshedAt = Date.now();
+          this.refreshFailed = false;
+          try {
+            await callService(
+              'pronote_ng.refresh',
+              tier ? { tier } : {},
+              config.device_id ? { device_id: config.device_id } : undefined
+            );
+          } catch {
+            // Le rejet doit remonter à l'utilisateur, pas disparaître : la
+            // carte reste seule juge de la façon de le montrer.
+            this.refreshFailed = true;
+          }
         },
         refreshCoolingDown: Date.now() - this.refreshedAt < REFRESH_COOLDOWN_MS,
+        refreshFailed: this.refreshFailed,
       };
     }
   }
