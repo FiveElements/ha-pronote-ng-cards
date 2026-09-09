@@ -46,6 +46,12 @@ export const SPEC: CardSpec<Config> = {
   scope: 'child',
   size: 4,
   stub: { day: 'today' },
+  // L'état de ces capteurs reste `unknown` même quand la collecte a réussi :
+  // un nombre de plats à zéro affirmerait qu'un menu existe. Toute
+  // l'information vit dans les attributs, et c'est donc à cette carte de
+  // distinguer « pas de menu ce jour » de « pas encore collecté » — le socle
+  // ne peut pas le faire pour elle.
+  attributeDriven: true,
   requires: (c) => [keyFor(c)],
   optional: () => [],
   schema: (_config: Config, t?: Translate) => {
@@ -82,9 +88,32 @@ export const SPEC: CardSpec<Config> = {
       );
     }
 
-    // Le vide appartient à la carte : la cantine ne publie pas tous les jours,
-    // ce n'est pas une panne.
-    if (rows.length === 0) return html`${heading}${emptyState(ctx.t('menu.empty'))}`;
-    return html`${heading}${rows}`;
+    if (rows.length > 0) return html`${heading}${rows}`;
+
+    /**
+     * Deux vides, deux phrases, et c'est cette carte seule qui peut les
+     * distinguer (voir `attributeDriven`).
+     *
+     * `published` porte la distinction : `false` veut dire que la collecte a
+     * réussi et que l'établissement ne publie rien ce jour-là. Avant que
+     * l'intégration ne l'expose, les sept clés disparaissaient toutes dans ce
+     * cas, et « pas de menu » était indiscernable de « pas encore collecté » —
+     * un parent lisait « pas encore collectée » pour une donnée qui n'existe
+     * pas.
+     *
+     * Sans `published` (intégration plus ancienne), on retombe sur la
+     * présence des sept clés : au moins une présente signifie que quelque
+     * chose est arrivé.
+     */
+    const published = ctx.attr<boolean>(key, 'published');
+    const collected =
+      // Un état exploitable suffit à prouver que la collecte a eu lieu ; les
+      // attributs ne servent à trancher que dans le cas `unknown`, celui que
+      // `attributeDriven` fait justement parvenir jusqu'ici.
+      ctx.status(key) === 'ok' ||
+      published !== undefined ||
+      SECTIONS.some((s) => ctx.attr(key, s) !== undefined);
+    const message = collected ? ctx.t('menu.empty') : ctx.t('common.unavailable');
+    return html`${heading}${emptyState(message)}`;
   },
 };

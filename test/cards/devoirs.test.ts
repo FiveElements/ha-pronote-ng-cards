@@ -381,6 +381,33 @@ describe('carte devoirs', () => {
     expect(titles).toEqual(['Anglais', 'Maths']);
   });
 
+  it('préfère `description_text` publié par l’intégration au HTML nettoyé ici', async () => {
+    // La conversion appartient au module qui SAIT que le champ est du HTML :
+    // trois cartes avec trois nettoyeurs donneraient trois réponses au même
+    // `&amp;amp;`. Mon nettoyage reste le repli pour une intégration
+    // antérieure à ce champ — d'où les deux champs, volontairement
+    // divergents, dans cette fixture.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({
+        items: [
+          {
+            id: 'h1',
+            subject: 'Anglais',
+            description: '<div>Version HTML</div>',
+            description_text: 'Version texte de l’intégration',
+            due: '2026-09-11',
+            done: false,
+          },
+        ],
+      })
+    );
+    const t = text(el);
+    expect(t).toContain('Version texte de l’intégration');
+    expect(t).not.toContain('Version HTML');
+  });
+
   it('affiche l’énoncé en texte lisible, pas le balisage que PRONOTE envoie', async () => {
     // Forme réelle : l'intégration recopie le HTML du serveur. La carte
     // affichait les balises et les entités à l'écran.

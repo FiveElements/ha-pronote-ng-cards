@@ -113,6 +113,23 @@ export interface CardSpec<C extends PronoteCardConfig = PronoteCardConfig> {
    */
   size?: number | ((config: C) => number);
   /**
+   * Carte dont la charge utile vit dans les ATTRIBUTS, pas dans l'état.
+   *
+   * Le socle écarte normalement une entité dont l'état est `unknown` ou
+   * `unavailable` : « pas encore collectée », et `render` n'est pas appelé.
+   * C'est le bon comportement pour presque tout — mais pas pour la cantine,
+   * où l'intégration laisse délibérément l'état à `unknown` même quand la
+   * collecte a réussi, parce que « zéro plat » serait une affirmation sur un
+   * menu qui n'existe pas. L'information « il n'y a pas de menu aujourd'hui »
+   * ne vit alors que dans un attribut.
+   *
+   * Avec ce drapeau, une entité résolue mais sans état exploitable est
+   * confiée à la carte, qui devient responsable des DEUX phrases : « pas de
+   * menu ce jour » et « pas encore collecté ». Ne l'activez que si la carte
+   * sait vraiment les distinguer — sinon le socle le fait mieux.
+   */
+  attributeDriven?: boolean;
+  /**
    * Déclare que la carte a besoin d'être repeinte périodiquement même sans
    * qu'aucune propriété réactive ne change — compte à rebours, créneau en
    * cours, bouton grisé par le temps. Le socle pose la minuterie ; la carte

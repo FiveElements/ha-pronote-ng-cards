@@ -211,6 +211,60 @@ describe('carte prochain-cours', () => {
     expect(t).toContain('mardi');
   });
 
+  // L'heure de fin peut etre DEDUITE plutot que fournie : quand PRONOTE omet
+  // la fin d'un cours, elle est calculee depuis la position du creneau dans
+  // la grille, par un code dont le commentaire amont dit « might be wrong ».
+  // La presenter comme une heure du serveur serait une affirmation que
+  // personne ne peut tenir.
+  it('marque une heure de fin deduite', async () => {
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant' },
+      makeHass([
+        {
+          key: 'sensor:next_lesson',
+          entity_id: 'sensor.abc_prochain_cours',
+          device: 'dev_enfant',
+          state: '2026-09-08T08:30:00+02:00',
+          attributes: {
+            subject: 'Mathematiques',
+            end: '2026-09-08T09:30:00+02:00',
+            end_inferred: true,
+          },
+        },
+      ])
+    );
+    const t = text(el);
+    expect(t).toContain('≈');
+    expect(t).toContain('09:30');
+    // L'explication est portee en infobulle, jamais laissee au seul symbole.
+    const marque = el.shadowRoot?.querySelector('span[title]');
+    expect(marque?.getAttribute('title')).toContain('déduite');
+  });
+
+  it('ne marque rien quand l’heure de fin vient du serveur', async () => {
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant' },
+      makeHass([
+        {
+          key: 'sensor:next_lesson',
+          entity_id: 'sensor.abc_prochain_cours',
+          device: 'dev_enfant',
+          state: '2026-09-08T08:30:00+02:00',
+          attributes: {
+            subject: 'Mathematiques',
+            end: '2026-09-08T09:30:00+02:00',
+            end_inferred: false,
+          },
+        },
+      ])
+    );
+    const t = text(el);
+    expect(t).not.toContain('≈');
+    expect(t).toContain('09:30');
+  });
+
   it("n'affiche aucune pastille « en cours » quand binary_sensor:in_class est absent", async () => {
     const el = await mountCard(
       'pronote-ng-prochain-cours',

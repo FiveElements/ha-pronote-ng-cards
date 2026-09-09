@@ -9,7 +9,8 @@
     "refresh": "Rafraîchir",
     "refresh_pending": "Demande envoyée",
     "of": "sur",
-    "render_error": "Cette carte n'a pas pu s'afficher. Le détail est dans la console du navigateur."
+    "render_error": "Cette carte n'a pas pu s'afficher. Le détail est dans la console du navigateur.",
+    "inferred_time": "Heure déduite par l'intégration, non fournie par le serveur."
   },
   "editor": {
     "device_id": "Enfant",
@@ -147,7 +148,9 @@
     "session_age": "Âge de la session",
     "session_lifetime": "Durée de vie de la session",
     "logins_today": "Connexions depuis minuit",
-    "throttled": "Collectes bridées"
+    "throttled": "Collectes bridées",
+    "overdue": "en retard de {duration}",
+    "failing": "en échec : {tiers}"
   },
   "evaluations": {
     "name": "Évaluations",

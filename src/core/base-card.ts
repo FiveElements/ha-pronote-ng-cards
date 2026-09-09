@@ -286,7 +286,9 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
         const e = this.entityFor(k);
         return e !== undefined && !ABSENT_STATES.has(e.state);
       });
-      if (anchors.length > 0 && !hasUsable) {
+      // `attributeDriven` rend la main à la carte plutôt que d'afficher « pas
+      // encore collectée » : voir CardSpec, la cantine est le seul cas.
+      if (anchors.length > 0 && !hasUsable && spec.attributeDriven !== true) {
         return this.frame(unavailableState(this.t));
       }
 

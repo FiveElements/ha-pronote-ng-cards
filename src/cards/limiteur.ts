@@ -119,11 +119,47 @@ export const SPEC: CardSpec<Config> = {
       // n'est pas un tableau ferait lever `join` ici, ce qui effacerait toute
       // la carte plutôt que de dégrader seulement cette ligne.
       const due = listAttr<string>(ctx.attr(NEXT, 'tiers_due'));
+
+      /**
+       * Une échéance passée est une lecture légitime : un palier est en
+       * retard. Mais « il y a 38 min » sur une PROCHAINE collecte se lit comme
+       * une erreur d'affichage, et n'apprend rien sur la cause.
+       *
+       * `overdue_by` (secondes de retard, 0 à l'heure) et `failing` (palier →
+       * nombre d'échecs consécutifs) séparent deux situations que le seul
+       * horodatage confondait : « l'échéance est passée et rien n'a tourné »
+       * et « il tourne et échoue à chaque fois ». Les deux attributs sont
+       * récents côté intégration : absents, la ligne reste celle d'avant.
+       */
+      const overdueBy = ctx.attr<number>(NEXT, 'overdue_by');
+      const overdue = typeof overdueBy === 'number' && overdueBy > 0;
+      const failing = ctx.attr(NEXT, 'failing');
+      const failingTiers =
+        typeof failing === 'object' && failing !== null && !Array.isArray(failing)
+          ? Object.keys(failing)
+          : [];
+
+      const detail = [
+        due.length > 0 ? due.join(', ') : ctx.t('limiteur.none'),
+        overdue
+          ? ctx.t('limiteur.overdue', {
+              duration: formatDuration(Math.round(overdueBy / 60), lang),
+            })
+          : '',
+        failingTiers.length > 0
+          ? ctx.t('limiteur.failing', { tiers: failingTiers.join(', ') })
+          : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
       out.push(
         listRow({
           primary: ctx.t('limiteur.next_collection'),
-          secondary: due.length > 0 ? due.join(', ') : ctx.t('limiteur.none'),
-          trailing: formatRelative(ctx.entity(NEXT)?.state, lang),
+          secondary: detail,
+          // Une échéance en retard n'a plus rien à dire en relatif : c'est le
+          // retard lui-même qui porte l'information, déjà dans `secondary`.
+          trailing: overdue ? undefined : formatRelative(ctx.entity(NEXT)?.state, lang),
         })
       );
     }

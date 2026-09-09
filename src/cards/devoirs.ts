@@ -13,7 +13,17 @@ interface Config extends PronoteCardConfig {
 interface Homework {
   id?: string;
   subject?: string;
+  /** L'énoncé tel que PRONOTE l'envoie : du HTML, balises et entités comprises. */
   description?: string;
+  /**
+   * Le même énoncé en texte simple, publié par l'intégration.
+   *
+   * C'est la bonne source : la conversion appartient au module qui SAIT que
+   * le champ est du HTML, sinon trois cartes donnent trois réponses
+   * différentes au même `&amp;amp;`. `plainText` reste le repli, pour les
+   * installations dont l'intégration est antérieure à ce champ.
+   */
+  description_text?: string;
   due?: string;
   done?: boolean;
 }
@@ -226,8 +236,9 @@ export const SPEC: CardSpec<Config> = {
               : ''}
             ${h.subject ?? ctx.t('devoirs.name')}
           `,
-          // L'énoncé arrive en HTML : dévêtu, jamais injecté.
-          secondary: plainText(h.description),
+          // Le texte simple publié par l'intégration s'il existe, sinon
+          // l'énoncé HTML dévêtu ici — jamais injecté.
+          secondary: h.description_text ?? plainText(h.description),
           trailing: html`
             ${overdue ? chip(ctx.t('devoirs.overdue'), 'problem') : ''} ${dueLabel
               ? ctx.t('devoirs.due', { date: dueLabel })

@@ -97,7 +97,21 @@ export const SPEC: CardSpec<Config> = {
     const endRaw = ctx.attr<string>(NEXT, 'end');
     const endTime = parseTimestamp(endRaw) ? formatTime(endRaw, lang, tz) : '';
     const startTime = start ? formatTime(e.state, lang, tz) : '';
-    const timeRange = endTime ? `${startTime} – ${endTime}` : startTime;
+    /**
+     * Une heure de fin peut être DÉDUITE plutôt que fournie.
+     *
+     * Quand PRONOTE omet la fin d'un cours, l'intégration la calcule depuis la
+     * position du créneau dans la grille — et le code amont qui s'en charge
+     * porte en commentaire « might be wrong ». Sur certains établissements
+     * c'est systématique. La présenter comme une heure du serveur serait une
+     * affirmation que personne ne peut tenir : on la marque d'un « ≈ », dont
+     * le sens est donné en infobulle.
+     */
+    const endInferred = ctx.attr<boolean>(NEXT, 'end_inferred') === true;
+    const endLabel = endInferred
+      ? html`<span title=${ctx.t('common.inferred_time')}>≈${endTime}</span>`
+      : endTime;
+    const timeRange = endTime ? html`${startTime} – ${endLabel}` : html`${startTime}`;
 
     // Deux entités optionnelles muettes tant qu'elles ne sont pas résolues à
     // 'on' : absentes, non résolues ou à 'off', elles ne produisent aucune
@@ -142,9 +156,13 @@ export const SPEC: CardSpec<Config> = {
         : ''}
       ${ctx.config.show_end_of_day && ctx.status(END) === 'ok'
         ? listRow({
-            primary: ctx.t('prochain_cours.end_of_day', {
+            // Même réserve que pour la fin du cours : la fin de journée se
+            // déduit du dernier créneau, dont la fin peut elle-même l'être.
+            primary: html`${ctx.t('prochain_cours.end_of_day', {
               time: formatTime(ctx.entity(END)?.state, lang, tz),
-            }),
+            })}${ctx.attr<boolean>(END, 'end_inferred') === true
+              ? html` <span title=${ctx.t('common.inferred_time')}>≈</span>`
+              : ''}`,
           })
         : ''}
       ${ctx.config.show_next_test && ctx.status(TEST) === 'ok'

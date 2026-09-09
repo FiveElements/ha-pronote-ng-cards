@@ -9,7 +9,8 @@
     "refresh": "Aggiorna",
     "refresh_pending": "Richiesta inviata",
     "of": "su",
-    "render_error": "Questa scheda non è riuscita a visualizzarsi. Il dettaglio è nella console del browser."
+    "render_error": "Questa scheda non è riuscita a visualizzarsi. Il dettaglio è nella console del browser.",
+    "inferred_time": "Ora dedotta dall'integrazione, non fornita dal server."
   },
   "editor": {
     "device_id": "Alunno",
@@ -147,7 +148,9 @@
     "session_age": "Età della sessione",
     "session_lifetime": "Durata della sessione",
     "logins_today": "Accessi da mezzanotte",
-    "throttled": "Raccolte limitate"
+    "throttled": "Raccolte limitate",
+    "overdue": "in ritardo di {duration}",
+    "failing": "in errore: {tiers}"
   },
   "evaluations": {
     "name": "Valutazioni",

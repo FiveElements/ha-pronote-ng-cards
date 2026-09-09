@@ -265,4 +265,67 @@ describe('carte limiteur', () => {
     const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('aucun');
   });
+
+  // Sur une instance réelle, la prochaine collecte s'affichait « il y a
+  // 38 min » : une échéance passée, lecture légitime (un palier est en
+  // retard) mais qui se lit comme une erreur d'affichage et n'apprend rien
+  // sur la cause. `overdue_by` et `failing` séparent « rien n'a tourné » de
+  // « il tourne et échoue ».
+  it('nomme le retard plutôt que d’afficher une échéance passée en relatif', async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:next_collection', 'sensor.cpt_prochaine', '2026-09-08T09:00:00+02:00', {
+        tiers_due: ['static'],
+        overdue_by: 2280,
+      }),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('static');
+    expect(t).toContain('en retard de 38 min');
+  });
+
+  it('nomme le palier en échec quand `failing` le désigne', async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:next_collection', 'sensor.cpt_prochaine', '2026-09-08T09:00:00+02:00', {
+        tiers_due: ['static'],
+        overdue_by: 600,
+        failing: { static: 4 },
+      }),
+    ]);
+    expect(text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass))).toContain(
+      'en échec : static'
+    );
+  });
+
+  it('ne parle ni de retard ni d’échec quand les attributs sont absents', async () => {
+    // Intégration antérieure à ces deux attributs : la ligne reste celle
+    // d'avant, relatif compris.
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:next_collection', 'sensor.cpt_prochaine', '2026-09-08T09:00:00+02:00', {
+        tiers_due: ['marks'],
+      }),
+    ]);
+    const t = text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass));
+    expect(t).not.toContain('en retard de');
+    expect(t).not.toContain('en échec');
+    expect(t).toContain('marks');
+  });
+
+  it('dégrade proprement quand `failing` n’est pas un dictionnaire', async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:next_collection', 'sensor.cpt_prochaine', '2026-09-08T09:00:00+02:00', {
+        tiers_due: ['marks'],
+        // Hors-contrat : un tableau au lieu d'un dictionnaire. `Object.keys`
+        // rendrait des indices numériques, qui ne nomment aucun palier.
+        failing: ['static'],
+      }),
+    ]);
+    const t = text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass));
+    expect(t).not.toContain('en échec');
+    expect(t).toContain('marks');
+  });
 });

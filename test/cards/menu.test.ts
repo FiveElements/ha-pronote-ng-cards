@@ -83,6 +83,51 @@ describe('carte menu', () => {
     expect(text(el)).toContain('pas encore collectée');
   });
 
+  // L'intégration laisse l'état à `unknown` même quand la collecte a réussi :
+  // « zéro plat » affirmerait qu'un menu existe. C'est donc `published` qui
+  // porte la distinction, et cette carte est la seule à pouvoir la faire —
+  // d'où `attributeDriven`. Avant, un parent lisait « pas encore collectée »
+  // pour une donnée qui n'existe pas.
+  it('dit « pas de menu publié » sur un état inconnu mais `published: false`', async () => {
+    const el = await mountCard(
+      'pronote-ng-menu',
+      { device_id: 'dev_enfant' },
+      menu('unknown', {
+        published: false,
+        first_meal: [],
+        main_meal: [],
+        side_meal: [],
+        other_meal: [],
+        cheese: [],
+        dessert: [],
+        is_lunch: null,
+      })
+    );
+    const t = text(el);
+    expect(t).toContain('Pas de menu publié');
+    expect(t).not.toContain('pas encore collectée');
+  });
+
+  it('rend les plats sur un état inconnu quand la collecte a réussi', async () => {
+    // L'état reste `unknown` par construction : sans `attributeDriven`, le
+    // socle écartait la carte et le menu n'était jamais affiché.
+    const el = await mountCard(
+      'pronote-ng-menu',
+      { device_id: 'dev_enfant' },
+      menu('unknown', { published: true, main_meal: ['Poulet rôti'] })
+    );
+    expect(text(el)).toContain('Poulet rôti');
+  });
+
+  it('dit « pas encore collectée » sur un état inconnu sans aucun attribut', async () => {
+    // Rien n'est encore arrivé : ni `published`, ni les sept clés. C'est le
+    // seul cas où cette carte reprend le message du socle à son compte.
+    const el = await mountCard('pronote-ng-menu', { device_id: 'dev_enfant' }, menu('unknown'));
+    const t = text(el);
+    expect(t).toContain('pas encore collectée');
+    expect(t).not.toContain('Pas de menu publié');
+  });
+
   it("dit « introuvable » quand l'entité manque", async () => {
     const el = await mountCard('pronote-ng-menu', { device_id: 'dev_enfant' }, makeHass([]));
     expect(text(el)).toContain('sensor:menu_today');

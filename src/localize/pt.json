@@ -9,7 +9,8 @@
     "refresh": "Atualizar",
     "refresh_pending": "Pedido enviado",
     "of": "de",
-    "render_error": "Este cartão não conseguiu apresentar-se. O detalhe está na consola do navegador."
+    "render_error": "Este cartão não conseguiu apresentar-se. O detalhe está na consola do navegador.",
+    "inferred_time": "Hora deduzida pela integração, não fornecida pelo servidor."
   },
   "editor": {
     "device_id": "Aluno",
@@ -147,7 +148,9 @@
     "session_age": "Idade da sessão",
     "session_lifetime": "Tempo de vida da sessão",
     "logins_today": "Ligações desde a meia-noite",
-    "throttled": "Recolhas limitadas"
+    "throttled": "Recolhas limitadas",
+    "overdue": "com {duration} de atraso",
+    "failing": "com falha: {tiers}"
   },
   "evaluations": {
     "name": "Avaliações",
