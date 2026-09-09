@@ -24,4 +24,17 @@ nav:
       - Cantine: cartes/menu.md
       - Vie scolaire: cartes/vie-scolaire.md
       - Limiteur: cartes/limiteur.md
+  - Assembler un tableau de bord: tableaux-de-bord.md
   - Ce que ces cartes ne feront jamais: limites.md
+
+# Une ancre morte est un avertissement, donc `mkdocs build --strict` echoue
+# dessus. Sans ce bloc, mkdocs les signale au niveau INFO et la barriere Docs
+# passe sans broncher : un sommaire dont la moitie des liens ne resolvent plus
+# est un sommaire que personne ne relit. Le slugifieur par defaut retire les
+# accents et les apostrophes -- `## Ce qui ne doit pas se faire` donne
+# `#ce-qui-ne-doit-pas-se-faire`, et une ancre ecrite avec les accents ne
+# resoudrait pas.
+validation:
+  anchors: warn
+  links:
+    unrecognized_links: warn

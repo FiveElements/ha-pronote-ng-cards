@@ -33,6 +33,11 @@ Voir [Installation](installation.md) : installation par HACS, ajout
 d'une carte, et les deux points qui surprennent le plus souvent
 (configuration par appareil, absence d'identifiant d'entité).
 
+Puis [Assembler un tableau de bord](tableaux-de-bord.md) : dans quel
+ordre disposer les cartes, quelle largeur donner à l'emploi du temps de
+la semaine, comment s'organiser avec plusieurs enfants, et pourquoi la
+carte limiteur ne se met qu'une fois.
+
 ## Ce que ces cartes ne feront jamais
 
 Certaines données ne deviennent volontairement jamais des entités —
