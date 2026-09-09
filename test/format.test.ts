@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  durationToMinutes,
   formatDayLabel,
   formatDuration,
   plainText,
@@ -171,5 +172,41 @@ describe('formatDuration', () => {
       expect(formatDuration(45)).toBe(formatDuration(45, 'fr'));
       expect(formatDuration(135)).toBe(formatDuration(135, 'fr'));
     });
+  });
+});
+
+describe('durationToMinutes', () => {
+  it('convertit les secondes que le capteur déclare en minutes', () => {
+    expect(durationToMinutes('2700', 's')).toBe(45);
+  });
+
+  it('arrondit à la minute plutôt que de rendre une fraction', () => {
+    // 1743 s = 29,05 min : la carte n'a que faire de la seconde près.
+    expect(durationToMinutes('1743', 's')).toBe(29);
+  });
+
+  it('laisse les minutes telles quelles', () => {
+    expect(durationToMinutes('135', 'min')).toBe(135);
+  });
+
+  it('convertit les heures en minutes', () => {
+    expect(durationToMinutes('2', 'h')).toBe(120);
+  });
+
+  it("rend undefined quand l'unité est absente, plutôt que de supposer les minutes", () => {
+    // C'est le cœur du correctif : supposer une unité produit une durée
+    // plausible et fausse. L'appelant montre alors la valeur brute.
+    expect(durationToMinutes('1743', undefined)).toBeUndefined();
+  });
+
+  it("rend undefined quand l'unité est inconnue", () => {
+    expect(durationToMinutes('42', 'quinzaines')).toBeUndefined();
+  });
+
+  it('rend undefined sur un état non numérique, vide ou négatif', () => {
+    expect(durationToMinutes('unavailable', 's')).toBeUndefined();
+    expect(durationToMinutes('', 's')).toBeUndefined();
+    expect(durationToMinutes(undefined, 's')).toBeUndefined();
+    expect(durationToMinutes('-60', 's')).toBeUndefined();
   });
 });

@@ -72,16 +72,43 @@ describe('carte limiteur', () => {
     expect(text(el)).not.toContain('Âge de la session');
   });
 
-  it("affiche l'âge de la session mis en forme (minutes) quand `sensor:session_age` est résolue", async () => {
+  it("affiche l'âge de la session mis en forme, dans l'unité que l'entité déclare", async () => {
     const hass = makeHass([
       compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
-      compte('sensor:session_age', 'sensor.cpt_age', '45'),
+      // La forme RÉELLE : l'âge de la session est publié en SECONDES.
+      compte('sensor:session_age', 'sensor.cpt_age', '2700', { unit_of_measurement: 's' }),
     ]);
     const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Âge de la session');
-    // La mise en forme, pas la valeur brute : « 45 min », jamais « 45 » nu.
+    // La mise en forme, pas la valeur brute : « 45 min », jamais « 2700 » nu.
     expect(t).toContain('45 min');
+  });
+
+  it("ne prend pas les secondes de l'âge de session pour des minutes", async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      // 1743 secondes, soit 29 minutes. Relevé sur une instance réelle, où la
+      // carte affichait « 22 h 33 » — un facteur 60, et un nombre assez
+      // plausible pour n'alerter personne.
+      compte('sensor:session_age', 'sensor.cpt_age', '1743', { unit_of_measurement: 's' }),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('29 min');
+    expect(t).not.toContain('22 h');
+  });
+
+  it("montre la valeur brute plutôt qu'une durée fausse quand l'unité n'est pas reconnue", async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:session_age', 'sensor.cpt_age', '42', { unit_of_measurement: 'quinzaines' }),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('42 quinzaines');
+    // Surtout pas une conversion inventée.
+    expect(t).not.toContain('42 min');
   });
 
   it("n'affiche pas la durée de vie de la session quand l'entité est absente", async () => {
@@ -93,7 +120,12 @@ describe('carte limiteur', () => {
   it("affiche la durée de vie de la session mise en forme (heures) quand `sensor:session_lifetime` est résolue", async () => {
     const hass = makeHass([
       compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
-      compte('sensor:session_lifetime', 'sensor.cpt_duree', '135'),
+      // La forme RÉELLE : la durée de vie, elle, est publiée en MINUTES.
+      // Les deux capteurs de session n'ont pas la même unité — c'est
+      // précisément le piège que ces tests verrouillent.
+      compte('sensor:session_lifetime', 'sensor.cpt_duree', '135', {
+        unit_of_measurement: 'min',
+      }),
     ]);
     const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);

@@ -1,6 +1,6 @@
 import { html, type TemplateResult } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
-import { formatDuration, formatRelative, formatTime } from '../core/format';
+import { durationToMinutes, formatDuration, formatRelative, formatTime } from '../core/format';
 import { chip, listRow } from '../core/ui/parts';
 import { listAttr } from '../core/list';
 
@@ -188,27 +188,38 @@ export const SPEC: CardSpec<Config> = {
       );
     }
 
-    // `sensor:session_age` et `sensor:session_lifetime` publient leur état en
-    // minutes, comme toutes les durées consommées par `formatDuration` dans ce
-    // projet (voir vie-scolaire.ts) : jamais un nombre nu suivi d'une unité
-    // codée en dur.
-    if (ctx.status(SESSION_AGE) === 'ok') {
+    /**
+     * Les deux durées de session, mises en forme selon l'unité que l'entité
+     * DÉCLARE — et non selon celle qu'on croit qu'elle publie.
+     *
+     * Les deux capteurs n'ont pas la même unité : l'âge est en secondes,
+     * la durée de vie en minutes. La carte les traitait tous les deux comme
+     * des minutes et affichait « 22 h 33 » pour une session de 29 minutes.
+     * Un facteur 60 sur une durée reste un nombre plausible : c'est ce qui
+     * l'a rendu invisible, sur la page comme dans les tests.
+     */
+    const durationRow = (key: EntityKey, labelKey: string): void => {
+      if (ctx.status(key) !== 'ok') return;
+      const published = ctx.entity(key)?.state;
+      const unit = ctx.attr<string>(key, 'unit_of_measurement');
+      const minutes = durationToMinutes(published, unit);
       out.push(
         listRow({
-          primary: ctx.t('limiteur.session_age'),
-          trailing: formatDuration(Number(ctx.entity(SESSION_AGE)?.state), lang),
+          primary: ctx.t(labelKey),
+          // Unité absente ou inconnue : on rend ce que l'entité publie, tel
+          // quel. Moins joli qu'une durée mise en forme, mais une conversion
+          // devinée serait plausible ET fausse — le défaut qu'on vient de
+          // corriger.
+          trailing:
+            minutes === undefined
+              ? [published, unit].filter(Boolean).join(' ')
+              : formatDuration(minutes, lang),
         })
       );
-    }
+    };
 
-    if (ctx.status(SESSION_LIFETIME) === 'ok') {
-      out.push(
-        listRow({
-          primary: ctx.t('limiteur.session_lifetime'),
-          trailing: formatDuration(Number(ctx.entity(SESSION_LIFETIME)?.state), lang),
-        })
-      );
-    }
+    durationRow(SESSION_AGE, 'limiteur.session_age');
+    durationRow(SESSION_LIFETIME, 'limiteur.session_lifetime');
 
     // `binary_sensor:throttled` recoupe la pastille d'état : quand
     // `sensor:limiter_state` vaut déjà `throttled`, la pastille l'affirme et

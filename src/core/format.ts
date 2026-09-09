@@ -195,3 +195,45 @@ export function plainText(value: string | undefined): string {
     .filter((line) => line !== '')
     .join('\n');
 }
+
+/**
+ * Une durée publiée par une entité, ramenée aux minutes qu'attend
+ * `formatDuration`, d'après l'unité que l'entité **déclare**.
+ *
+ * Ne devinez jamais l'unité. Les deux capteurs de session de l'intégration
+ * n'ont pas la même : l'âge est publié en secondes (`s`), la durée de vie en
+ * minutes (`min`). La carte du limiteur les a longtemps traités tous les deux
+ * comme des minutes et affichait « 22 h 33 » pour une session de 29 minutes.
+ * Le défaut a survécu à ses propres tests parce que leurs fixtures ne
+ * déclaraient aucune unité — et un facteur 60 sur une durée reste un nombre
+ * plausible, donc personne ne le voit.
+ *
+ * Rend `undefined` quand l'unité est absente ou inconnue. L'appelant montre
+ * alors la valeur brute suivie de son unité : c'est moins joli qu'une durée
+ * mise en forme, mais une conversion inventée serait plausible ET fausse.
+ */
+export function durationToMinutes(
+  state: string | undefined,
+  unit: string | undefined
+): number | undefined {
+  const value = Number(state);
+  if (state === undefined || state === '' || !Number.isFinite(value) || value < 0) {
+    return undefined;
+  }
+  switch (unit) {
+    case 's':
+    case 'sec':
+    case 'seconds':
+      // Arrondi à la minute : une carte n'a que faire de la seconde près, et
+      // `formatDuration` afficherait sinon « 29,05 min ».
+      return Math.round(value / 60);
+    case 'min':
+    case 'minutes':
+      return value;
+    case 'h':
+    case 'hours':
+      return value * 60;
+    default:
+      return undefined;
+  }
+}

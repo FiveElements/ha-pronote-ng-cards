@@ -41,8 +41,8 @@ plus déroutant de l'intégration.
 | `sensor:calls_today` | Optionnelle. `by_tier` détaille les appels par palier. |
 | `sensor:next_collection` | Optionnelle. Échéance, `tiers_due`, `overdue_by`, `failing`. |
 | `sensor:last_collection` | Optionnelle. Palier et instant de la dernière collecte. |
-| `sensor:session_age` | Optionnelle. En minutes. |
-| `sensor:session_lifetime` | Optionnelle. En minutes. |
+| `sensor:session_age` | Optionnelle. La carte lit l'unité que l'entité déclare (`unit_of_measurement`) : ces deux capteurs n'ont pas la même. |
+| `sensor:session_lifetime` | Optionnelle. Même règle. Si l'unité est absente ou inconnue, la carte affiche la valeur brute suivie de son unité plutôt qu'une durée convertie à tort. |
 | `sensor:logins_today` | Optionnelle. Connexions depuis minuit. |
 | `binary_sensor:throttled` | Optionnelle. Collectes bridées. |
 
