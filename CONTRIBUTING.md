@@ -153,4 +153,15 @@ contiennent des identifiants.
 
 Le tout est publié sur <https://fiveelements.github.io/ha-pronote-ng-cards/>.
 
+**Deux documents de contributeur ne sont pas sur le site**, délibérément — ils
+sont destinés à qui implémente ou relit une carte, non à qui l'installe :
+
+| Document | Contenu |
+| --- | --- |
+| [`spec/parite-ancien-format.md`](spec/parite-ancien-format.md) | 89 exigences : la parité avec les huit cartes de `lovelace-pronote`, et ce que le nouveau format publie que l'ancien ne pouvait pas connaître. Chaque exigence porte sa raison et une marque de provenance — `mesuré`, `catalogue`, `fonctionnel`, `décision`, `bloqué`. |
+| [`test/fixtures/FORMES.md`](test/fixtures/FORMES.md) | Les formes d'attributs telles qu'une instance les publie, avec la mention explicite de ce qui n'a **pas** pu être vérifié. |
+
+Ils vivent hors de `docs/` et non dans `exclude_docs`, pour qu'aucune
+manipulation de la configuration mkdocs ne les publie par accident.
+
 Sous licence [MIT](LICENSE).
