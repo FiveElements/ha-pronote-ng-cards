@@ -1,6 +1,11 @@
 # Pronote NG Cards — Cartes Lovelace pour Home Assistant
+[![Version](https://img.shields.io/github/v/release/FiveElements/ha-pronote-ng-cards?style=flat-square&label=version)](https://github.com/FiveElements/ha-pronote-ng-cards)
+[![Validate](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/validate.yml?branch=main&style=flat-square&label=validate)](https://github.com/FiveElements/ha-pronote-ng-cards/actions)
+![Home Assistant 2026.9.0 minimum](https://img.shields.io/badge/Home%20Assistant-2026.9.0%2B-41BDF5?style=flat-square&logo=homeassistant&logoColor=white)
+![MIT License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
- \<p align="center"\> \<strong\>Les cartes Lovelace pour afficher PRONOTE dans Home Assistant\</strong\> \</p\> \<p align="center"\> \<a href="https://github.com/FiveElements/ha-pronote-ng-cards"\> \<img src="https://img.shields.io/github/v/release/FiveElements/ha-pronote-ng-cards?style=flat-square&label=version" alt="Version"\> \</a\> \<a href="https://github.com/FiveElements/ha-pronote-ng-cards/actions"\> \<img src="https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/validate.yml?branch=main&style=flat-square&label=validate" alt="Validate"\> \</a\> \<img src="https://img.shields.io/badge/Home%20Assistant-2026.9.0%2B-41BDF5?style=flat-square&logo=homeassistant&logoColor=white" alt="Home Assistant 2026.9.0 minimum"\> \<img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"\> \</p\> \<p align="center"\> \<a href="https://fiveelements.github.io/ha-pronote-ng-cards/"\>📖 Documentation\</a\> · \<a href="https://github.com/FiveElements/ha-pronote-ng"\>🔌 Pronote NG\</a\> · \<a href="https://github.com/FiveElements/ha-pronote-ng-cards/issues"\>🐛 Signaler un problème\</a\> \</p\>
+
+[📖 Documentation](https://fiveelements.github.io/ha-pronote-ng-cards/) · [🔌 Pronote NG](https://github.com/FiveElements/ha-pronote-ng) · [🐛 Signaler un problème](https://github.com/FiveElements/ha-pronote-ng-cards/issues)
 ---
 
  ## 📚 À propos
