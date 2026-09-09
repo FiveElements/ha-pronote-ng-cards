@@ -1,7 +1,7 @@
 import { LitElement, html, nothing, type TemplateResult } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { HaFormSchema, HomeAssistant } from './ha-types';
-import { isChildDevice, resolveEntities } from './resolve';
+import { createResolveCache, isChildDevice } from './resolve';
 import type { CardSpec, EntityKey, PronoteCardConfig, Translate } from './types';
 import { sharedStyles } from './ui/styles';
 import { localize } from '../localize';
@@ -15,6 +15,11 @@ export class PronoteCardEditor extends LitElement {
 
   private t: Translate = (path, vars) => localize(path, vars, this.hass?.language);
 
+  // Partagé avec la carte (voir base-card.ts) : sans lui, l'éditeur
+  // rebalaierait tout le registre (Object.values(hass.entities)) à chaque
+  // mise à jour d'état de la maison tant qu'il reste ouvert.
+  private resolveCache = createResolveCache();
+
   setConfig(config: PronoteCardConfig): void {
     this.config = config;
   }
@@ -27,7 +32,7 @@ export class PronoteCardEditor extends LitElement {
         selector: { device: { integration: 'pronote_ng' } },
       },
       { name: 'title', selector: { text: {} } },
-      ...(this.spec?.schema(config) ?? []),
+      ...(this.spec?.schema(config, this.t) ?? []),
     ];
   }
 
@@ -35,7 +40,10 @@ export class PronoteCardEditor extends LitElement {
    * Résout d'abord dans la racine de catalogue de la carte (`notes.sections`,
    * `devoirs.filter`…) et ne retombe sur `editor.` que pour les deux champs
    * de base (`device_id`, `title`). `localize` rend le chemin lui-même
-   * quand la clé manque : c'est le signal du repli.
+   * quand la clé manque : c'est le signal du repli — jamais le repli final,
+   * qui reste le nom du champ (voir `computeHelper`, qui applique le même
+   * principe côté aide : un champ ajouté sans traduction ne doit jamais
+   * afficher un chemin de catalogue à l'utilisateur).
    *
    * Protégé (pas privé) : le test de repli l'expose via une sous-classe,
    * plutôt que de le lire par une conversion de type qui contourne
@@ -48,7 +56,9 @@ export class PronoteCardEditor extends LitElement {
       const own = this.t(path);
       if (own !== path) return own;
     }
-    return this.t(`editor.${s.name}`);
+    const path = `editor.${s.name}`;
+    const value = this.t(path);
+    return value === path ? s.name : value;
   };
 
   /**
@@ -128,7 +138,13 @@ export class PronoteCardEditor extends LitElement {
       ...(spec.requiresAny?.(config) ?? []),
       ...spec.optional(config),
     ];
-    const resolved = resolveEntities(hass, config.device_id, spec.scope, keys, config.entities);
+    const resolved = this.resolveCache.resolve(
+      hass,
+      config.device_id,
+      spec.scope,
+      keys,
+      config.entities
+    );
 
     return html`
       <div class="title">${this.t('editor.diagnosis')}</div>

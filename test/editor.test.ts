@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { html } from 'lit';
 import { PronoteCardEditor } from '../src/core/editor';
 import { localize } from '../src/localize';
-import type { CardSpec } from '../src/core/types';
+import type { CardSpec, Translate } from '../src/core/types';
 import { makeHass } from './fixtures/hass';
 import { mountCard, text } from './fixtures/mount';
 
@@ -114,5 +114,42 @@ describe('PronoteCardEditor — diagnostic de résolution', () => {
     const el = await mount({ device_id: 'dev_enfant' }, makeHass([]));
     expect(el.helperFor('device_id')).toBe(localize('editor.device_id_helper'));
     expect(el.helperFor('title')).toBeUndefined();
+  });
+
+  it('retombe sur le nom du champ, jamais sur le chemin de traduction, quand aucun libellé n’existe — même repli que computeHelper', async () => {
+    const el = await mount({ device_id: 'dev_enfant' }, makeHass([]));
+    expect(el.labelFor('un_champ_sans_traduction')).toBe('un_champ_sans_traduction');
+  });
+
+  it('passe la fonction de traduction à spec.schema, pour que la carte évite les libellés en dur', async () => {
+    let received: Translate | undefined;
+    const SPEC_T: CardSpec = {
+      ...SPEC,
+      type: 'pronote-ng-test-editor-t',
+      schema: (_config, t) => {
+        received = t;
+        return [];
+      },
+    };
+    await mountCard('pronote-ng-card-editor-test', { device_id: 'dev_enfant' }, makeHass([]), {
+      spec: SPEC_T,
+    });
+    expect(received).toBeTypeOf('function');
+    expect(received?.('common.refresh')).toBe(localize('common.refresh'));
+  });
+
+  it("schema(config, t) reçoit t optionnel : une carte non migrée qui l'ignore continue de fonctionner", async () => {
+    const SPEC_NO_T: CardSpec = {
+      ...SPEC,
+      type: 'pronote-ng-test-editor-no-t',
+      schema: () => [{ name: 'legacy_field', selector: { text: {} } }],
+    };
+    const el = await mountCard(
+      'pronote-ng-card-editor-test',
+      { device_id: 'dev_enfant' },
+      makeHass([]),
+      { spec: SPEC_NO_T }
+    );
+    expect(el.shadowRoot?.querySelector('ha-form')).not.toBeNull();
   });
 });
