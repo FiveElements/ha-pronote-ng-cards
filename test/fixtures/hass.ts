@@ -73,7 +73,14 @@ export function makeHass(entities: EntitySpec[] = [], language = 'fr'): HomeAssi
     entities: registry,
     devices,
     language,
-    locale: { language, time_zone: 'Europe/Paris' },
+    // La forme RÉELLE : `locale.time_zone` est une préférence (`'local'` ou
+    // `'server'`), pas un identifiant IANA. L'ancienne fixture y écrivait
+    // « Europe/Paris », ce qu'aucune instance n'envoie — et c'est ce
+    // mensonge qui a laissé passer une `RangeError` jusqu'en production.
+    // `'server'` plutôt que `'local'` pour que les tests ne dépendent pas
+    // du fuseau de la machine qui les exécute.
+    locale: { language, time_zone: 'server' },
+    config: { time_zone: 'Europe/Paris' },
     callService: async () => undefined,
   };
 }

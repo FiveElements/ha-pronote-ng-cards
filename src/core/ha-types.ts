@@ -38,7 +38,16 @@ export interface HomeAssistant {
   entities: Record<string, EntityRegistryDisplayEntry>;
   devices: Record<string, DeviceRegistryEntry>;
   language: string;
+  /**
+   * `locale.time_zone` n'est **pas** un identifiant IANA : c'est une
+   * préférence d'affichage, `'local'` (le fuseau du navigateur) ou
+   * `'server'` (celui de l'instance, qui vit dans `config.time_zone`).
+   * Le passer tel quel à `Intl.DateTimeFormat` lève une `RangeError` —
+   * voir `resolveTimeZone` dans `base-card.ts`.
+   */
   locale: { language: string; time_zone: string };
+  /** Absent de certains contextes de rendu (aperçu d'éditeur) : à traiter comme optionnel. */
+  config?: { time_zone?: string };
   callService(
     domain: string,
     service: string,

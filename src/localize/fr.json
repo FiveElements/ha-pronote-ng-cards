@@ -8,7 +8,8 @@
     "unknown_device": "Cet appareil n'existe plus.",
     "refresh": "Rafraîchir",
     "refresh_pending": "Demande envoyée",
-    "of": "sur"
+    "of": "sur",
+    "render_error": "Cette carte n'a pas pu s'afficher. Le détail est dans la console du navigateur."
   },
   "editor": {
     "device_id": "Enfant",

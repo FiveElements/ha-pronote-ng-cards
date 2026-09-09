@@ -8,7 +8,8 @@
     "unknown_device": "Este dispositivo ya no existe.",
     "refresh": "Actualizar",
     "refresh_pending": "Solicitud enviada",
-    "of": "de"
+    "of": "de",
+    "render_error": "Esta tarjeta no ha podido mostrarse. El detalle está en la consola del navegador."
   },
   "editor": {
     "device_id": "Alumno",

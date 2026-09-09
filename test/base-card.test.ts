@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { html } from 'lit';
 import { defineCard } from '../src/core/registry';
+import { resolveTimeZone } from '../src/core/base-card';
 import type { CardSpec, RenderCtx } from '../src/core/types';
 import { makeHass } from './fixtures/hass';
 import { mountCard, text } from './fixtures/mount';
@@ -448,6 +449,78 @@ describe('spec.tickMs — minuterie déclarative pour les rendus qui dépendent 
       expect(after).not.toBe(before);
     } finally {
       vi.useRealTimers();
+    }
+  });
+});
+
+
+describe('resolveTimeZone', () => {
+  // `hass.locale.time_zone` est une PRÉFÉRENCE, pas un identifiant IANA. La
+  // passer telle quelle à `Intl.DateTimeFormat` lève une `RangeError`, et une
+  // exception dans `render()` laisse la carte entièrement vide : c'est
+  // exactement la panne observée sur une instance réelle, où la valeur vaut
+  // « local » par défaut.
+  const browser = new Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  it('rend le fuseau du navigateur sur la préférence « local »', () => {
+    const tz = resolveTimeZone({ locale: { time_zone: 'local' }, config: { time_zone: 'Asia/Tokyo' } });
+    expect(tz).toBe(browser);
+    expect(() => new Intl.DateTimeFormat('fr', { timeZone: tz })).not.toThrow();
+  });
+
+  it('rend le fuseau de l’instance sur la préférence « server »', () => {
+    expect(
+      resolveTimeZone({ locale: { time_zone: 'server' }, config: { time_zone: 'Asia/Tokyo' } })
+    ).toBe('Asia/Tokyo');
+  });
+
+  it('retombe sur le navigateur quand « server » ne publie aucun fuseau', () => {
+    expect(resolveTimeZone({ locale: { time_zone: 'server' } })).toBe(browser);
+  });
+
+  it('n’émet jamais un fuseau que `Intl` refuse', () => {
+    for (const locale of [{ time_zone: 'Pas/Un/Fuseau' }, { time_zone: '' }, undefined]) {
+      const tz = resolveTimeZone({ locale });
+      expect(() => new Intl.DateTimeFormat('fr', { timeZone: tz })).not.toThrow();
+    }
+  });
+
+  it('accepte un identifiant IANA écrit directement dans la préférence', () => {
+    expect(resolveTimeZone({ locale: { time_zone: 'Europe/Paris' } })).toBe('Europe/Paris');
+  });
+});
+
+describe('rendu qui lève', () => {
+  const SPEC_THROWS: CardSpec = {
+    type: 'pronote-ng-test-throws',
+    name: 'Test exception',
+    description: 'Carte de test — render qui lève',
+    key: 'test',
+    scope: 'child',
+    requires: () => ['sensor:next_lesson'],
+    optional: () => [],
+    schema: () => [],
+    render: () => {
+      throw new Error('boum');
+    },
+  };
+
+  it('affiche un message plutôt que de disparaître de la page', async () => {
+    defineCard(SPEC_THROWS);
+    const erreurs = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const el = await mountCard(
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- SPEC_THROWS est enregistrée juste au-dessus ; ce fichier de test n'augmente pas HTMLElementTagNameMap pour cette balise supplémentaire.
+        'pronote-ng-test-throws' as 'pronote-ng-test',
+        { device_id: 'dev_enfant' },
+        withNextLessonEntity()
+      );
+      // Sans le filet, Lit laisse la racine d'ombre VIDE : l'assertion
+      // positive est celle qui compte.
+      expect(text(el)).toContain("Cette carte n'a pas pu s'afficher.");
+      expect(erreurs).toHaveBeenCalled();
+    } finally {
+      erreurs.mockRestore();
     }
   });
 });

@@ -23,6 +23,17 @@ export const missingState = (keys: readonly string[], t: Translate): TemplateRes
   <div class="notice">${t('common.missing_hint')}</div>
 `;
 
+/**
+ * État « la carte a levé » : dernier filet, jamais un état normal.
+ *
+ * Sans lui, une exception dans `render()` laisse la racine d'ombre vide et la
+ * carte disparaît de la page sans un mot — c'est exactement ce qui est arrivé
+ * sur une instance réelle, sur deux cartes à la fois. Un message visible vaut
+ * mieux qu'un trou dans le tableau de bord.
+ */
+export const errorState = (t: Translate): TemplateResult =>
+  html`<div class="notice problem">${t('common.render_error')}</div>`;
+
 export interface RowOptions {
   primary: string | TemplateResult;
   secondary?: string | TemplateResult;

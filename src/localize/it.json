@@ -8,7 +8,8 @@
     "unknown_device": "Questo dispositivo non esiste più.",
     "refresh": "Aggiorna",
     "refresh_pending": "Richiesta inviata",
-    "of": "su"
+    "of": "su",
+    "render_error": "Questa scheda non è riuscita a visualizzarsi. Il dettaglio è nella console del browser."
   },
   "editor": {
     "device_id": "Alunno",

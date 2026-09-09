@@ -12,13 +12,64 @@ import type {
   Translate,
 } from './types';
 import { sharedStyles } from './ui/styles';
-import { missingState, unavailableState } from './ui/parts';
+import { errorState, missingState, unavailableState } from './ui/parts';
 import { localize } from '../localize';
 
 /** Un boost est plafonné à un par palier et par intervalle côté intégration. */
 export const REFRESH_COOLDOWN_MS = 15 * 60 * 1000;
 
 const ABSENT_STATES = new Set(['unknown', 'unavailable']);
+
+/**
+ * Le fuseau à passer à `Intl`, déduit de la préférence de l'utilisateur.
+ *
+ * `hass.locale.time_zone` ne vaut pas un identifiant IANA : c'est un choix
+ * d'affichage, `'local'` (le fuseau du navigateur) ou `'server'` (celui de
+ * l'instance, publié dans `hass.config.time_zone`). Le socle passait cette
+ * valeur telle quelle à `Intl.DateTimeFormat`, qui lève une `RangeError` sur
+ * `'local'` — et une exception dans `render()` n'affiche pas un message
+ * d'erreur : elle laisse la carte entièrement vide. Sur une instance réelle,
+ * les deux cartes qui mettent en forme une date ne rendaient plus rien du
+ * tout, en jetant une exception à chaque évènement de la maison.
+ *
+ * On ne fait jamais confiance à la valeur obtenue sans la vérifier : un
+ * fuseau que le moteur ne connaît pas ramènerait exactement la même panne.
+ */
+export function resolveTimeZone(hass: {
+  locale?: { time_zone?: string };
+  config?: { time_zone?: string };
+}): string {
+  const browser = ((): string => {
+    try {
+      return new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch {
+      return 'UTC';
+    }
+  })();
+  const preference = hass.locale?.time_zone;
+  const candidate =
+    preference === 'server'
+      ? hass.config?.time_zone
+      : preference === 'local' || preference === undefined || preference === ''
+        ? browser
+        : // Une valeur inattendue est peut-être déjà un identifiant IANA :
+          // on la teste plutôt que de la jeter.
+          preference;
+  return usable(candidate) ? candidate : usable(browser) ? browser : 'UTC';
+}
+
+function usable(timeZone: string | undefined): timeZone is string {
+  if (!timeZone) return false;
+  try {
+    // Le constructeur est le seul validateur disponible : `Intl` n'expose
+    // aucun « ce fuseau existe-t-il ». On garde sa sortie pour que la règle
+    // no-new ne voie pas une construction pour effet de bord.
+    const probe = new Intl.DateTimeFormat('en', { timeZone });
+    return probe.resolvedOptions().timeZone !== undefined;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * La garde de rafraîchissement survit au rechargement de la page.
@@ -240,7 +291,19 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       }
 
       // État 3 — la carte décide, le vide lui appartient.
-      return this.frame(spec.render(this.makeCtx(hass, config)));
+      //
+      // Le `catch` n'est pas une politesse : Lit laisse la racine d'ombre
+      // VIDE quand `render()` lève, et Home Assistant rappelle le rendu à
+      // chaque évènement de la maison — une carte fautive disparaît donc de
+      // la page en jetant des milliers d'exceptions, sans rien afficher.
+      // Observé en production. Le message reste générique ; la trace part en
+      // console, seul endroit où elle sert à quelque chose.
+      try {
+        return this.frame(spec.render(this.makeCtx(hass, config)));
+      } catch (error) {
+        console.error(`[${spec.type}] le rendu a levé`, error);
+        return this.frame(errorState(this.t));
+      }
     }
 
     private frame(body: TemplateResult): TemplateResult {
@@ -282,7 +345,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
         hass,
         config,
         language: hass.language,
-        timeZone: hass.locale.time_zone,
+        timeZone: resolveTimeZone(hass),
         deviceName: device?.name_by_user ?? device?.name ?? '',
         entityId: (k) => this.resolved.get(k),
         entity: (k) => this.entityFor(k),
