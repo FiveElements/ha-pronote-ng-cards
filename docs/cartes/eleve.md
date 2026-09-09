@@ -5,7 +5,8 @@ prochain cours.
 
 ![Aperçu de la carte Élève](../assets/cartes/eleve.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.*
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires et les valeurs sont inventés ; la matière et la classe sont ordinaires.*
 
 ## Configuration
 

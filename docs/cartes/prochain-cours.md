@@ -4,7 +4,9 @@ Le prochain cours à venir : matière, plage horaire, salle et professeur.
 
 ![Aperçu de la carte Prochain cours](../assets/cartes/prochain-cours.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.*
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires et les valeurs sont inventés ; la matière est une matière de
+programme.*
 
 ## Configuration
 

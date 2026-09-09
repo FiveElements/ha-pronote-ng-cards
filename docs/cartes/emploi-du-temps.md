@@ -5,7 +5,9 @@ surligné.
 
 ![Aperçu de la carte Emploi du temps](../assets/cartes/emploi-du-temps.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.*
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires et les valeurs sont inventés ; les matières sont des matières de
+programme.*
 
 ## Configuration
 

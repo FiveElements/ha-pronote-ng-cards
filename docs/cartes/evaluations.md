@@ -4,7 +4,9 @@ Les évaluations par compétences, avec leur niveau de maîtrise.
 
 ![Aperçu de la carte Évaluations](../assets/cartes/evaluations.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.*
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires et les valeurs sont inventés ; les matières sont des matières de
+programme et les libellés de maîtrise ceux du livret scolaire.*
 
 ## Configuration
 

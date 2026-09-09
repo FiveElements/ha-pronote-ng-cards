@@ -4,7 +4,9 @@ Le menu du jour ou du lendemain, service par service.
 
 ![Aperçu de la carte Cantine](../assets/cartes/menu.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.*
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires et les valeurs sont inventés ; les plats sont des plats de cantine
+ordinaires.*
 
 ## Configuration
 

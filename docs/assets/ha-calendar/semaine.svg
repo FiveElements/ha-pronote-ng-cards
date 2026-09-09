@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 552" width="420" height="552" role="img" aria-label="La carte Agenda de Home Assistant en vue listWeek : la semaine en liste, groupée par jour, avec deux cours annulés préfixés d'une croix.">
   <title>Carte Agenda native, vue listWeek</title>
-  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les horaires et la semaine sont inventés pour cette image.</desc>
+  <desc>Illustration synthétique. Rien n'y vient d'un élève réel : les dates, les horaires et les valeurs sont inventés, et les matières sont des matières de programme.</desc>
 
   <style>
     .bg { fill: #f2f4f7; }

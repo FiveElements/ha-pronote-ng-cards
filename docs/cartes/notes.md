@@ -4,7 +4,9 @@ Moyenne générale, dernières notes, moyennes par matière et bulletin.
 
 ![Aperçu de la carte Notes](../assets/cartes/notes.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.*
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires et les valeurs sont inventés ; les matières sont des matières de
+programme.*
 
 ## Configuration
 

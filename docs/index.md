@@ -11,7 +11,9 @@ l'enfant. Aucune ne demande d'identifiant d'entité — voir
 
 ![Trois des dix cartes : prochain cours, devoirs et vie scolaire](assets/apercu.svg)
 
-*Illustration synthétique — aucune donnée réelle n'entre dans ce dépôt.*
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires et les valeurs sont inventés ; les matières sont des matières de
+programme.*
 
 ## Les dix cartes
 

@@ -46,9 +46,9 @@ La couleur d'une matière se prend dans cet ordre :
 2. **sinon votre table** ;
 3. **sinon rien.** Sur les trois cartes qui posent le filet en gouttière à
    gauche, la gouttière reste réservée mais transparente, pour que la ligne
-   garde son alignement. Sur [Devoirs](cartes/devoirs.md), où le filet suit
-   l'intitulé de la matière, il n'y a rien à réserver : la ligne n'a pas de
-   filet du tout.
+   garde son alignement. Sur [Devoirs](cartes/devoirs.md), où le filet est
+   un séparateur pleine hauteur entre la matière et l'énoncé, la ligne est
+   un flux et il n'y a rien à réserver : elle n'a pas de filet du tout.
 
 **Il n'y a pas de quatrième rang, et surtout pas une couleur calculée à partir
 du nom.** C'est le rang qui n'existe pas, volontairement. Une couleur déclarée

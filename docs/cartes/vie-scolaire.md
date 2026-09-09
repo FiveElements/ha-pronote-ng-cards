@@ -5,7 +5,9 @@ Absences, retards et punitions, avec leurs compteurs et la prochaine
 
 ![Aperçu de la carte Vie scolaire](../assets/cartes/vie-scolaire.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.*
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires et les valeurs sont inventés ; le motif d'absence est du vocabulaire
+courant.*
 
 ## Configuration
 

@@ -12,7 +12,9 @@ semaine déjà collectée. Pour voir la semaine d'un seul tenant, voyez
 
 ![Aperçu de la carte Vue journée](../assets/cartes/journee.svg)
 
-*Illustration synthétique : toutes les valeurs sont fictives.*
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires et les valeurs sont inventés ; les matières sont des matières de
+programme.*
 
 ## Configuration
 
