@@ -46,9 +46,9 @@ Une plage du midi illisible (`meal_from: midi`) est **ignorée** : la plage
 par défaut reprend, plutôt que de faire disparaître la zone repas sur une
 faute de frappe.
 
-**Les sept options à bascule figurent dans l'éditeur graphique** de la carte :
-aucun YAML n'est nécessaire pour les régler. Seule la table de couleurs
-demande le mode YAML, pour la raison expliquée plus bas.
+**Les six bascules et les trois champs de texte figurent dans l'éditeur
+graphique** de la carte : aucun YAML n'est nécessaire pour les régler. Seule la
+table de couleurs demande le mode YAML, pour la raison expliquée plus bas.
 
 ## La navigation d'un jour à l'autre
 
@@ -154,9 +154,21 @@ s'affiche et les bornes disparaissent — rien n'est inventé.
 
 ## Les couleurs de matière
 
-Le filet vertical à gauche de chaque créneau prend la couleur de sa matière. Il n'y en a aucune tant que vous n'avez pas écrit de table
-`subject_colors` : l'intégration ne publie pas encore la couleur de
-votre établissement.
+Le filet vertical **entre l'heure et la matière** prend la couleur de cette
+matière. Depuis la version 0.0.13 de l'intégration, elle vient du serveur :
+vous n'avez **rien à écrire**. Mesuré sur une instance, les trois créneaux du
+jour et les 27 de la semaine arrivent tous colorés.
+
+Une table `subject_colors` reste utile pour deux choses seulement : colorer une
+matière que votre établissement ne colore pas, et remplacer une teinte qui vous
+déplaît. Les couleurs de PRONOTE sont choisies pour le fond blanc de son
+interface, donc certaines sont vives — c'est aussi pourquoi la carte ne s'en
+sert que comme filet, jamais comme fond.
+
+Un créneau dont la matière n'a pas de couleur garde un filet **gris**. Ce n'est
+pas un défaut de collecte : c'est la carte qui dit « cette matière n'a pas de
+couleur » plutôt que de laisser un vide qu'on lirait comme un défaut
+d'affichage.
 
 ```yaml
 type: custom:pronote-ng-journee

@@ -82,14 +82,27 @@ export interface RowOptions {
 }
 
 /**
- * La ligne de liste, et le seul endroit du projet qui pose la gouttière de
- * couleur — d'où le drapeau `stacked` plutôt qu'une seconde fonction à côté.
+ * La ligne de liste, et le seul endroit qui pose la **gouttière** de couleur —
+ * d'où le drapeau `stacked` plutôt qu'une seconde fonction à côté.
  *
  * Une `stackedRow` séparée aurait dû reproduire les trois valeurs de `accent`
  * (aucune gouttière, gouttière réservée, gouttière colorée) ainsi que le
  * filtrage de la valeur qui atteint l'attribut `style`. C'est exactement le
- * genre de copie qui dérive : six cartes doivent placer la couleur de matière
- * identiquement, et la garantie tient à ce qu'une seule fonction la place.
+ * genre de copie qui dérive : **cinq** cartes placent la couleur de matière
+ * ici, et le fait qu'une seule fonction s'en charge est ce qui les tient
+ * identiques.
+ *
+ * Cinq et non six, et il faut le dire au lieu de l'arrondir : la vue journée
+ * n'appelle pas `listRow`. Sa grille a ses propres colonnes et elle pose son
+ * filet à la main. Une version antérieure de ce commentaire écrivait « six
+ * cartes » et en concluait que la garantie couvrait tout le monde — faux, et
+ * faux dans le sens le plus coûteux, puisqu'une garantie surestimée dispense
+ * d'aller vérifier l'exception.
+ *
+ * Ce qui reste vraiment partagé avec la journée : la valeur passe des deux
+ * côtés par `subjectColor` puis par la propriété personnalisée
+ * `--pronote-subject-color`. C'est le **filtrage** qui est central, pas le
+ * placement — une chaîne venue du serveur atteint un attribut `style`.
  */
 export const listRow = (o: RowOptions): TemplateResult => {
   const primary = html`<span class="primary">${o.primary}</span>`;

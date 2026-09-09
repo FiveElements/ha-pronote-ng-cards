@@ -325,8 +325,16 @@ export const sharedStyles = css`
      Elle dit explicitement « cette ligne n'a pas de couleur de matière », ce
      qu'une propriété simplement absente ne dit à personne — ni au test qui
      distingue les deux cas, ni à celui qui inspecte le DOM en cherchant
-     pourquoi une matière est grise. */
-  .jour-filet-neutre {
+     pourquoi une matière est grise.
+
+     Le sélecteur porte les DEUX classes, et ce n'est pas de la cosmétique.
+     Écrit sur la seule classe neutre, il avait la même spécificité que la
+     règle du filet et ne gagnait que par son rang dans le fichier. Or
+     --pronote-subject-color est une propriété HERITEE : un thème qui la pose
+     plus haut dans l'arbre, plus un déplacement de bloc, et toutes les
+     matières sans couleur se coloreraient — silencieusement, le pire genre.
+     Deux classes suffisent à ne plus dépendre de l'ordre. */
+  .jour-filet.jour-filet-neutre {
     background: var(--divider-color);
   }
   .jour-corps {
@@ -340,19 +348,26 @@ export const sharedStyles = css`
     font-weight: 500;
     color: var(--primary-text-color);
   }
-  .jour-salle {
-    color: var(--secondary-text-color);
-    font-size: 0.9em;
-  }
   .jour-pastilles {
     display: inline-flex;
     flex-wrap: wrap;
     gap: 4px;
     margin-left: auto;
   }
-  /* Le cours en cours. Un fond très léger dérivé de la couleur d'accent du
-     thème, pas une couleur propre : la mise en avant doit survivre à un
-     thème sombre comme à un thème clair. */
+  /* Le cours en cours. Le fond secondaire du thème, pas une couleur écrite
+     ici : la mise en avant doit survivre à un thème sombre comme à un thème
+     clair.
+
+     Un commentaire antérieur parlait d'un fond « dérivé de la couleur
+     d'accent du thème ». C'était faux — la variable employée est le fond
+     secondaire, qui n'a rien à voir avec l'accent — et la phrase valait
+     surtout parce qu'elle laissait croire à un contraste garanti.
+
+     Ce que cette mise en avant ne fait PAS, et qu'il faut savoir avant de s'y
+     fier : sur un thème sombre l'écart entre ce fond et celui de la carte est
+     de l'ordre de 1,05:1, donc elle est pratiquement invisible. Et c'est le
+     SEUL marqueur du créneau en cours : ni texte, ni pastille, ni ARIA. Un
+     lecteur d'écran n'en apprend rien du tout. */
   .jour-courant {
     background: var(--secondary-background-color);
     border-radius: 6px;

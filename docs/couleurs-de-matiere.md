@@ -42,14 +42,41 @@ dans le formulaire ensuite.
 
 La couleur d'une matière se prend dans cet ordre :
 
-1. **la couleur publiée par le serveur**, quand l'intégration l'expose ;
+1. **la couleur publiée par le serveur.** Depuis la version 0.0.13 de
+   l'intégration, elle arrive sur les créneaux, les devoirs et les moyennes
+   par matière — mesuré, pas annoncé. Elle n'arrive **pas encore** sur le
+   prochain cours ni sur les évaluations ;
 2. **sinon votre table** ;
-3. **sinon rien.** La gouttière reste réservée mais transparente, pour que
-   la ligne garde son alignement. C'est le cas sur les six cartes : le
-   placement de la couleur est le même partout, une gouttière à gauche.
-   [Devoirs](cartes/devoirs.md) a porté un temps un séparateur pleine
-   hauteur entre la matière et l'énoncé — il a été retiré, et la carte
-   réserve donc sa gouttière comme les autres.
+3. **sinon rien.**
+
+**Le rang 1 gagne, et il rend votre table muette sans vous le dire.** Si vous
+aviez écrit une table pour compenser l'absence de couleur, elle ne s'applique
+plus qu'aux matières que le serveur ne colore pas — donc, sur la plupart des
+établissements, à aucune. Le bloc reste dans votre YAML et ne fait plus rien :
+c'est le genre de configuration qui trompe celui qui l'édite. Retirez-la des
+cartes où le serveur fournit la couleur, gardez-la sur le prochain cours et
+les évaluations.
+
+**Où la couleur se place, carte par carte.** Le placement n'est pas uniforme,
+et ce n'est pas un oubli :
+
+| carte | placement |
+| --- | --- |
+| emploi du temps, notes, prochain cours, évaluations | gouttière à gauche de la ligne |
+| devoirs | gouttière à gauche du bloc, la matière en titre |
+| vue journée | **filet entre l'heure et la matière** |
+
+La journée est l'exception assumée. Sa colonne d'horaires se lit seule — on la
+consulte pour savoir où en est la journée — donc un filet posé à sa gauche
+colorerait l'heure autant que la matière, alors que la couleur n'appartient
+qu'à la seconde. Les deux placements ont été rendus et comparés ; celui-ci a
+été retenu.
+
+Deuxième différence, plus discrète : sur les cinq cartes à gouttière, une ligne
+sans couleur garde une gouttière **réservée et transparente**, pour que rien ne
+se décale. Sur la journée, le filet d'un créneau sans couleur est **gris** — la
+colonne est fixe, donc rien ne se décale de toute façon, et le gris dit
+« cette matière n'a pas de couleur » là où le transparent ne dit rien.
 
 **Il n'y a pas de quatrième rang, et surtout pas une couleur calculée à partir
 du nom.** C'est le rang qui n'existe pas, volontairement. Une couleur déclarée

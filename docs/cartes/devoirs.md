@@ -45,7 +45,10 @@ limit: 12
 ## Les couleurs de matière
 
 La couleur de la matière est une **gouttière à gauche** du bloc, comme sur
-les cinq autres cartes qui portent une matière. Un devoir sans couleur
+les quatre autres cartes à gouttière. La [vue journée](journee.md) est
+l'exception : elle pose son filet **entre l'heure et la matière**, parce que
+sa colonne d'horaires se lit seule et qu'un filet à sa gauche colorerait
+l'heure autant que la matière. Un devoir sans couleur
 garde sa gouttière, réservée mais transparente : sans elle, la ligne se
 décalerait de neuf pixels par rapport à sa voisine colorée, ce qui se lit
 comme un défaut d'affichage plutôt que comme une matière sans couleur.
@@ -57,9 +60,14 @@ jour. Les deux ont été retirés par la même décision, et pour une raison qui
 n'est pas l'esthétique : la matière **titre** désormais le bloc, et
 l'énoncé passe dessous sur toute la largeur de la carte. En colonne, il ne
 disposait que de 132 pixels sur une carte de 420 — or l'énoncé est ce que
-la carte a à dire. Il n'y en a aucune tant que vous n'avez pas écrit de table
-`subject_colors` : l'intégration ne publie pas encore la couleur de
-votre établissement.
+la carte a à dire.
+
+Depuis la version 0.0.13 de l'intégration, cette couleur vient
+**du serveur** : vous n'avez rien à écrire pour la voir. Une table
+`subject_colors` ne sert plus qu'à colorer une matière que votre
+établissement laisse sans couleur, ou à remplacer une teinte qui vous
+déplaît — et le serveur **gagne** sur votre table, donc une entrée qui
+double une couleur reçue ne fait plus rien.
 
 ```yaml
 type: custom:pronote-ng-devoirs

@@ -17,7 +17,8 @@ import { mountCard } from '../fixtures/mount';
  * tests dispersés dans trois fichiers auraient laissé la divergence passer.
  *
  * Le **placement** est transverse lui aussi, depuis la décision « la
- * gouttière à gauche, partout » : les six cartes qui portent une matière
+ * gouttière à gauche, partout » : les cinq cartes montées ici, qui portent une
+ * matière
  * bordent la ligne du même côté, avec la même variable CSS. Ce fichier a
  * porté l'exigence inverse pour les devoirs — un filet séparateur posé APRES
  * l'intitulé — et les tests qui l'affirmaient ont été renversés plutôt que

@@ -178,33 +178,66 @@ décode : `background_color`, `subject_id`, `groups`, `virtual_classrooms`,
 dans l'attribut. Une carte ne peut donc pas s'en servir — ce n'est pas une
 donnée manquante côté serveur, c'est une donnée non exposée.
 
-### `background_color` — lu par les cartes, pas encore publié
+### `background_color` — **publié depuis le 9 septembre 2026, et mesuré**
 
-Trois cartes lisent `background_color` **aujourd'hui** : l'emploi du temps sur
-`lessons[]`, les devoirs sur `items[]`, les notes sur les `items[]` de
-`sensor:averages`. Aucune installation ne le reçoit encore : la passerelle le
-décode aux quatre endroits où le protocole l'envoie (`CouleurFond` sur les
-créneaux et les devoirs, `couleur` — en minuscules — sur les moyennes par
-matière) et le capteur ne l'expose sur aucune entité. Une demande de
-publication est déposée côté intégration.
+Cette section demandait explicitement d'être refaite le jour où une
+installation recevrait le champ. C'est arrivé, et voici le relevé — plus une
+demande, plus une supposition.
+
+| étage | attribut | relevé sur instance |
+| --- | --- | --- |
+| créneaux (jour, demain, semaine) | `lessons[]` | 27 / 27 remplis |
+| devoirs | `items[]` | 12 / 12 remplis |
+| moyennes par matière | `items[]` | liste vide (début d'année), clé présente |
+| **prochain cours** | — | **le champ n'est pas publié** |
+| **évaluations** | — | **le champ n'est pas publié** |
+
+Recensement en trois seaux sur les trois étages qui ont des données : **zéro
+absent, zéro vide**. Trois seaux et non deux parce que l'intégration résout la
+clé en mode tolérant : une clé absente rend `null`, une clé présente et vide
+rend `""`, et un compteur à deux seaux dirait « pas de couleur » dans les deux
+cas.
+
+**La forme reçue :** hexadécimal à six chiffres, dièse compris, en
+**capitales** — `#E73A1F`, `#FFED00`, `#144897`. Jamais de forme courte, jamais
+de nom CSS, jamais d'entier. `subjectColor` accepte les capitales sans les
+reformuler, donc rien à convertir.
+
+**Ce que ces couleurs ne sont pas :** une palette de tableau de bord. Elles
+viennent de l'établissement et sont choisies pour le fond blanc de l'interface
+officielle. `#FFED00` est un jaune vif, `#144897` un bleu nuit. C'est la raison
+pour laquelle les cartes ne s'en servent **qu'en accent** — un filet, jamais un
+fond ni une couleur de texte. En aplat, la moitié de ces teintes casserait le
+contraste sur un thème sombre.
+
+**Six** cartes lisent le champ, pas trois : emploi du temps et journée sur
+`lessons[]`, devoirs sur `items[]`, notes sur les `items[]` de
+`sensor:averages`, évaluations sur ses propres `items[]`, prochain cours sur
+l'attribut plat de `sensor:next_lesson`. Les deux dernières lisent un champ que
+l'intégration ne publie pas encore sur leur étage : elles tombent donc sur la
+table de l'utilisateur, ce qui est le rang 2 et non un défaut.
+
+**Le rang 1 écrase le rang 2.** Une table `subject_colors` écrite pour
+compenser l'absence du champ est devenue inopérante à l'instant où le champ est
+arrivé, **sans un mot**. C'est le piège de cette publication, plus que la
+couleur elle-même : personne ne relit ses tableaux de bord après une mise à
+jour.
+
+`subject_id` est publié en même temps, 27 / 27 sur les créneaux. C'est la clé
+stable qu'une carte doit préférer au nom pour indexer quoi que ce soit : PRONOTE
+écrit les matières en capitales, avec accents, et un établissement peut les
+renommer en cours d'année.
 
 La couleur est par ailleurs **exclue de la détection de changement**, et c'est
-voulu : `Lesson.change_signature` (`models.py:101-107`) écarte `memo`,
-`background_color` et le contenu du cours, parce qu'« une correction de coquille
-ne doit pas réveiller la maison ». Une couleur modifiée en cours d'année
-apparaîtra donc à la collecte suivante **sans émettre d'évènement**. N'attendez
-pas d'`event` sur ce champ.
-
-C'est donc le seul champ de ce fichier dont la forme vient d'une **demande** et
-non d'un relevé. Les fixtures l'écrivent en hexadécimal (`#1e88e5`) parce que
-c'est ce que le contrat demandé prévoit ; quand une installation le recevra
-vraiment, **vérifiez la forme reçue et mettez cette section à jour** — c'est
-exactement le genre de supposition qui a produit les trois défauts du tableau
-en tête de fichier.
+voulu : `Lesson.change_signature` écarte `memo`, `background_color` et le
+contenu du cours, parce qu'« une correction de coquille ne doit pas réveiller
+la maison ». Une couleur modifiée en cours d'année apparaîtra donc à la
+collecte suivante **sans émettre d'évènement**. N'attendez pas d'`event` sur ce
+champ.
 
 Une valeur qui n'est pas un hexadécimal strict est ignorée par `subjectColor`,
-et la ligne s'affiche alors sans accent de couleur. Le champ est donc sans
-risque de régression : le pire cas est le rendu d'aujourd'hui.
+et la ligne s'affiche alors sans accent de couleur. Le pire cas reste donc le
+rendu d'avant la couleur.
 
 `status` est **orthogonal** à `canceled` : `canceled` dit si le cours a lieu,
 `status` dit pourquoi. Relevé réel sur une semaine — `canceled: true` avec

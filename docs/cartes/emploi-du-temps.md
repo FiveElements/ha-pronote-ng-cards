@@ -49,9 +49,15 @@ show_teachers: true
 
 ## Les couleurs de matière
 
-Chaque créneau porte un filet vertical à gauche, dans la couleur de sa matière. Il n'y en a aucune tant que vous n'avez pas écrit de table
-`subject_colors` : l'intégration ne publie pas encore la couleur de
-votre établissement.
+Chaque créneau porte un filet vertical à gauche, dans la couleur de sa
+matière.
+
+Depuis la version 0.0.13 de l'intégration, cette couleur vient
+**du serveur** : vous n'avez rien à écrire pour la voir. Une table
+`subject_colors` ne sert plus qu'à colorer une matière que votre
+établissement laisse sans couleur, ou à remplacer une teinte qui vous
+déplaît — et le serveur **gagne** sur votre table, donc une entrée qui
+double une couleur reçue ne fait plus rien.
 
 ```yaml
 type: custom:pronote-ng-emploi-du-temps
@@ -117,19 +123,20 @@ Les lignes sans couleur gardent le même retrait que les autres — la
 gouttière est réservée, simplement transparente. Une matière sans couleur ne
 décale donc pas son voisinage.
 
-**Les cartes concernées sont celles dont le producteur envoie une couleur** :
-l'emploi du temps, les [devoirs](devoirs.md) et les moyennes par matière de
-la carte [notes](notes.md). Les notes individuelles, les évaluations et le
-bulletin n'en portent pas côté PRONOTE ; le prochain cours non plus, faute
-d'être publié pour cette entité.
+**Trois entités portent la couleur du serveur** : les créneaux d'emploi du
+temps, les [devoirs](devoirs.md) et les moyennes par matière de la carte
+[notes](notes.md) — mesuré sur une instance, 27 créneaux et 12 devoirs sur
+27 et 12. Les notes individuelles, les évaluations et le bulletin n'en
+portent pas côté PRONOTE.
 
-!!! info "Pas encore visible"
+!!! info "Deux cartes attendent encore l'intégration"
 
-    L'intégration décode cette couleur mais ne la publie pas encore dans les
-    attributs de ses entités. Les cartes la lisent déjà : l'accent
-    apparaîtra dès qu'une version de l'intégration l'expose, sans aucune
-    modification de votre tableau de bord. D'ici là, l'affichage est
-    inchangé.
+    Le [prochain cours](prochain-cours.md) et les
+    [évaluations](evaluations.md) ne reçoivent **pas** la couleur du
+    serveur : l'entité du prochain cours compose ses attributs un à un, et
+    la couleur n'y a pas encore été ajoutée. Sur ces deux cartes-là, une
+    table `subject_colors` reste le seul moyen d'obtenir un accent, et elle
+    y garde tout son sens.
 
 ## Si la carte est vide
 

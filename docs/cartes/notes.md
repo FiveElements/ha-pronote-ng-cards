@@ -55,9 +55,20 @@ lesquelles paraissent.
 
 ## Les couleurs de matière
 
-Chaque moyenne par matière porte un filet vertical à gauche, dans la couleur de sa matière. Il n'y en a aucune tant que vous n'avez pas écrit de table
-`subject_colors` : l'intégration ne publie pas encore la couleur de
-votre établissement.
+Chaque moyenne par matière porte un filet vertical à gauche, dans la
+couleur de sa matière.
+
+Depuis la version 0.0.13 de l'intégration, cette couleur vient
+**du serveur** : vous n'avez rien à écrire pour la voir. Une table
+`subject_colors` ne sert plus qu'à colorer une matière que votre
+établissement laisse sans couleur, ou à remplacer une teinte qui vous
+déplaît — et le serveur **gagne** sur votre table, donc une entrée qui
+double une couleur reçue ne fait plus rien.
+
+Les **notes individuelles** n'en portent pas : PRONOTE colore la matière,
+pas la note. Le filet d'une moyenne se lit donc comme celui d'un créneau
+d'emploi du temps, et une note reste sans accent — ce n'est pas un défaut
+de collecte.
 
 ```yaml
 type: custom:pronote-ng-notes
