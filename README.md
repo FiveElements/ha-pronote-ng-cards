@@ -1,142 +1,293 @@
-<p align="center">
-  <img src="docs/assets/logo.png" alt="Pronote NG" width="180">
-</p>
+# Pronote NG Cards — Cartes Lovelace pour Home Assistant
+<p align="center"> <strong>Les cartes Lovelace pour afficher PRONOTE dans Home Assistant</strong> </p> <p align="center"> <a href="https://github.com/FiveElements/ha-pronote-ng-cards"> <img src="https://img.shields.io/github/v/release/FiveElements/ha-pronote-ng-cards?style=flat-square&label=version" alt="Version"> </a> <a href="https://github.com/FiveElements/ha-pronote-ng-cards/actions"> <img src="https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/validate.yml?branch=main&style=flat-square&label=validate" alt="Validate"> </a> <img src="https://img.shields.io/badge/Home%20Assistant-2026.9.0%2B-41BDF5?style=flat-square&logo=homeassistant&logoColor=white" alt="Home Assistant 2026.9.0 minimum"> <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"> </p> <p align="center"> <a href="https://fiveelements.github.io/ha-pronote-ng-cards/">📖 Documentation</a> · <a href="https://github.com/FiveElements/ha-pronote-ng">🔌 Pronote NG</a> · <a href="https://github.com/FiveElements/ha-pronote-ng-cards/issues">🐛 Signaler un problème</a> </p>
+📚 À propos
 
-<h1 align="center">Pronote NG — Cartes</h1>
+Pronote NG Cards est un ensemble de cartes Lovelace personnalisées pour Home Assistant, conçu pour afficher de manière claire et moderne les données scolaires fournies par l'intégration Pronote NG.
 
-<p align="center">
-  <strong>Dix cartes Lovelace pour l'intégration Home Assistant Pronote NG.</strong>
-</p>
+Les cartes permettent de transformer les données PRONOTE en un véritable tableau de bord scolaire dans Home Assistant.
 
-<p align="center">
-  <a href="https://fiveelements.github.io/ha-pronote-ng-cards/">Documentation</a>
-  ·
-  <a href="https://fiveelements.github.io/ha-pronote-ng-cards/installation/">Installation</a>
-  ·
-  <a href="https://fiveelements.github.io/ha-pronote-ng-cards/tableaux-de-bord/">Assembler un tableau de bord</a>
-  ·
-  <a href="https://fiveelements.github.io/ha-pronote-ng-cards/limites/">Ce qu'elles ne feront jamais</a>
-</p>
+Vous pouvez notamment afficher :
 
-<p align="center">
-  <a href="https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/validate.yml"><img src="https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/validate.yml?branch=main&label=validation&logo=github" alt="Validation"></a>
-  <a href="https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/hacs.yml"><img src="https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/hacs.yml?branch=main&label=HACS" alt="HACS"></a>
-  <a href="https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/docs.yml"><img src="https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/docs.yml?branch=main&label=documentation&logo=materialformkdocs&logoColor=white" alt="Documentation"></a>
-  <a href="https://github.com/FiveElements/ha-pronote-ng-cards/releases"><img src="https://img.shields.io/github/v/release/FiveElements/ha-pronote-ng-cards?label=version&sort=semver" alt="Dernière version"></a>
-  <img src="https://img.shields.io/badge/Home%20Assistant-2026.9.0%2B-41BDF5?logo=homeassistant&logoColor=white" alt="Home Assistant 2026.9.0 minimum">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-green" alt="Licence MIT"></a>
-</p>
+📅 l'emploi du temps
+🕐 le prochain cours
+📝 les devoirs
+📊 les notes
+🎯 les évaluations
+🍽️ le menu de cantine
+🏫 la vie scolaire
+👨‍🎓 les informations de l'élève
+🚦 le budget de requêtes PRONOTE
 
-![Trois des dix cartes : prochain cours, devoirs et vie scolaire](docs/assets/apercu.svg)
+Pronote NG Cards nécessite l'intégration Pronote NG.
 
-*Illustration synthétique — aucune donnée réelle n'entre dans ce dépôt.*
+✨ Les 10 cartes
+👨‍🎓 Élève
 
-## Ce qui distingue ces cartes
+Une carte de synthèse permettant d'afficher les principales informations concernant l'élève.
 
-**Un seul réglage : l'appareil de l'enfant.** Aucune carte ne demande
-d'identifiant d'entité, pas même celle du limiteur, qui remonte toute seule
-jusqu'à l'appareil du compte. Chaque carte retrouve ses entités par une clé
-technique stable, ce qui les rend insensibles à un renommage : renommer
-l'enfant renomme la carte, sans rien casser.
+🕐 Prochain cours
 
-**Trois états, jamais deux.** Une entité peut être absente du registre, ou
-présente sans donnée exploitable, ou renseignée. Ces trois situations disent
-des choses différentes à un parent, et aucune carte ne les confond : « entité
-introuvable », « pas encore collectée » et le contenu réel sont trois
-affichages distincts. Un cadre vide qui pourrait vouloir dire trois choses ne
-vaut rien.
+Affiche rapidement le prochain cours :
 
-**Une carte n'appelle jamais PRONOTE.** Le type interdit à une carte tout appel
-de service sauf deux — relever une priorité de collecte, cocher un devoir. Un
-tableau de bord qu'on ouvre ne consomme donc aucune requête sur le compte
-scolaire, quel que soit le nombre de cartes affichées. Le bouton de la carte
-limiteur lui-même ne fait que demander à l'ordonnanceur de passer plus tôt : il
-n'obtient aucune dérogation.
+matière
+horaire
+salle
+enseignant
+informations complémentaires
 
-**Ce qui n'est pas su n'est pas affiché.** Une heure de fin déduite plutôt que
-fournie porte un `≈`. Un libellé de maîtrise reste dans les mots de
-l'établissement, jamais traduit. Une moyenne générale s'affiche sans barème,
-parce que celui qui est publié n'en est pas un. La liste de ce qui est
-volontairement absent est publiée :
-[Ce que ces cartes ne feront jamais](docs/limites.md).
+Idéal pour avoir une vue immédiate de ce qui arrive ensuite.
 
-## Les dix cartes
+📅 Vue journée
 
-Chaque carte a sa page : aperçu, options, exemple complet, entités consommées,
-et ce qu'elle ne peut pas savoir.
+Une représentation graphique de la journée avec :
 
-| Carte | À quoi elle sert |
-| --- | --- |
-| [Élève](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/eleve/) | En-tête de synthèse : photo, classe, état du jour, prochain cours |
-| [Prochain cours](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/prochain-cours/) | Le prochain cours : matière, heure, salle, professeur |
-| [Vue journée](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/journee/) | La journée en grille : couleur de matière, annulations, zone repas, navigation d'un jour à l'autre |
-| [Emploi du temps](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/emploi-du-temps/) | Les cours du jour, du lendemain ou de la semaine |
-| [Devoirs](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/devoirs/) | Les devoirs à faire, avec échéance et matière, cochables |
-| [Notes](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/notes/) | Moyennes, dernières notes, moyennes par matière, bulletin |
-| [Évaluations](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/evaluations/) | Les évaluations par compétences et leur niveau de maîtrise |
-| [Cantine](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/menu/) | Le menu du jour ou du lendemain, service par service |
-| [Vie scolaire](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/vie-scolaire/) | Absences, retards et punitions, avec leur détail |
-| [Limiteur](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/limiteur/) | Budget d'appels, état du limiteur, prochaine collecte |
+horaires
+matières
+salles
+enseignants
+couleurs par matière
+zone repas
 
-## Avant d'installer
+Cette carte est particulièrement adaptée à un tableau de bord principal.
 
-**L'intégration [Pronote NG](https://github.com/FiveElements/ha-pronote-ng)
-doit être installée et configurée d'abord.** Ces cartes n'affichent rien par
-elles-mêmes : elles lisent les entités que l'intégration publie. Sans elle, une
-carte ajoutée à un tableau de bord annonce simplement qu'elle ne trouve pas
-d'appareil.
+🗓️ Emploi du temps
 
-**Home Assistant 2026.9.0 minimum**, le même plancher que l'intégration.
+Affiche l'emploi du temps PRONOTE dans Home Assistant.
 
-## Installation
+La carte permet de visualiser les cours à venir et leur contexte directement depuis le tableau de bord.
 
-Dans HACS : menu → **Dépôts personnalisés** → ajouter
-`https://github.com/FiveElements/ha-pronote-ng-cards` avec la catégorie
-**Lovelace / greffon** → installer → recharger la page.
+📝 Devoirs
 
-Puis, dans un tableau de bord : **Ajouter une carte**, chercher « Pronote »,
-choisir la carte, et sélectionner l'appareil de l'enfant.
+Affiche les devoirs récupérés depuis PRONOTE.
 
-Sur un tableau de bord en **mode YAML**, la ressource doit être déclarée à la
-main — c'est le seul cas où une carte n'apparaît même pas dans le catalogue.
-La procédure est dans
-[Installation](https://fiveelements.github.io/ha-pronote-ng-cards/installation/).
+Les informations peuvent notamment inclure :
 
-## Un exemple
+matière
+description
+date
+échéance
+état du devoir
+📊 Notes
 
-```yaml
-type: custom:pronote-ng-journee
-device_id: <appareil de l'enfant>
-show_meal: true
-show_rooms: true
-show_teachers: true
-```
+Affiche les notes et informations associées dans une présentation adaptée à Home Assistant.
 
-Toutes les options de chaque carte, avec un exemple complet à copier, sont sur
-sa page. `title` et `entities` fonctionnent en plus sur les dix.
+🎯 Évaluations
 
-## Langues
+Permet d'afficher les évaluations et les informations de compétences fournies par PRONOTE.
 
-L'interface des cartes — libellés, messages d'état, éditeur — est traduite en
-**français**, **italien**, **portugais** (européen) et **espagnol** (d'Espagne).
-Elle suit la langue de l'utilisateur Home Assistant connecté et retombe sur le
-français. Les libellés venus de PRONOTE, eux, ne sont jamais traduits : ce sont
-les mots de l'établissement.
+🍽️ Cantine
 
-Cette documentation reste en français.
+Affiche les menus de cantine directement dans le tableau de bord Home Assistant.
 
-## Développer
+🏫 Vie scolaire
 
-```bash
+Permet de visualiser les informations liées à la vie scolaire, notamment les absences et autres événements disponibles dans PRONOTE.
+
+🚦 Limiteur
+
+Affiche l'état du limiteur de requêtes de Pronote NG.
+
+Cette carte permet notamment de suivre :
+
+le budget d'appels
+l'utilisation actuelle
+l'état du limiteur
+le rafraîchissement des données
+
+Elle est particulièrement utile pour comprendre l'activité de l'intégration PRONOTE.
+
+🖼️ Aperçu
+
+Les cartes sont conçues pour être utilisées ensemble afin de créer un tableau de bord scolaire complet.
+
+📸 Les captures d'écran de démonstration ne contiennent aucune donnée scolaire réelle.
+
+🚀 Installation
+Avec HACS
+
+Pronote NG Cards peut être installé directement depuis HACS en tant que dépôt personnalisé.
+
+Ouvrez HACS
+Allez dans Frontend
+Ouvrez le menu ⋮
+Sélectionnez Dépôts personnalisés
+Ajoutez :
+https://github.com/FiveElements/ha-pronote-ng-cards
+
+Sélectionnez la catégorie Lovelace
+Cliquez sur Ajouter
+Installez Pronote NG Cards
+Rechargez le frontend Home Assistant
+
+💡 Après l'installation, les ressources JavaScript nécessaires aux cartes sont automatiquement gérées par HACS.
+
+🔌 Prérequis
+
+Pronote NG Cards est une extension d'affichage.
+
+Vous devez donc avoir installé et configuré :
+
+Pronote NG — Intégration PRONOTE pour Home Assistant
+
+L'intégration Pronote NG fournit les données PRONOTE.
+
+Pronote NG Cards se charge ensuite de les présenter dans votre interface Lovelace.
+
+PRONOTE
+   │
+   ▼
+Pronote NG
+   │
+   ├── Sensors
+   ├── Events
+   ├── Calendar
+   ├── Todo
+   └── autres entités
+          │
+          ▼
+   Pronote NG Cards
+          │
+          ▼
+   Tableau de bord Home Assistant
+
+🧩 Utilisation
+
+Après installation, ajoutez une carte depuis l'éditeur de tableau de bord Home Assistant.
+
+Les cartes Pronote NG sont disponibles comme cartes Lovelace personnalisées.
+
+Pour chaque carte, la documentation fournit :
+
+les propriétés disponibles
+les paramètres obligatoires
+les paramètres optionnels
+des exemples YAML
+les entités nécessaires
+les possibilités de personnalisation
+
+👉 Consulter la documentation complète
+
+📖 Documentation
+
+La documentation complète est disponible ici :
+
+📖 Documentation Pronote NG Cards
+
+Vous y trouverez notamment :
+
+Guide d'installation
+Guide de configuration
+Documentation de chaque carte
+Exemples YAML
+Personnalisation
+Architecture
+Limites connues
+Guide pour les contributeurs
+⚙️ Architecture
+
+Pronote NG Cards est volontairement séparé de l'intégration PRONOTE.
+
+Cela permet de garder deux responsabilités distinctes :
+
+Pronote NG
+
+Récupère et expose les données PRONOTE dans Home Assistant.
+
+Pronote NG Cards
+
+Présente ces données dans l'interface Lovelace.
+
+Cette séparation permet d'utiliser Pronote NG sans installer les cartes personnalisées.
+
+Inversement, les cartes peuvent évoluer indépendamment de la récupération des données PRONOTE.
+
+🔒 Données personnelles
+
+Les captures et illustrations du projet sont conçues pour ne pas contenir de données scolaires réelles.
+
+Lorsque vous partagez une capture d'écran ou un exemple de configuration, veillez toutefois à ne jamais publier :
+
+nom ou prénom d'un élève
+identifiant PRONOTE
+établissement
+adresse
+informations personnelles d'un enseignant
+données scolaires privées
+⚠️ Limites
+
+Ces cartes sont uniquement une interface d'affichage.
+
+Elles ne remplacent pas l'intégration Pronote NG et ne communiquent pas directement avec PRONOTE.
+
+Les limitations liées à la récupération des données, au protocole PRONOTE ou au rate limiting sont donc principalement gérées par Pronote NG.
+
+👉 Consultez la page Limites pour connaître précisément le comportement des cartes.
+
+🧑‍💻 Développement
+
+Le projet est développé avec :
+
+TypeScript
+Vite
+Home Assistant Lovelace
+Web Components
+
+Le dépôt contient également des tests et des contrôles de qualité automatisés.
+
+Pour contribuer au projet :
+
 npm install
-npm run build        # vite, vers dist/
-npm test             # vitest
-npm run typecheck    # tsc --noEmit
-npm run lint         # oxlint
-```
+npm run build
+npm test
 
-Les règles du dépôt sont dans [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## Licence
+Consultez également :
 
-MIT — voir [`LICENSE`](LICENSE).
+CONTRIBUTING.md
+
+🤝 Contribuer
+
+Les contributions sont les bienvenues.
+
+Vous pouvez contribuer en :
+
+🐛 signalant un bug
+💡 proposant une amélioration
+🎨 améliorant l'interface
+📖 améliorant la documentation
+🧪 ajoutant des tests
+💻 proposant une Pull Request
+
+👉 Voir les issues
+
+Lorsque vous signalez un problème, indiquez si possible :
+
+version de Pronote NG
+version de Pronote NG Cards
+version de Home Assistant
+carte concernée
+configuration YAML utilisée
+capture d'écran anonymisée
+⚠️ Important
+
+Pronote NG Cards n'est pas développé, maintenu ou officiellement supporté par Index Éducation / PRONOTE.
+
+PRONOTE est un service tiers.
+
+Le fonctionnement des cartes dépend des données exposées par l'intégration Pronote NG et peut évoluer lorsque PRONOTE ou Home Assistant évoluent.
+
+📄 Licence
+
+Pronote NG Cards est distribué sous licence MIT.
+
+⭐ Le projet vous est utile ?
+
+Si Pronote NG Cards vous permet de construire votre tableau de bord scolaire dans Home Assistant :
+
+⭐ ajoutez une étoile au projet
+🐛 signalez les problèmes
+💡 proposez des améliorations
+📖 contribuez à la documentation
+📣 partagez le projet avec d'autres utilisateurs de Home Assistant
+
+Chaque étoile et chaque contribution aide d'autres utilisateurs à découvrir les cartes Lovelace PRONOTE pour Home Assistant.
