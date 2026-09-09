@@ -23,6 +23,17 @@ const TOMORROW: EntityKey = 'sensor:homework_tomorrow';
 const ALL: EntityKey = 'sensor:homework';
 const OVERDUE: EntityKey = 'binary_sensor:homework_overdue';
 const TODO_LIST: EntityKey = 'todo:homework';
+/**
+ * Le calendrier des devoirs. Trois entités distinctes portent le même
+ * `translation_key` sur des domaines différents — `sensor:homework`,
+ * `calendar:homework` et `todo:homework` — d'où la qualification par domaine
+ * de toutes les clés du projet.
+ *
+ * Ce que cette entité apporte et que la liste ne peut pas montrer : la
+ * prochaine échéance QUEL QUE SOIT le filtre. En mode « demain », tout ce qui
+ * tombe plus tard est invisible ; le calendrier, lui, la nomme.
+ */
+const CALENDAR: EntityKey = 'calendar:homework';
 
 /**
  * Bit UPDATE_TODO_ITEM de `TodoListEntityFeature`, côté Home Assistant.
@@ -95,7 +106,7 @@ export const SPEC: CardSpec<Config> = {
   size: 5,
   stub: { filter: 'todo', group_by: 'date' },
   requires: (c) => [keyFor(c)],
-  optional: () => [OVERDUE, TODO_LIST],
+  optional: () => [OVERDUE, TODO_LIST, CALENDAR],
   schema: (_config: Config, t?: Translate) => [
     {
       name: 'filter',
@@ -128,7 +139,40 @@ export const SPEC: CardSpec<Config> = {
     const key = keyFor(ctx.config);
     const raw = listAttr<Homework>(ctx.attr(key, 'items'));
 
-    if (raw.length === 0) return emptyState(ctx.t(emptyFor(ctx.config)));
+    /**
+     * La prochaine échéance vue par le calendrier.
+     *
+     * Seuls les ATTRIBUTS de l'entité sont lus. Obtenir la liste complète de
+     * ses évènements demanderait un appel de service — donc une collecte au
+     * rendu, que le projet interdit, et que le type `AllowedCall` refuse de
+     * toute façon à la compilation.
+     *
+     * Affichée seulement quand elle ajoute quelque chose : avec le filtre
+     * « tous », la liste montre déjà tout, et la ligne ne ferait que répéter
+     * sa première entrée.
+     */
+    const nextDue = ((): TemplateResult | '' => {
+      if (ctx.config.filter === 'all' || ctx.status(CALENDAR) !== 'ok') return '';
+      const message = ctx.attr<string>(CALENDAR, 'message');
+      const startsAt = ctx.attr<string>(CALENDAR, 'start_time');
+      const when = startsAt ? formatDayLabel(startsAt, ctx.language, ctx.timeZone) : '';
+      // Un calendrier sans évènement à venir ne porte ni intitulé ni date :
+      // il se tait, plutôt que d'afficher une ligne creuse.
+      if (!message && !when) return '';
+      return listRow({
+        primary: ctx.t('devoirs.next_due'),
+        secondary: message,
+        trailing: when || undefined,
+      });
+    })();
+
+    // `nextDue` survit à l'état vide, et c'est le moment où il sert le plus :
+    // rien à rendre dans la fenêtre choisie, mais une échéance existe plus
+    // loin. Le rendre après un retour anticipé le jetterait — le défaut exact
+    // qui a déjà été corrigé sur deux autres cartes de ce projet.
+    if (raw.length === 0) {
+      return html`${nextDue}${emptyState(ctx.t(emptyFor(ctx.config)))}`;
+    }
 
     const by = ctx.config.group_by ?? 'date';
     const sorted = sortedBy(raw, (a, b) =>
@@ -193,7 +237,7 @@ export const SPEC: CardSpec<Config> = {
     };
 
     const groups = groupOf(limited, by, ctx.timeZone, ctx.language);
-    const out: (TemplateResult | string)[] = [overdueBanner];
+    const out: (TemplateResult | string)[] = [overdueBanner, nextDue];
     for (const g of groups) {
       out.push(html`<div class="title">${g.label}</div>`);
       for (const h of g.items) out.push(rowFor(h));

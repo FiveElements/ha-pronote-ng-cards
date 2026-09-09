@@ -60,7 +60,8 @@
     "group_by": "Agrupar por",
     "group_date": "Prazo",
     "group_subject": "Disciplina",
-    "limit": "Número máximo"
+    "limit": "Número máximo",
+    "next_due": "Próxima entrega"
   },
   "notes": {
     "name": "Notas",

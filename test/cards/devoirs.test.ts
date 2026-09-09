@@ -44,6 +44,85 @@ const withTodoList = (attributes: Record<string, unknown>, features: number) =>
   ]);
 
 describe('carte devoirs', () => {
+  // `calendar:homework` porte la prochaine échéance telle que le calendrier la
+  // voit. Elle n'est lue que dans ses ATTRIBUTS : récupérer la liste de ses
+  // évènements demanderait un appel de service, donc une collecte au rendu.
+  const withCalendar = (attributes: Record<string, unknown>, calendar: Record<string, unknown>) =>
+    hw(attributes, '2', [
+      {
+        key: 'calendar:homework',
+        entity_id: 'calendar.abc_devoirs',
+        device: 'dev_enfant',
+        state: 'off',
+        attributes: calendar,
+      },
+    ]);
+
+  const nextEvent = { message: 'DM de physique', start_time: '2026-09-15T08:00:00+02:00' };
+
+  it('nomme la prochaine échéance depuis le calendrier, que le filtre masque', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', filter: 'todo' },
+      withCalendar({ items }, nextEvent)
+    );
+    const t = text(el);
+    expect(t).toContain('Prochaine échéance');
+    expect(t).toContain('DM de physique');
+    // Assertion positive : la liste est toujours là, la ligne s'ajoute.
+    expect(t).toContain('Maths');
+  });
+
+  it('garde la prochaine échéance quand la fenêtre choisie est vide', async () => {
+    // Le moment où cette ligne sert le plus : rien à rendre dans la fenêtre
+    // demandée, mais une échéance existe plus loin.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', filter: 'todo' },
+      withCalendar({ items: [] }, nextEvent)
+    );
+    const t = text(el);
+    expect(t).toContain('Prochaine échéance');
+    expect(t).toContain('DM de physique');
+  });
+
+  it('tait la prochaine échéance avec le filtre « tous », où la liste montre déjà tout', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', filter: 'all' },
+      makeHass([
+        {
+          key: 'sensor:homework',
+          entity_id: 'sensor.abc_devoirs',
+          device: 'dev_enfant',
+          state: '2',
+          attributes: { items },
+        },
+        {
+          key: 'calendar:homework',
+          entity_id: 'calendar.abc_devoirs',
+          device: 'dev_enfant',
+          state: 'off',
+          attributes: nextEvent,
+        },
+      ])
+    );
+    const t = text(el);
+    expect(t).not.toContain('Prochaine échéance');
+    expect(t).toContain('Maths');
+  });
+
+  it('ne dit rien quand le calendrier n’a aucun évènement à venir', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', filter: 'todo' },
+      withCalendar({ items }, {})
+    );
+    const t = text(el);
+    expect(t).not.toContain('Prochaine échéance');
+    expect(t).toContain('Maths');
+  });
+
   it('liste les devoirs avec matière et énoncé', async () => {
     const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hw({ items }));
     const t = text(el);

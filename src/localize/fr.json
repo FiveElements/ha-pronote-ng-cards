@@ -60,7 +60,8 @@
     "group_by": "Grouper par",
     "group_date": "Échéance",
     "group_subject": "Matière",
-    "limit": "Nombre maximum"
+    "limit": "Nombre maximum",
+    "next_due": "Prochaine échéance"
   },
   "notes": {
     "name": "Notes",

@@ -60,7 +60,8 @@
     "group_by": "Raggruppa per",
     "group_date": "Scadenza",
     "group_subject": "Materia",
-    "limit": "Numero massimo"
+    "limit": "Numero massimo",
+    "next_due": "Prossima scadenza"
   },
   "notes": {
     "name": "Voti",
