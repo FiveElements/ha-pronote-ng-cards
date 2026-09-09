@@ -22,6 +22,12 @@ grid_options:
   rows: 9
 ```
 
+![La carte Agenda en vue listWeek : la semaine en liste, groupée par jour](assets/ha-calendar/semaine.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.* Le rendu est
+celui du YAML ci-dessus. Les deux cours préfixés de ❌ sont annulés : l'agenda
+les garde à leur place au lieu de les effacer.
+
 Remplacez `enfant_un` par ce qui figure dans **vos** identifiants d'entité :
 ils sont dérivés du nom de l'appareil de l'enfant, donc propres à votre
 installation. Le sélecteur d'entités de l'éditeur les propose.
@@ -36,6 +42,15 @@ installation. Le sélecteur d'entités de l'éditeur les propose.
 journée de cours tient en cinq à huit lignes, là où la grille mensuelle affiche
 des cases minuscules. La grille redevient intéressante pour les devoirs, qui
 sont des journées entières.
+
+Les **trois boutons en haut à droite** changent de vue sans toucher à la
+configuration : `initial_view` ne fixe que celle de l'ouverture. En
+`dayGridDay`, la même carte se réduit à la journée du jour — utile en colonne
+étroite, à côté d'autres cartes :
+
+![La même carte en vue jour : les cours du lundi seuls](assets/ha-calendar/jour.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
 
 `grid_options` n'existe que dans les vues en **sections**, la disposition par
 défaut des tableaux de bord récents. Dans une vue en masonry (l'ancienne),
@@ -97,6 +112,15 @@ mois de requêtes, en une seconde, sans que personne ne l'ait demandé.
 | Emploi du temps | la **semaine PRONOTE en cours**, jours déjà passés compris, plus la suivante le dernier jour de la semaine |
 | Devoirs | l'**horizon des devoirs**, 14 jours par défaut, réglable dans les options de l'intégration |
 | Punitions | les créneaux de la **période en cours** |
+
+Cela se voit immédiatement en vue mensuelle :
+
+![La vue mois : une seule semaine porte des pastilles, le reste du mois est vide](assets/ha-calendar/mois.png)
+
+Les pastilles s'arrêtent au vendredi de la semaine en cours, et le « +5 en plus »
+dit qu'une journée ne tient pas dans une case. Le reste du mois n'est pas vide
+parce qu'il n'y a pas cours : il est vide parce que rien n'a été collecté, et
+que faire défiler n'ira rien chercher.
 
 Donc `dayGridMonth` affiche une semaine remplie dans un mois vide, et c'est
 normal. Si vous voulez la vue mensuelle malgré tout, elle est utile pour les

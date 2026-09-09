@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 352" width="420" height="352" role="img" aria-label="La même carte Agenda en vue jour : les trois cours du lundi seuls.">
+  <title>Carte Agenda native, vue jour</title>
+  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les horaires et la journée sont inventés pour cette image.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .title { font: 400 23px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #212121; }
+    .range { font: 400 20px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #212121; }
+    .nav { font: 400 20px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #212121; }
+    .today { font: 400 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #03a9f4; }
+    .band { font: 600 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #616161; letter-spacing: .05em; }
+    .time { font: 400 13.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #212121; }
+    .subj { font: 600 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #212121; }
+    .rule { stroke: #e0e0e0; stroke-width: 1; }
+    .dot { fill: #3f51b5; }
+  </style>
+
+  <rect class="bg" width="420" height="352"/>
+  <g transform="translate(16 16)">
+    <rect class="shadow" x="1" y="3" width="388" height="320" rx="12"/>
+    <rect class="card" width="388" height="320" rx="12"/>
+
+    <text class="title" x="22" y="40">Agenda de la semaine</text>
+    <text class="range" x="22" y="76">12 janvier 2026</text>
+    <text class="nav" x="330" y="76">‹</text>
+    <text class="nav" x="360" y="76">›</text>
+
+    <text class="today" x="22" y="117">Aujourd'hui</text>
+    <rect x="232" y="96" width="134" height="32" rx="16" fill="#e1f5fe"/>
+    <rect x="277" y="96" width="44" height="32" rx="16" fill="#03a9f4"/>
+    <g fill="#0288d1">
+      <rect x="247" y="106" width="6" height="6" rx="1"/><rect x="256" y="106" width="6" height="6" rx="1"/>
+      <rect x="247" y="115" width="6" height="6" rx="1"/><rect x="256" y="115" width="6" height="6" rx="1"/>
+      <rect x="333" y="106" width="22" height="5" rx="2"/><rect x="333" y="116" width="15" height="5" rx="2"/>
+    </g>
+    <g fill="#ffffff">
+      <rect x="288" y="106" width="22" height="5" rx="2"/><rect x="288" y="116" width="22" height="5" rx="2"/>
+    </g>
+    <line class="rule" x1="22" y1="146" x2="366" y2="146"/>
+
+    <rect x="22" y="158" width="344" height="28" rx="4" fill="#f5f5f5"/>
+    <text class="band" x="194" y="177" text-anchor="middle">LUNDI</text>
+
+    <text class="time" x="34" y="220">08:30 - 09:30</text>
+    <circle class="dot" cx="134" cy="216" r="5"/>
+    <text class="subj" x="154" y="220">MATHEMATIQUES</text>
+    <text class="time" x="34" y="256">09:30 - 10:30</text>
+    <circle class="dot" cx="134" cy="252" r="5"/>
+    <text class="subj" x="154" y="256">FRANCAIS</text>
+    <text class="time" x="34" y="292">10:30 - 11:30</text>
+    <circle class="dot" cx="134" cy="288" r="5"/>
+    <text class="subj" x="154" y="292">HISTOIRE-GEOGRAPHIE</text>
+  </g>
+</svg>
