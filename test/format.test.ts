@@ -85,6 +85,17 @@ describe('formatGrade', () => {
   it('laisse passer une note textuelle non numérique telle quelle', () => {
     expect(formatGrade('Absent', 20)).toBe('Absent/20');
   });
+
+  describe('language', () => {
+    it('respecte la langue demandée', () => {
+      expect(formatGrade(14.5, 20, 'it')).toBe('14,5/20');
+      expect(formatGrade(14.5, 20, 'pt')).toBe('14,5/20');
+      expect(formatGrade(14.5, 20, 'es')).toBe('14,5/20');
+    });
+    it("retombe sur 'fr' quand la langue n'est pas fournie — ne casse pas les appelants existants", () => {
+      expect(formatGrade(14.5, 20)).toBe(formatGrade(14.5, 20, 'fr'));
+    });
+  });
 });
 
 describe('formatDuration', () => {
@@ -96,5 +107,26 @@ describe('formatDuration', () => {
   });
   it('rend les heures rondes sans minutes', () => {
     expect(formatDuration(120)).toBe('2 h');
+  });
+
+  describe('language', () => {
+    // Chaînes relevées en exécutant Intl.NumberFormat(langue, { style: 'unit', unitDisplay: 'short' })
+    // (voir node -e dans le rapport de correctifs) plutôt que devinées : fr,
+    // it, pt et es rendent tous la même abréviation d'heure et de minute en
+    // affichage court.
+    it("respecte la langue demandée pour les minutes", () => {
+      expect(formatDuration(45, 'it')).toBe('45 min');
+      expect(formatDuration(45, 'pt')).toBe('45 min');
+      expect(formatDuration(45, 'es')).toBe('45 min');
+    });
+    it('respecte la langue demandée pour heures et minutes combinées', () => {
+      expect(formatDuration(135, 'it')).toBe('2 h 15');
+      expect(formatDuration(135, 'pt')).toBe('2 h 15');
+      expect(formatDuration(135, 'es')).toBe('2 h 15');
+    });
+    it("retombe sur 'fr' quand la langue n'est pas fournie — ne casse pas les appelants existants", () => {
+      expect(formatDuration(45)).toBe(formatDuration(45, 'fr'));
+      expect(formatDuration(135)).toBe(formatDuration(135, 'fr'));
+    });
   });
 });

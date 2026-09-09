@@ -78,14 +78,20 @@ function normalize(s: string): string {
     .trim();
 }
 
+/**
+ * `language` est optionnel, replié sur 'fr', pour ne pas casser les
+ * appelants existants (les cartes ne le passent pas encore — voir le
+ * rapport de correctifs pour la liste des sites à migrer).
+ */
 export function formatGrade(
   grade: number | string | undefined,
-  outOf: number | string | undefined
+  outOf: number | string | undefined,
+  language = 'fr'
 ): string {
   if (grade === undefined || grade === null || grade === '' || ABSENT.has(String(grade))) {
     return '—';
   }
-  const g = formatGradeValue(grade);
+  const g = formatGradeValue(grade, language);
   if (outOf === undefined || outOf === null || outOf === '') return g;
   return `${g}/${outOf}`;
 }
@@ -97,16 +103,39 @@ export function formatGrade(
  * une chaîne non numérique (note textuelle PRONOTE : "Absent", "Non noté")
  * est rendue telle quelle.
  */
-function formatGradeValue(grade: number | string): string {
-  if (typeof grade === 'number') return grade.toLocaleString('fr-FR');
+function formatGradeValue(grade: number | string, language: string): string {
+  if (typeof grade === 'number') return grade.toLocaleString(language);
   const n = Number(grade);
-  return grade.trim() !== '' && !Number.isNaN(n) ? n.toLocaleString('fr-FR') : grade;
+  return grade.trim() !== '' && !Number.isNaN(n) ? n.toLocaleString(language) : grade;
 }
 
-export function formatDuration(minutes: number | undefined): string {
+/**
+ * Les unités viennent d'`Intl.NumberFormat` (`style: 'unit'`, affichage
+ * court : « 45 min », « 2 h »), jamais d'un catalogue — vérifié à
+ * l'exécution pour fr/it/pt/es, qui rendent tous la même abréviation
+ * d'heure et de minute en affichage court. `language` est optionnel,
+ * replié sur 'fr', pour ne pas casser les appelants existants.
+ *
+ * `normalize` (déjà utilisé par `formatRelative`) uniformise l'espace
+ * insécable qu'ICU insère entre le nombre et l'unité (U+202F, une espace
+ * fine insécable, distincte d'une espace normale bien qu'indiscernable
+ * à l'œil) : sans elle, le rendu varie selon la version d'ICU du moteur.
+ */
+export function formatDuration(minutes: number | undefined, language = 'fr'): string {
   if (minutes === undefined || minutes < 0) return '';
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 60) {
+    return normalize(
+      new Intl.NumberFormat(language, {
+        style: 'unit',
+        unit: 'minute',
+        unitDisplay: 'short',
+      }).format(minutes)
+    );
+  }
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m === 0 ? `${h} h` : `${h} h ${String(m).padStart(2, '0')}`;
+  const hourPart = normalize(
+    new Intl.NumberFormat(language, { style: 'unit', unit: 'hour', unitDisplay: 'short' }).format(h)
+  );
+  return m === 0 ? hourPart : `${hourPart} ${String(m).padStart(2, '0')}`;
 }
