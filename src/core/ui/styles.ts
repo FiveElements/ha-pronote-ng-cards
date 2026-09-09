@@ -154,11 +154,38 @@ export const sharedStyles = css`
      laissées au placement automatique. Une ligne sans couleur n'a pas de
      filet et une ligne sans échéance n'a pas de partie finale : en placement
      automatique, l'énoncé remonterait dans la colonne du filet et l'alignement
-     se perdrait sur les lignes mêmes qu'il devait aligner. */
+     se perdrait sur les lignes mêmes qu'il devait aligner.
+
+     Les deux colonnes de bord sont BORNEES, et c'est la correction d'un
+     défaut mesuré. La première version les dimensionnait toutes deux en
+     max-content : sur une carte de 420 pixels de large, l'échéance prenait
+     248 pixels parce que « à rendre le lundi 14 septembre » ne se replie pas
+     en max-content, et il restait 67 pixels à l'énoncé — qui se dépliait sur
+     trente lignes. La ligne la plus haute mesurait 619 pixels. Avec les
+     bornes, la même ligne en mesure 296 et l'énoncé dispose de 132 pixels.
+
+     C'est un piège propre à la grille : en flux flex, la partie finale se
+     laissait comprimer et se repliait d'elle-même. Une piste max-content ne
+     se replie JAMAIS — elle prend la largeur de son texte déplié, quoi qu'il
+     en coûte à ses voisines. La fonction fit-content borne ce maximum : la
+     piste vaut sa largeur naturelle tant qu'elle tient sous la borne, et se
+     replie au-delà. Le pourcentage se résout sur la largeur de la carte,
+     donc la borne suit la place disponible au lieu d'être un nombre de
+     pixels choisi pour une carte en particulier.
+
+     Le minmax de zéro à une fraction sur l'énoncé dit le reste : sans le
+     zéro, une piste en fraction a un minimum automatique égal à son contenu
+     minimal, et un mot long y rouvrirait le débordement que les bornes
+     viennent de fermer.
+
+     L'alignement demandé n'en souffre pas : une piste bornée reste UNE piste
+     partagée par toutes les lignes du groupe, donc la colonne de matière a
+     toujours la même largeur sur toutes les lignes du jour. La borne change
+     sa largeur, pas son unicité. */
   @supports (grid-template-columns: subgrid) {
     .devoirs-groupe {
       display: grid;
-      grid-template-columns: max-content 4px 1fr max-content;
+      grid-template-columns: fit-content(45%) 4px minmax(0, 1fr) fit-content(30%);
       column-gap: 8px;
     }
     .devoirs-groupe > .row {
