@@ -10,7 +10,7 @@
     "refresh_pending": "Solicitud enviada",
     "of": "de",
     "render_error": "Esta tarjeta no ha podido mostrarse. El detalle está en la consola del navegador.",
-    "inferred_time": "Hora de fin deducida: el servidor no la facilitó, o la facilitó inservible."
+    "inferred_time": "Hora de fin deducida por la integración: el servidor no la facilitó y el cálculo puede equivocarse."
   },
   "editor": {
     "device_id": "Alumno",

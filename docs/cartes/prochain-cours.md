@@ -38,18 +38,23 @@ sépare la mention du cours affiché : la pastille décrit **maintenant**, la
 ligne décrit **la suite**. Sans cet intitulé, on lisait l'une pour l'autre.
 
 Une heure de fin peut être **déduite** plutôt que fournie. Elle porte alors
-un `≈`, dont le sens est donné en infobulle. Deux causes, et le marqueur ne
-les distingue pas :
+un `≈`, dont le sens est donné en infobulle.
 
-- PRONOTE **omet** la fin du créneau, et elle est calculée depuis la
-  position du cours dans la grille horaire de l'établissement ;
-- PRONOTE **fournit** une fin inutilisable — à l'heure de début ou avant —
-  et l'intégration la remplace par un créneau d'une heure.
+Le marqueur a **une seule** cause : PRONOTE n'a pas envoyé la fin du
+créneau, et elle est calculée depuis la position du cours dans la grille
+horaire de l'établissement. Ce calcul peut se tromper — c'est pourquoi la
+carte le signale au lieu de présenter l'heure comme une donnée.
 
-Le `≈` se lit donc « ne prenez pas cette heure au pied de la lettre », et
-non « le serveur ne l'a pas envoyée ». Sur certains établissements il est
-allumé sur **chaque** ligne : le serveur n'y publie aucune heure de fin, et
-ce n'est pas un défaut d'affichage.
+Sur certains établissements le marqueur est allumé sur **chaque** ligne :
+le serveur n'y publie aucune heure de fin. Ce n'est pas un défaut
+d'affichage, et c'est le cas de l'instance sur laquelle ces cartes sont
+validées.
+
+L'absence du marqueur n'est pas pour autant une garantie. L'intégration
+remplace aussi une fin **impossible** — à l'heure de début ou avant — par
+un créneau d'une heure, et ce remplacement-là ne lève pas le drapeau : si
+un serveur envoyait une fin inversée, l'heure affichée serait fabriquée
+sans le `≈`. Aucun créneau de ce genre n'a été observé.
 
 ## Si la carte est vide
 

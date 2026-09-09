@@ -106,15 +106,27 @@ subjects[] de sensor:report_card
 `description` est du **HTML** ; `description_text` est le même énoncé en texte
 simple, avec de vrais retours à la ligne. Lisez `description_text` d'abord.
 
-`end_inferred` veut dire « **ne faites pas confiance à cette fin** », et non
-« le serveur ne l'a pas envoyée ». Deux causes le lèvent : la fin est absente
-de la réponse, ou elle est présente mais inutilisable (à l'heure de début ou
-avant), auquel cas l'intégration la remplace par un créneau d'une heure. Le
+`end_inferred` vaut **exactement** « le serveur n'a pas envoyé la fin » —
+vérifié dans les deux chemins de décodage de l'intégration, qui le posent tous
+deux comme un simple test d'absence du champ. Rien d'autre ne le lève. Le
 champ est toujours présent, et il peut valoir `true` sur **tous** les créneaux
-— sur l'instance de référence, 37 sur 37, parce que cet établissement ne
-publie aucune heure de fin. Le champ existe bel et bien côté protocole et
-d'autres serveurs le renseignent : ne concluez pas de ce 37/37 que la donnée
-est toujours déduite.
+— sur l'instance de référence, 37 sur 37 et **zéro** `false`, parce que cet
+établissement ne publie aucune heure de fin. Le champ existe bel et bien côté
+protocole et d'autres serveurs le renseignent : ne concluez pas de ce 37/37
+que la donnée est toujours déduite.
+
+Attention au sens de `false` : l'intégration remplace aussi une fin
+**impossible** (à l'heure de début ou avant) par un créneau d'une heure, et ce
+remplacement **ne lève pas** le drapeau. `false` veut donc dire « le serveur a
+envoyé une fin », pas « cette fin est celle du serveur ». Aucun créneau de ce
+genre n'a été observé sur l'instance de référence, faute de fin envoyée du
+tout.
+
+Les `lessons` publiées sont un **sous-ensemble** de ce que la passerelle
+décode : `background_color`, `subject_id`, `groups`, `virtual_classrooms`,
+`num`, `place` et `duration` existent côté intégration mais **ne sont pas**
+dans l'attribut. Une carte ne peut donc pas s'en servir — ce n'est pas une
+donnée manquante côté serveur, c'est une donnée non exposée.
 
 `status` est **orthogonal** à `canceled` : `canceled` dit si le cours a lieu,
 `status` dit pourquoi. Relevé réel sur une semaine — `canceled: true` avec
