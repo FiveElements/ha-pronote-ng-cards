@@ -234,6 +234,10 @@ describe('garde : aucune donnée réelle', () => {
     // workflow. La liste reste blanche plutot que de laisser passer les
     // sous-domaines d'un hote connu.
     'img.shields.io',
+    // Le service de redirection officiel de Home Assistant, derrière les
+    // boutons « Ajouter à mon Home Assistant » du README. L'URL ne porte que
+    // le propriétaire et le nom du dépôt public.
+    'my.home-assistant.io',
   ]);
 
   const scanned = () =>
@@ -246,12 +250,22 @@ describe('garde : aucune donnée réelle', () => {
     ]).filter(([f]) => !f.includes('superpowers'));
 
   it('toutes les URL citées pointent vers un hôte autorisé', () => {
+    // Tous les manquants d'un coup, et non le premier.
+    //
+    // La version précédente assérait à l'intérieur de la boucle : la première
+    // URL non autorisée levait, et les suivantes restaient invisibles. Deux
+    // hôtes arrivés dans le même commit du README ont donc coûté deux
+    // publications — la première corrigée en local, verte, puis rouge en
+    // intégration continue sur le second. Une garde qui ne montre qu'un
+    // défaut à la fois transforme une correction en ping-pong.
+    const offenders = new Set<string>();
     for (const [file, body] of scanned()) {
       for (const match of body.matchAll(/https?:\/\/([a-zA-Z0-9.-]+)/g)) {
         const host = match[1] ?? '';
-        expect(ALLOWED_HOSTS.has(host), `${file} cite l'hôte ${host}`).toBe(true);
+        if (!ALLOWED_HOSTS.has(host)) offenders.add(`${file} : ${host}`);
       }
     }
+    expect([...offenders], 'hôtes non autorisés').toEqual([]);
   });
 
   /**
