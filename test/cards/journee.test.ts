@@ -92,8 +92,9 @@ const lignes = (el: HTMLElement) =>
       // lecture qui ne dépende pas du mécanisme employé pour y arriver.
       peint:
         filet instanceof HTMLElement ? globalThis.getComputedStyle(filet).background.trim() : '',
-      // Le rang du filet parmi les enfants de la ligne : la gouttière est à
-      // gauche, donc AVANT les horaires.
+      // Le rang du filet parmi les enfants de la ligne. Sur cette carte il
+      // SEPARE l'heure de la matière, donc il vient APRES les horaires — la
+      // seule des six où la couleur n'est pas une gouttière.
       rangFilet: [...l.children].findIndex((n) => n.classList.contains('jour-filet')),
       rangHeures: [...l.children].findIndex((n) => n.classList.contains('jour-heures')),
       neutre: filet?.classList.contains('jour-filet-neutre') ?? false,
@@ -246,20 +247,34 @@ describe('carte vue journée — les cinq éléments requis', () => {
     expect(l[1]?.neutre).toBe(true);
   });
 
-  it('pose le filet en GOUTTIERE, avant les horaires', async () => {
-    // « La gouttière à gauche, partout » : le filet était auparavant posé
-    // entre les horaires et le corps, ce qui se défendait puisqu'il touchait
-    // là le contenu qu'il colore. Le placement uniforme sur les six cartes a
-    // été jugé plus utile que cet argument local.
+  it('pose le filet en SEPARATEUR, entre les horaires et la matière', async () => {
+    // Ce test a affirmé l'inverse pendant une version, et le renversement est
+    // celui du propriétaire, pas une correction de défaut. Il a demandé les
+    // deux placements l'un après l'autre : d'abord « la gouttière à gauche,
+    // partout », puis, en le voyant rendu, « la ligne de couleur doit séparer
+    // l'heure et la matière ».
+    //
+    // Ce que la seconde version dit de plus, et qui vaut d'être gardé : sur
+    // cette carte la colonne d'horaires se lit seule — « il est où, là ? » —
+    // et un filet posé à sa gauche colorait l'heure autant que la matière,
+    // alors que la couleur ne qualifie que la seconde. Entre les deux, il dit
+    // à quoi la couleur appartient.
+    //
+    // L'uniformité des six cartes n'est donc pas totale, et c'est assumé. Ne
+    // ramenez pas ce filet à gauche pour aligner les cartes entre elles : ça
+    // a été fait, puis défait.
     const el = await monter({ subject_colors: { maths: '#1e88e5' } });
     const l = lignes(el);
     // Le rang, et non `firstElementChild` : celui-ci ignore les nœuds texte
     // et rendrait le même élément quel que soit l'ordre réel des deux
-    // premiers enfants.
-    expect(l[0]?.rangFilet).toBe(0);
-    expect(l[0]?.rangHeures).toBe(1);
-    // Sur toutes les lignes, la zone repas comprise.
-    expect(l.map((x) => x.rangFilet)).toEqual(l.map(() => 0));
+    // premiers enfants. C'est la correction d'un test creux mesuré la veille.
+    expect(l[0]?.rangHeures).toBe(0);
+    expect(l[0]?.rangFilet).toBe(1);
+    // Sur toutes les lignes, la zone repas comprise : le filet du repas doit
+    // suivre le même ordre, sinon les deux sortes de lignes ne s'alignent
+    // plus dans les colonnes de la grille.
+    expect(l.map((x) => x.rangHeures)).toEqual(l.map(() => 0));
+    expect(l.map((x) => x.rangFilet)).toEqual(l.map(() => 1));
     // Appariée à un positif : les horaires sont bien rendus, la ligne n'est
     // pas vide.
     expect(l[0]?.heures).toEqual(['08:00', '09:00']);

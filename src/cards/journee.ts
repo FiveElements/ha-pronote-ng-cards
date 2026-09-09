@@ -603,11 +603,11 @@ export const SPEC: CardSpec<Config> = {
       if (slot.kind === 'meal') {
         return html`
           <div class="jour-ligne jour-repas">
-            <div class="jour-filet" aria-hidden="true"></div>
             <div class="jour-heures">
               <span>${formatTime(slot.start, lang, tz)}${mealInferred ? '≈' : ''}</span>
               <span>${formatTime(slot.end, lang, tz)}</span>
             </div>
+            <div class="jour-filet" aria-hidden="true"></div>
             <div class="jour-corps">
               <span
                 class="jour-matiere"
@@ -656,21 +656,6 @@ export const SPEC: CardSpec<Config> = {
 
       return html`
         <div class="jour-ligne ${current ? 'jour-courant' : ''}">
-          <!-- Le filet AVANT les horaires : la couleur de matière est une
-               gouttière à gauche sur les six cartes, et la valeur passe par
-               la même propriété personnalisée que la règle .row.accented —
-               pas par un fond en style en ligne.
-
-               Sans guillemet oblique dans ce commentaire : il est à
-               l'intérieur du gabarit html, qu'un guillemet oblique fermerait
-               au milieu. Ici l'erreur signalée était « Property row does not
-               exist on type TemplateResult », à deux lignes du vrai
-               coupable. -->
-          <div
-            class="jour-filet ${accent === undefined ? 'jour-filet-neutre' : ''}"
-            style=${accent === undefined ? nothing : `--pronote-subject-color: ${accent}`}
-            aria-hidden="true"
-          ></div>
           <div class="jour-heures">
             <span>${formatTime(l.start, lang, tz)}</span>
             <!-- L'heure de FIN, et le « ≈ » quand l'intégration l'a déduite
@@ -682,6 +667,26 @@ export const SPEC: CardSpec<Config> = {
               >${l.end_inferred === true ? '≈' : ''}${formatTime(l.end, lang, tz)}</span
             >
           </div>
+          <!-- Le filet ENTRE les horaires et le corps : sur cette carte il
+               sépare l'heure de la matière, il ne borde pas la ligne. C'est la
+               seule des six où la couleur n'est pas une gouttière, et le
+               propriétaire a tranché dans ce sens après avoir vu les deux.
+
+               La valeur passe malgré tout par la même propriété personnalisée
+               que la règle .row.accented des cinq autres : un placement
+               différent ne justifie pas un second mécanisme, sinon le
+               filtrage de la valeur finit par divorcer entre les deux.
+
+               Sans guillemet oblique dans ce commentaire : il est à
+               l'intérieur du gabarit html, qu'un guillemet oblique fermerait
+               au milieu. Ici l'erreur signalée était « Property row does not
+               exist on type TemplateResult », à deux lignes du vrai
+               coupable. -->
+          <div
+            class="jour-filet ${accent === undefined ? 'jour-filet-neutre' : ''}"
+            style=${accent === undefined ? nothing : `--pronote-subject-color: ${accent}`}
+            aria-hidden="true"
+          ></div>
           <div class="jour-corps">
             <div class="jour-tete">
               <span class="jour-matiere ${canceled ? 'canceled' : ''}"

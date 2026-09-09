@@ -273,10 +273,23 @@ export const sharedStyles = css`
   }
   .jour-ligne {
     display: grid;
-    /* Le filet, puis les horaires, puis le corps. Deux chiffres, deux points,
+    /* Les horaires, puis le filet, puis le corps. Deux chiffres, deux points,
        deux chiffres, plus le marqueur de fin déduite : 4,5em tient
-       « ≈08:00 » sans que la police du thème puisse le tronquer. */
-    grid-template-columns: 4px 4.5em 1fr;
+       « ≈08:00 » sans que la police du thème puisse le tronquer.
+
+       Le filet est ici un SEPARATEUR entre l'heure et la matière, et c'est la
+       seule carte des six où il ne borde pas la ligne. Le propriétaire a
+       demandé les deux placements l'un après l'autre et a tranché pour
+       celui-ci : sur cette carte la colonne d'horaires est un repère qu'on
+       lit seul — « il est où, là ? » — et un filet posé à sa gauche colorait
+       l'heure autant que la matière, alors que la couleur ne qualifie que la
+       seconde. Placé entre les deux, il dit à quoi la couleur appartient.
+
+       L'uniformité des six cartes n'est donc pas totale, et c'est assumé : la
+       gouttière qualifie une ligne de liste, ce filet-ci sépare deux colonnes
+       dont une seule est colorée. Ne le ramenez pas à gauche pour aligner les
+       cartes entre elles — ça a été fait, puis défait. */
+    grid-template-columns: 4.5em 4px 1fr;
     gap: 10px;
     align-items: stretch;
     padding: 8px 0;
