@@ -47,7 +47,11 @@ Le cas qui a produit cette règle, le 9 septembre 2026. Trois captures de l'inst
 
 Mais ce qui fonde la règle est **que la seconde question n'était pas la première**, et c'est cela qu'il faut retenir plutôt que la rétractation. Une règle qui reposerait sur « le propriétaire a reconnu son erreur » ne servirait à rien le jour où il ne se rétracte pas — or c'est précisément ce jour-là qu'il faut reposer la question. La rétractation confirme la règle ; elle ne la porte pas.
 
-Ce paragraphe a lui-même dû être corrigé deux fois, et les deux erreurs valent d'être connues parce qu'elles sont symétriques. **D'abord** il attribuait au propriétaire une qualification qu'il n'avait pas formulée — l'erreur que cette section dénonce, commise dans son propre compte rendu. **Ensuite**, corrigeant cela sur le rapport d'une session pair qui avait le transcript de la première question, il a retiré une phrase que le propriétaire a immédiatement confirmée être vraie. Le rapport d'un pair sur le raisonnement du propriétaire est une information ; **seul le propriétaire dit ce qu'il a voulu dire**, et la voie courte est de le lui demander plutôt que de trancher dans un sens ou dans l'autre.
+Ce paragraphe a lui-même dû être corrigé deux fois, et les deux erreurs valent d'être connues parce qu'elles sont symétriques.
+
+**D'abord** il donnait pour un fait une lecture. Le propriétaire avait écrit « c'est une erreur » sans dire de quoi ; le paragraphe affirmait qu'il parlait de sa première réponse. Cette lecture s'est avérée juste — il l'a confirmée depuis — mais elle ne l'était pas encore quand elle a été écrite. **Avoir raison sans être fondé n'est pas avoir raison :** la phrase aurait été identique si la lecture avait été fausse.
+
+**Ensuite**, corrigeant cela sur le rapport d'une session pair qui avait le transcript de la première question, il a retiré une phrase vraie. Le pair concluait de l'absence d'une rétractation *dans sa vue* à son absence tout court — le propriétaire s'était adressé à une autre session. Le rapport d'un pair sur le raisonnement du propriétaire est une information ; **seul le propriétaire dit ce qu'il a voulu dire**, et la voie courte est de le lui demander plutôt que de trancher dans un sens ou dans l'autre.
 
 Ce que ça coûte de se tromper dans un sens et dans l'autre est asymétrique, et c'est ce qui tranche : reposer une question inutilement coûte un message. Traiter un « j'assume » comme un blanc-seing publie l'emploi du temps d'un enfant sur un site indexé.
 
