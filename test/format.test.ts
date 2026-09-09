@@ -137,7 +137,6 @@ describe('formatGrade', () => {
   });
 });
 
-
 describe('plainText', () => {
   // Forme réelle d'un énoncé de devoir : l'intégration recopie le HTML de
   // PRONOTE. La carte l'affichait tel quel, et le parent lisait les balises.
@@ -195,7 +194,7 @@ describe('formatDuration', () => {
     // (voir node -e dans le rapport de correctifs) plutôt que devinées : fr,
     // it, pt et es rendent tous la même abréviation d'heure et de minute en
     // affichage court.
-    it("respecte la langue demandée pour les minutes", () => {
+    it('respecte la langue demandée pour les minutes', () => {
       expect(formatDuration(45, 'it')).toBe('45 min');
       expect(formatDuration(45, 'pt')).toBe('45 min');
       expect(formatDuration(45, 'es')).toBe('45 min');

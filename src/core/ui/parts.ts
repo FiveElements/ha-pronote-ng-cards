@@ -17,8 +17,7 @@ export const unavailableState = (t: Translate): TemplateResult =>
 /** État « entité absente » : demande une action de l'utilisateur. */
 export const missingState = (keys: readonly string[], t: Translate): TemplateResult => html`
   <div class="notice problem">
-    ${t('common.missing_body')}
-    ${keys.map((k) => html`<code>${k}</code> `)}
+    ${t('common.missing_body')} ${keys.map((k) => html`<code>${k}</code> `)}
   </div>
   <div class="notice">${t('common.missing_hint')}</div>
 `;
@@ -110,19 +109,21 @@ export const listRow = (o: RowOptions): TemplateResult => {
   const trailing = o.trailing ? html`<span class="trailing">${o.trailing}</span>` : '';
   return html`
     <div
-      class="row ${o.canceled ? 'canceled' : ''} ${o.accent === undefined
-        ? ''
-        : 'accented'} ${o.stacked === true ? 'empile' : ''}"
+      class="row ${o.canceled ? 'canceled' : ''} ${
+        o.accent === undefined ? '' : 'accented'
+      } ${o.stacked === true ? 'empile' : ''}"
       style=${typeof o.accent === 'string' ? `--pronote-subject-color: ${o.accent}` : nothing}
     >
-      ${o.stacked === true
-        ? // L'ordre du DOM est l'ordre visuel : titre puis contenu. Un `order`
-          // en CSS aurait donné le même rendu en laissant le DOM mentir sur la
-          // position — donc un test de placement qui passe alors que le
-          // lecteur d'écran lit l'énoncé avant sa matière.
-          html`<div class="empile-tete">${primary}${trailing}</div>
-            ${secondary}`
-        : html`${primary}${secondary}${trailing}`}
+      ${
+        o.stacked === true
+          ? // L'ordre du DOM est l'ordre visuel : titre puis contenu. Un `order`
+            // en CSS aurait donné le même rendu en laissant le DOM mentir sur la
+            // position — donc un test de placement qui passe alors que le
+            // lecteur d'écran lit l'énoncé avant sa matière.
+            html`<div class="empile-tete">${primary}${trailing}</div>
+              ${secondary}`
+          : html`${primary}${secondary}${trailing}`
+      }
     </div>
   `;
 };

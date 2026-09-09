@@ -148,63 +148,71 @@ export const SPEC: CardSpec<Config> = {
       ctx.status(LESSONS_CANCELED) === 'ok' && ctx.entity(LESSONS_CANCELED)?.state === 'on';
 
     return html`
-      ${inClass || lessonsCanceledToday
-        ? html`<div class="row">
-            ${inClass ? chip(ctx.t('prochain_cours.in_class')) : ''}
-            ${lessonsCanceledToday ? chip(ctx.t('prochain_cours.lessons_canceled'), 'warn') : ''}
-          </div>`
-        : ''}
+      ${
+        inClass || lessonsCanceledToday
+          ? html`<div class="row">
+              ${inClass ? chip(ctx.t('prochain_cours.in_class')) : ''}
+              ${lessonsCanceledToday ? chip(ctx.t('prochain_cours.lessons_canceled'), 'warn') : ''}
+            </div>`
+          : ''
+      }
       ${inClass ? html`<div class="title">${ctx.t('prochain_cours.name')}</div>` : ''}
       ${listRow({
         primary: subject || ctx.t('prochain_cours.name'),
-        secondary: start
-          ? html`${timeRange} · ${formatRelative(e.state, lang)}`
-          : undefined,
+        secondary: start ? html`${timeRange} · ${formatRelative(e.state, lang)}` : undefined,
         trailing: canceled ? chip(ctx.t('prochain_cours.canceled'), 'problem') : undefined,
         canceled,
         accent: accent ?? null,
       })}
       ${room ? listRow({ primary: ctx.t('prochain_cours.room', { room }), accent: null }) : ''}
       ${teachers ? listRow({ primary: teachers, accent: null }) : ''}
-      ${ctx.config.show_wake_up && ctx.status(WAKE) === 'ok'
-        ? listRow({
-            primary: ctx.t('prochain_cours.wake_up', {
-              time: formatTime(ctx.entity(WAKE)?.state, lang, tz),
-            }),
-            accent: null,
-          })
-        : ''}
-      ${ctx.config.show_end_of_day && ctx.status(END) === 'ok'
-        ? listRow({
-            // Même réserve que pour la fin du cours : la fin de journée se
-            // déduit du dernier créneau, dont la fin peut elle-même l'être.
-            primary: html`${ctx.t('prochain_cours.end_of_day', {
-              time: formatTime(ctx.entity(END)?.state, lang, tz),
-            })}${ctx.attr<boolean>(END, 'end_inferred') === true
-              ? html` <span title=${ctx.t('common.inferred_time')}>≈</span>`
-              : ''}`,
-            accent: null,
-          })
-        : ''}
-      ${ctx.config.show_next_test && ctx.status(TEST) === 'ok'
-        ? listRow({
-            // Contrairement à `wake_up`/`end_of_day`, un contrôle n'a aucune
-            // raison de tomber le jour même : le jour et l'heure comptent
-            // tous les deux, d'où `formatDayLabel` en plus de `formatTime`
-            // (mêmes outils — ctx.language, ctx.timeZone — que les deux
-            // autres lignes). L'intégration ne documente aucun attribut de
-            // matière sur cette entité : mieux vaut une ligne juste
-            // qu'une ligne enrichie d'une donnée supposée.
-            primary: ctx.t('prochain_cours.next_test'),
-            secondary: [
-              formatDayLabel(ctx.entity(TEST)?.state, lang, tz),
-              formatTime(ctx.entity(TEST)?.state, lang, tz),
-            ]
-              .filter(Boolean)
-              .join(' · '),
-            accent: null,
-          })
-        : ''}
+      ${
+        ctx.config.show_wake_up && ctx.status(WAKE) === 'ok'
+          ? listRow({
+              primary: ctx.t('prochain_cours.wake_up', {
+                time: formatTime(ctx.entity(WAKE)?.state, lang, tz),
+              }),
+              accent: null,
+            })
+          : ''
+      }
+      ${
+        ctx.config.show_end_of_day && ctx.status(END) === 'ok'
+          ? listRow({
+              // Même réserve que pour la fin du cours : la fin de journée se
+              // déduit du dernier créneau, dont la fin peut elle-même l'être.
+              primary: html`${ctx.t('prochain_cours.end_of_day', {
+                time: formatTime(ctx.entity(END)?.state, lang, tz),
+              })}${
+                ctx.attr<boolean>(END, 'end_inferred') === true
+                  ? html` <span title=${ctx.t('common.inferred_time')}>≈</span>`
+                  : ''
+              }`,
+              accent: null,
+            })
+          : ''
+      }
+      ${
+        ctx.config.show_next_test && ctx.status(TEST) === 'ok'
+          ? listRow({
+              // Contrairement à `wake_up`/`end_of_day`, un contrôle n'a aucune
+              // raison de tomber le jour même : le jour et l'heure comptent
+              // tous les deux, d'où `formatDayLabel` en plus de `formatTime`
+              // (mêmes outils — ctx.language, ctx.timeZone — que les deux
+              // autres lignes). L'intégration ne documente aucun attribut de
+              // matière sur cette entité : mieux vaut une ligne juste
+              // qu'une ligne enrichie d'une donnée supposée.
+              primary: ctx.t('prochain_cours.next_test'),
+              secondary: [
+                formatDayLabel(ctx.entity(TEST)?.state, lang, tz),
+                formatTime(ctx.entity(TEST)?.state, lang, tz),
+              ]
+                .filter(Boolean)
+                .join(' · '),
+              accent: null,
+            })
+          : ''
+      }
     `;
   },
 };

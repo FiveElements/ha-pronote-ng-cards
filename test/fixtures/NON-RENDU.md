@@ -16,12 +16,12 @@ qu'elle contenait, et les relectures qui ont suivi l'ont rendu faux. Quatre
 entrées d'ici font qu'une carte **affirme quelque chose d'inexact**, et elles
 ne se rangent pas avec les autres :
 
-| carte | l'affirmation fausse | le champ qui la corrigerait |
-| --- | --- | --- |
-| Vie scolaire | une exclusion présentée comme une retenue | `punishments[].exclusion`, publié |
-| Notes | une note de bonus ou facultative présentée comme une note qui compte | `items[].is_bonus`, `.is_optional`, publiés |
-| Cantine | un dîner titré « menu du jour » | `is_lunch`, publié |
-| Notes | « /20 » sur une moyenne générale, quelle que soit l'échelle | aucun — le producteur publie une constante |
+| carte        | l'affirmation fausse                                                 | le champ qui la corrigerait                 |
+| ------------ | -------------------------------------------------------------------- | ------------------------------------------- |
+| Vie scolaire | une exclusion présentée comme une retenue                            | `punishments[].exclusion`, publié           |
+| Notes        | une note de bonus ou facultative présentée comme une note qui compte | `items[].is_bonus`, `.is_optional`, publiés |
+| Cantine      | un dîner titré « menu du jour »                                      | `is_lunch`, publié                          |
+| Notes        | « /20 » sur une moyenne générale, quelle que soit l'échelle          | aucun — le producteur publie une constante  |
 
 **Un manque se voit ; une affirmation fausse ressemble à un affichage
 correct.** C'est pourquoi ces quatre-là passent devant tout le reste de ce
@@ -37,15 +37,15 @@ pas par inadvertance.
 configuration.** C'est la perte la plus lourde, et elle est structurelle :
 il n'y a pas d'option à activer, il n'y a pas de carte.
 
-| clé | ce qui est perdu | gravité |
-| --- | --- | --- |
-| `sensor:information`, `sensor:unread_information` | les actualités de l'établissement, et leur compte non lu | **haute** — un parent ne les voit qu'en tuile, sans le titre ni l'auteur |
-| `sensor:discussions`, `sensor:unread_messages` | les messages de la messagerie, et leur compte non lu | **haute** — même raison |
-| `sensor:teaching_staff` | l'équipe pédagogique | moyenne, et non observable : indisponible sur l'instance de référence |
-| `sensor:periods` | la liste de **toutes** les périodes avec leurs bornes | moyenne — les cartes ne lisent que la période en cours |
-| `calendar:timetable`, `calendar:punishments` | les évènements de calendrier correspondants | faible — les capteurs portent la même information sous forme de liste |
-| `button:refresh`, `button:refresh_marks` | les deux boutons de rafraîchissement | faible — la carte limiteur appelle le service, ce qui est équivalent et mieux encadré |
-| les 11 `event:*` | note, devoir, cours modifié, actualité, absence, retard, punition, message, évaluation | faible pour une carte — un `event` sert une automatisation, pas un affichage |
+| clé                                               | ce qui est perdu                                                                       | gravité                                                                               |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `sensor:information`, `sensor:unread_information` | les actualités de l'établissement, et leur compte non lu                               | **haute** — un parent ne les voit qu'en tuile, sans le titre ni l'auteur              |
+| `sensor:discussions`, `sensor:unread_messages`    | les messages de la messagerie, et leur compte non lu                                   | **haute** — même raison                                                               |
+| `sensor:teaching_staff`                           | l'équipe pédagogique                                                                   | moyenne, et non observable : indisponible sur l'instance de référence                 |
+| `sensor:periods`                                  | la liste de **toutes** les périodes avec leurs bornes                                  | moyenne — les cartes ne lisent que la période en cours                                |
+| `calendar:timetable`, `calendar:punishments`      | les évènements de calendrier correspondants                                            | faible — les capteurs portent la même information sous forme de liste                 |
+| `button:refresh`, `button:refresh_marks`          | les deux boutons de rafraîchissement                                                   | faible — la carte limiteur appelle le service, ce qui est équivalent et mieux encadré |
+| les 11 `event:*`                                  | note, devoir, cours modifié, actualité, absence, retard, punition, message, évaluation | faible pour une carte — un `event` sert une automatisation, pas un affichage          |
 
 Les deux premières lignes sont le vrai trou : **actualités et messagerie
 n'ont aucune carte**, alors que le producteur publie l'intitulé, l'auteur,
@@ -58,36 +58,36 @@ la catégorie, la date et l'état lu pour chaque actualité.
 Formes prises du source de l'intégration pour les punitions et les retards,
 dont les listes sont vides sur l'instance de référence.
 
-| champ | lu ? | conséquence |
-| --- | --- | --- |
-| `absences[].days` | **non** | une absence de trois jours s'affiche comme une absence d'une heure ; seule la durée en heures est montrée |
-| `delays[].justification` | **non** | champ **distinct** de `reasons` : le texte de justification est perdu |
-| `punishments[].exclusion` | **non** | **une exclusion s'affiche exactement comme une retenue.** C'est la perte la plus grave de tout le document : deux sanctions de nature très différente rendues à l'identique. Lecture confirmée à la source — `_punishment_dict` (`sensor.py:636`) publie bien `exclusion`, un booléen (`models.py:313`), et la carte déclare `nature`, `giver` et `schedule[].duration_minutes` sans lui |
-| `punishments[].reasons` | **non** | le motif de la punition, alors que le motif d'une absence est bien montré |
-| `punishments[].schedule[].start` | **non** | la durée totale est calculée, mais **quand** la punition a lieu n'est jamais dit |
-| `absences[].id`, `delays[].id`, `punishments[].id` | non | sans conséquence d'affichage |
+| champ                                              | lu ?    | conséquence                                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `absences[].days`                                  | **non** | une absence de trois jours s'affiche comme une absence d'une heure ; seule la durée en heures est montrée                                                                                                                                                                                                                                                                                |
+| `delays[].justification`                           | **non** | champ **distinct** de `reasons` : le texte de justification est perdu                                                                                                                                                                                                                                                                                                                    |
+| `punishments[].exclusion`                          | **non** | **une exclusion s'affiche exactement comme une retenue.** C'est la perte la plus grave de tout le document : deux sanctions de nature très différente rendues à l'identique. Lecture confirmée à la source — `_punishment_dict` (`sensor.py:636`) publie bien `exclusion`, un booléen (`models.py:313`), et la carte déclare `nature`, `giver` et `schedule[].duration_minutes` sans lui |
+| `punishments[].reasons`                            | **non** | le motif de la punition, alors que le motif d'une absence est bien montré                                                                                                                                                                                                                                                                                                                |
+| `punishments[].schedule[].start`                   | **non** | la durée totale est calculée, mais **quand** la punition a lieu n'est jamais dit                                                                                                                                                                                                                                                                                                         |
+| `absences[].id`, `delays[].id`, `punishments[].id` | non     | sans conséquence d'affichage                                                                                                                                                                                                                                                                                                                                                             |
 
 ### Emploi du temps
 
-| champ | lu ? | conséquence |
-| --- | --- | --- |
-| `lessons[].detention` | **non** | une retenue est rendue comme un cours ordinaire |
-| `lessons[].exempted` | **non** | une dispense est rendue comme un cours ordinaire |
-| `lessons[].memo` | non | non observable : `null` sur les 37 créneaux relevés |
-| `first_start`, `last_end` | **non** | aucune borne de journée affichée |
-| `canceled_count` | non | recalculable depuis la liste |
-| `weeks` | non | sans usage d'affichage |
-| `end_inferred` | **écarté** | délibéré : cette carte n'affiche que l'heure de **début**, elle ne présente donc jamais une fin déduite comme une donnée |
+| champ                     | lu ?       | conséquence                                                                                                              |
+| ------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `lessons[].detention`     | **non**    | une retenue est rendue comme un cours ordinaire                                                                          |
+| `lessons[].exempted`      | **non**    | une dispense est rendue comme un cours ordinaire                                                                         |
+| `lessons[].memo`          | non        | non observable : `null` sur les 37 créneaux relevés                                                                      |
+| `first_start`, `last_end` | **non**    | aucune borne de journée affichée                                                                                         |
+| `canceled_count`          | non        | recalculable depuis la liste                                                                                             |
+| `weeks`                   | non        | sans usage d'affichage                                                                                                   |
+| `end_inferred`            | **écarté** | délibéré : cette carte n'affiche que l'heure de **début**, elle ne présente donc jamais une fin déduite comme une donnée |
 
 ### Devoirs
 
-| champ | lu ? | conséquence |
-| --- | --- | --- |
-| `items[].attachments` | **non** | les pièces jointes d'un devoir ne sont jamais signalées |
-| `items[].done` | **conditionnel** | lu, mais rendu **seulement** si l'entité de liste annonce l'écriture. Sur une installation sans écriture — le cas de l'instance de référence — rien n'indique qu'un devoir est fait |
-| `homework_todo.next_due` | non | la carte prend la prochaine échéance de `calendar:homework` à la place ; même information par un chemin plus long |
-| `homework_overdue.count`, `.items` | non | le bandeau ne dit pas **combien** de devoirs sont en retard |
-| `calendar:homework.end_time`, `.location`, `.description` | non | sans usage clair |
+| champ                                                     | lu ?             | conséquence                                                                                                                                                                         |
+| --------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items[].attachments`                                     | **non**          | les pièces jointes d'un devoir ne sont jamais signalées                                                                                                                             |
+| `items[].done`                                            | **conditionnel** | lu, mais rendu **seulement** si l'entité de liste annonce l'écriture. Sur une installation sans écriture — le cas de l'instance de référence — rien n'indique qu'un devoir est fait |
+| `homework_todo.next_due`                                  | non              | la carte prend la prochaine échéance de `calendar:homework` à la place ; même information par un chemin plus long                                                                   |
+| `homework_overdue.count`, `.items`                        | non              | le bandeau ne dit pas **combien** de devoirs sont en retard                                                                                                                         |
+| `calendar:homework.end_time`, `.location`, `.description` | non              | sans usage clair                                                                                                                                                                    |
 
 ### Notes et moyennes — la famille auditée clé par clé
 
@@ -95,7 +95,7 @@ Cette famille a produit **trois** défauts de clé supposée (`grade` au lieu de
 `value`, `average` au lieu de `student`, plus une erreur de contrat trouvée par
 un pair). Le mécanisme a été nommé : les clés y décrivent des **rôles** —
 l'élève, la classe, le minimum — là où l'intuition attend la notion mesurée.
-Une clé devinée y est donc *plausible* et fausse, ce qui est le pire cas : rien
+Une clé devinée y est donc _plausible_ et fausse, ce qui est le pire cas : rien
 ne casse, une valeur manque.
 
 Les huit constructeurs ont donc été relus un à un dans `sensor.py`, chaque clé
@@ -108,17 +108,17 @@ lisent.
 
 Ce que l'audit a trouvé à la place, ce sont des champs publiés et non lus :
 
-| champ | lu ? | conséquence |
-| --- | --- | --- |
-| `items[].is_bonus` de `sensor:grades` | **non** | **une note de bonus s'affiche comme une note ordinaire.** Même nature que l'exclusion rendue comme une retenue : deux choses de portée différente présentées à l'identique |
-| `items[].is_optional` | **non** | une note facultative, qui peut ne pas compter, est présentée comme une note qui compte |
-| `items[].comment` | **non** | le commentaire du professeur sur la note |
-| `items[].min` / `.max` de `sensor:grades` | non | le minimum et le maximum de la classe sur ce devoir |
-| `items[].min` / `.max` de `sensor:averages` | non | idem sur la moyenne de la matière |
-| `items[].subject_id` de `sensor:averages` | non | sans usage d'affichage |
-| `subjects[].id` / `.teachers` du bulletin | non | sans conséquence |
-| `items[].domain` de `sensor:evaluations` | non | le domaine d'acquisition |
-| `sensor:periods` en entier | **non** | déjà compté au niveau 1 |
+| champ                                       | lu ?    | conséquence                                                                                                                                                                |
+| ------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items[].is_bonus` de `sensor:grades`       | **non** | **une note de bonus s'affiche comme une note ordinaire.** Même nature que l'exclusion rendue comme une retenue : deux choses de portée différente présentées à l'identique |
+| `items[].is_optional`                       | **non** | une note facultative, qui peut ne pas compter, est présentée comme une note qui compte                                                                                     |
+| `items[].comment`                           | **non** | le commentaire du professeur sur la note                                                                                                                                   |
+| `items[].min` / `.max` de `sensor:grades`   | non     | le minimum et le maximum de la classe sur ce devoir                                                                                                                        |
+| `items[].min` / `.max` de `sensor:averages` | non     | idem sur la moyenne de la matière                                                                                                                                          |
+| `items[].subject_id` de `sensor:averages`   | non     | sans usage d'affichage                                                                                                                                                     |
+| `subjects[].id` / `.teachers` du bulletin   | non     | sans conséquence                                                                                                                                                           |
+| `items[].domain` de `sensor:evaluations`    | non     | le domaine d'acquisition                                                                                                                                                   |
+| `sensor:periods` en entier                  | **non** | déjà compté au niveau 1                                                                                                                                                    |
 
 **Et un défaut qui n'est pas de mon côté.** `_period_attributes`
 (`sensor.py:521-526`) publie `"out_of": 20` — un littéral, jamais lu depuis les
@@ -130,8 +130,8 @@ disponible.
 
 ### Cantine
 
-| champ | lu ? | conséquence |
-| --- | --- | --- |
+| champ      | lu ?    | conséquence                                                                                                                                                      |
+| ---------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `is_lunch` | **non** | ses **trois** valeurs sont perdues : `null` (on ne sait pas), `true`, `false`. « On ne sait pas s'il s'agit du déjeuner » n'est pas « ce n'est pas le déjeuner » |
 
 ## Niveau 3 — décodé par l'intégration, jamais publié

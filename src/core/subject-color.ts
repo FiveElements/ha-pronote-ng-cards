@@ -142,11 +142,7 @@ export function subjectColor(value: unknown): string | undefined {
  * comparaison l'est.
  */
 const fold = (value: string | undefined): string =>
-  (value ?? '')
-    .normalize('NFD')
-    .replace(/\p{M}/gu, '')
-    .trim()
-    .toLowerCase();
+  (value ?? '').normalize('NFD').replace(/\p{M}/gu, '').trim().toLowerCase();
 
 export function subjectAccent(
   published: unknown,

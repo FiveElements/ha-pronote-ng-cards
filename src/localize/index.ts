@@ -18,7 +18,8 @@ export function localize(
   vars?: Record<string, string | number>,
   language = FALLBACK
 ): string {
-  const found = lookup(CATALOGS[language] ?? CATALOGS[FALLBACK], path) ?? lookup(CATALOGS[FALLBACK], path);
+  const found =
+    lookup(CATALOGS[language] ?? CATALOGS[FALLBACK], path) ?? lookup(CATALOGS[FALLBACK], path);
   if (typeof found !== 'string') return path;
   if (!vars) return found;
   return found.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));

@@ -50,7 +50,11 @@ const evals = (attributes: Record<string, unknown>, state = '2') =>
 
 describe('carte évaluations', () => {
   it('liste les évaluations, la plus récente en tête', async () => {
-    const el = await mountCard('pronote-ng-evaluations', { device_id: 'dev_enfant' }, evals({ items }));
+    const el = await mountCard(
+      'pronote-ng-evaluations',
+      { device_id: 'dev_enfant' },
+      evals({ items })
+    );
     const t = text(el);
     expect(t).toContain('Mathématiques');
     expect(t).toContain('Anglais');
@@ -59,7 +63,11 @@ describe('carte évaluations', () => {
   });
 
   it('détaille les compétences et leur niveau, sans jamais les traduire', async () => {
-    const el = await mountCard('pronote-ng-evaluations', { device_id: 'dev_enfant' }, evals({ items }));
+    const el = await mountCard(
+      'pronote-ng-evaluations',
+      { device_id: 'dev_enfant' },
+      evals({ items })
+    );
     const t = text(el);
     expect(t).toContain('Modéliser');
     // Le libellé de maîtrise est le texte du serveur, rendu tel quel :
@@ -127,7 +135,9 @@ describe('carte évaluations', () => {
       'pronote-ng-evaluations',
       { device_id: 'dev_enfant' },
       evals({
-        items: [{ subject: 'Physique', acquisitions: [null, { name: 'Observer', level: 'Acquis' }] }],
+        items: [
+          { subject: 'Physique', acquisitions: [null, { name: 'Observer', level: 'Acquis' }] },
+        ],
       })
     );
     const t = text(el);

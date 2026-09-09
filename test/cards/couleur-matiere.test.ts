@@ -90,7 +90,7 @@ beforeAll(() => {
 const accents = (el: HTMLElement): (string | null)[] =>
   [...(el.shadowRoot?.querySelectorAll('.row.accented') ?? [])].map((row) =>
     row instanceof HTMLElement
-      ? (row.style.getPropertyValue('--pronote-subject-color').trim() || null)
+      ? row.style.getPropertyValue('--pronote-subject-color').trim() || null
       : null
   );
 

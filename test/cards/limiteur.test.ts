@@ -18,9 +18,13 @@ beforeAll(() => {
   defineCard(SPEC);
 });
 
-
-const compte = (key: string, entity_id: string, state: string, attributes = {}) =>
-  ({ key, entity_id, device: 'dev_compte' as const, state, attributes });
+const compte = (key: string, entity_id: string, state: string, attributes = {}) => ({
+  key,
+  entity_id,
+  device: 'dev_compte' as const,
+  state,
+  attributes,
+});
 
 describe('carte limiteur', () => {
   it("résout les entités de compte depuis le device_id de l'enfant", async () => {
@@ -117,7 +121,7 @@ describe('carte limiteur', () => {
     expect(text(el)).not.toContain('Durée de vie de la session');
   });
 
-  it("affiche la durée de vie de la session mise en forme (heures) quand `sensor:session_lifetime` est résolue", async () => {
+  it('affiche la durée de vie de la session mise en forme (heures) quand `sensor:session_lifetime` est résolue', async () => {
     const hass = makeHass([
       compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
       // La forme RÉELLE : la durée de vie, elle, est publiée en MINUTES.
@@ -181,9 +185,7 @@ describe('carte limiteur', () => {
   });
 
   it("retombe sur l'état brut pour un état que le catalogue ne connaît pas encore", async () => {
-    const hass = makeHass([
-      compte('sensor:limiter_state', 'sensor.cpt_etat', 'maintenance'),
-    ]);
+    const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'maintenance')]);
     const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     // Ni la clé technique manquante...
@@ -326,9 +328,9 @@ describe('carte limiteur', () => {
         failing: { static: 4 },
       }),
     ]);
-    expect(text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass))).toContain(
-      'en échec : static'
-    );
+    expect(
+      text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass))
+    ).toContain('en échec : static');
   });
 
   it('ne nomme pas deux fois le même palier', async () => {

@@ -102,7 +102,7 @@ describe('carte notes', () => {
     expect(t).not.toContain('Aucune note');
   });
 
-  it("dit « aucune moyenne » sur une carte limitée à la section « par matière »", async () => {
+  it('dit « aucune moyenne » sur une carte limitée à la section « par matière »', async () => {
     const hass = makeHass([
       {
         key: 'sensor:averages',
@@ -246,7 +246,7 @@ describe('carte notes', () => {
     expect(t).toContain('13,5');
   });
 
-  it("ne montre rien pour la période quand `sensor:current_period` est indisponible", async () => {
+  it('ne montre rien pour la période quand `sensor:current_period` est indisponible', async () => {
     // La spec (§5.1) est explicite : la période devient *indisponible*
     // plutôt que fausse quand l'intégration ne peut pas la déterminer —
     // aucun repli ne doit se glisser à sa place.

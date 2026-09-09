@@ -547,24 +547,28 @@ export const SPEC: CardSpec<Config> = {
             <!-- Le retour à aujourd'hui n'apparaît que lorsqu'on n'y est
                  plus : un bouton qui ne fait rien fatigue plus qu'il
                  n'aide. -->
-            ${navOn && cursor !== 0
-              ? html`<button
-                  class="jour-retour"
-                  @click=${() => {
+            ${
+              navOn && cursor !== 0
+                ? html`<button
+                    class="jour-retour"
+                    @click=${() => {
                     ctx.setCursor(0);
                   }}
-                >
-                  ${ctx.t('journee.today')}
-                </button>`
-              : ''}
+                  >
+                    ${ctx.t('journee.today')}
+                  </button>`
+                : ''
+            }
           </div>
-          ${from === '' || to === ''
-            ? ''
-            : html`<span
-                class="jour-bornes"
-                title=${inferred ? ctx.t('common.inferred_time') : ''}
-                >${from} – ${inferred ? '≈' : ''}${to}</span
-              >`}
+          ${
+            from === '' || to === ''
+              ? ''
+              : html`<span
+                  class="jour-bornes"
+                  title=${inferred ? ctx.t('common.inferred_time') : ''}
+                  >${from} – ${inferred ? '≈' : ''}${to}</span
+                >`
+          }
         </div>
       `;
     })();
@@ -609,9 +613,7 @@ export const SPEC: CardSpec<Config> = {
             </div>
             <div class="jour-filet" aria-hidden="true"></div>
             <div class="jour-corps">
-              <span
-                class="jour-matiere"
-                title=${mealInferred ? ctx.t('journee.meal_inferred') : ''}
+              <span class="jour-matiere" title=${mealInferred ? ctx.t('journee.meal_inferred') : ''}
                 >${c.meal_label ?? ctx.t('journee.meal')}</span
               >
             </div>
@@ -689,9 +691,7 @@ export const SPEC: CardSpec<Config> = {
           ></div>
           <div class="jour-corps">
             <div class="jour-tete">
-              <span class="jour-matiere ${canceled ? 'canceled' : ''}"
-                >${l.subject ?? '—'}</span
-              >
+              <span class="jour-matiere ${canceled ? 'canceled' : ''}">${l.subject ?? '—'}</span>
               ${badges.length > 0 ? html`<span class="jour-pastilles">${badges}</span>` : ''}
             </div>
             <!-- Salle et professeur sur leur propre ligne, et non à la suite
@@ -705,6 +705,7 @@ export const SPEC: CardSpec<Config> = {
       `;
     });
 
-    return html`${header}<div class="jour">${rows}</div>`;
+    return html`${header}
+      <div class="jour">${rows}</div>`;
   },
 };

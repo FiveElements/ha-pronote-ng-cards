@@ -4,11 +4,11 @@ Ce fichier existe parce que **trois défauts de ce dépôt ont été causés par
 forme d'attribut supposée plutôt que vérifiée**, et que les trois avaient des
 tests verts :
 
-| défaut | ce que le code lisait | ce que l'intégration publie |
-| --- | --- | --- |
-| toutes les notes affichées en « — » | `grade` | `value` |
-| deux cartes entièrement vides | `locale.time_zone` comme identifiant IANA | une préférence, `'local'` ou `'server'` |
-| « 22 h 33 » pour une session de 29 min | des minutes supposées | des secondes, **déclarées** dans `unit_of_measurement` |
+| défaut                                 | ce que le code lisait                     | ce que l'intégration publie                            |
+| -------------------------------------- | ----------------------------------------- | ------------------------------------------------------ |
+| toutes les notes affichées en « — »    | `grade`                                   | `value`                                                |
+| deux cartes entièrement vides          | `locale.time_zone` comme identifiant IANA | une préférence, `'local'` ou `'server'`                |
+| « 22 h 33 » pour une session de 29 min | des minutes supposées                     | des secondes, **déclarées** dans `unit_of_measurement` |
 
 Le point commun n'est pas l'inattention : c'est que **la fixture répétait
 l'hypothèse du code**. Un test dont les données viennent de la même supposition
@@ -36,15 +36,15 @@ plus de l'`unique_id`.
 La distinction n'est pas théorique : elle a produit un défaut dans ce dépôt et
 onze dans la documentation de l'intégration, le même jour.
 
-| ce qu'on croit lire | ce que l'installation produit |
-| --- | --- |
-| `sensor.<é>_averages` (la clé `averages`) | `sensor.<é>_subject_averages` — le nom est « Subject averages » |
-| `sensor.<é>_homework_todo` (la clé `homework_todo`) | `sensor.<é>_homework_to_do` — le nom est « Homework to do » |
-| `sensor.<é>_notes_p1` (le `p<n>` de l'`unique_id`) | le nom est « Notes ({period}) », donc le suffixe porte le **libellé de période de l'établissement** |
+| ce qu'on croit lire                                 | ce que l'installation produit                                                                       |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `sensor.<é>_averages` (la clé `averages`)           | `sensor.<é>_subject_averages` — le nom est « Subject averages »                                     |
+| `sensor.<é>_homework_todo` (la clé `homework_todo`) | `sensor.<é>_homework_to_do` — le nom est « Homework to do »                                         |
+| `sensor.<é>_notes_p1` (le `p<n>` de l'`unique_id`)  | le nom est « Notes ({period}) », donc le suffixe porte le **libellé de période de l'établissement** |
 
 Le troisième cas est le pire, et il n'a pas de forme fixe : le nom contient un
 trou que Home Assistant remplit avec une donnée qu'aucun test ne peut voir. Une
-fixture ne peut donc que montrer une forme *plausible* — d'où
+fixture ne peut donc que montrer une forme _plausible_ — d'où
 `sensor.abc_notes_trimestre_1` dans `resolve.test.ts`, avec le commentaire qui
 dit pourquoi elle est plausible et non exacte.
 
@@ -56,10 +56,10 @@ donc il doit rester honnête.
 
 ## Les deux attributs que portent presque toutes les entités de données
 
-| attribut | type | sens |
-| --- | --- | --- |
-| `fetched_at` | `string` (ISO 8601 avec décalage) | instant de la collecte qui a produit cet état |
-| `stale` | `boolean` | l'état est un repli, la dernière collecte a échoué |
+| attribut     | type                              | sens                                               |
+| ------------ | --------------------------------- | -------------------------------------------------- |
+| `fetched_at` | `string` (ISO 8601 avec décalage) | instant de la collecte qui a produit cet état      |
+| `stale`      | `boolean`                         | l'état est un repli, la dernière collecte a échoué |
 
 Aucune carte ne les lit aujourd'hui. Ils sont là si une carte veut un jour dire
 « figée depuis 11:21 » plutôt que de se taire.
@@ -68,9 +68,9 @@ Aucune carte ne les lit aujourd'hui. Ils sont là si une carte veut un jour dire
 
 Deux capteurs de durée, **deux unités différentes**, toutes deux déclarées :
 
-| clé | `unit_of_measurement` |
-| --- | --- |
-| `sensor:session_age` | `s` — des **secondes** |
+| clé                       | `unit_of_measurement`   |
+| ------------------------- | ----------------------- |
+| `sensor:session_age`      | `s` — des **secondes**  |
 | `sensor:session_lifetime` | `min` — des **minutes** |
 
 Passez par `durationToMinutes(état, unité)` (dans `src/core/format.ts`), jamais
@@ -83,16 +83,16 @@ sur son site d'appel.
 
 ## Enfant — les clés que les cartes lisent
 
-| clé | attributs |
-| --- | --- |
-| `sensor:class_name` | `establishment` (`string`) |
-| `sensor:next_lesson` | `subject`, `classroom`, `end` (ISO), `teachers` (`array<string>`), `canceled` (`boolean`), `end_inferred` (`boolean`) |
-| `sensor:end_of_lessons` | `subject`, `end_inferred` (`boolean`) |
-| `sensor:next_wake_up` | `first_lesson` (ISO), `subject`, `margin_minutes` (`number`) |
-| `sensor:lessons_today` | `lessons` (voir plus bas), `first_start`, `last_end`, `canceled_count` (`number`) |
-| `sensor:timetable_tomorrow` | `lessons` |
-| `sensor:timetable_week` | `lessons`, `weeks` (`array<number>`) |
-| `sensor:homework_todo` | `items` (voir plus bas), `next_due` (ISO) |
+| clé                         | attributs                                                                                                             |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `sensor:class_name`         | `establishment` (`string`)                                                                                            |
+| `sensor:next_lesson`        | `subject`, `classroom`, `end` (ISO), `teachers` (`array<string>`), `canceled` (`boolean`), `end_inferred` (`boolean`) |
+| `sensor:end_of_lessons`     | `subject`, `end_inferred` (`boolean`)                                                                                 |
+| `sensor:next_wake_up`       | `first_lesson` (ISO), `subject`, `margin_minutes` (`number`)                                                          |
+| `sensor:lessons_today`      | `lessons` (voir plus bas), `first_start`, `last_end`, `canceled_count` (`number`)                                     |
+| `sensor:timetable_tomorrow` | `lessons`                                                                                                             |
+| `sensor:timetable_week`     | `lessons`, `weeks` (`array<number>`)                                                                                  |
+| `sensor:homework_todo`      | `items` (voir plus bas), `next_due` (ISO)                                                                             |
 
 ### Ce que `timetable_week` couvre vraiment
 
@@ -184,13 +184,13 @@ Cette section demandait explicitement d'être refaite le jour où une
 installation recevrait le champ. C'est arrivé, et voici le relevé — plus une
 demande, plus une supposition.
 
-| étage | attribut | relevé sur instance |
-| --- | --- | --- |
-| créneaux (jour, demain, semaine) | `lessons[]` | 27 / 27 remplis |
-| devoirs | `items[]` | 12 / 12 remplis |
-| moyennes par matière | `items[]` | liste vide (début d'année), clé présente |
-| **prochain cours** | — | **le champ n'est pas publié** |
-| **évaluations** | — | **le champ n'est pas publié** |
+| étage                            | attribut    | relevé sur instance                      |
+| -------------------------------- | ----------- | ---------------------------------------- |
+| créneaux (jour, demain, semaine) | `lessons[]` | 27 / 27 remplis                          |
+| devoirs                          | `items[]`   | 12 / 12 remplis                          |
+| moyennes par matière             | `items[]`   | liste vide (début d'année), clé présente |
+| **prochain cours**               | —           | **le champ n'est pas publié**            |
+| **évaluations**                  | —           | **le champ n'est pas publié**            |
 
 Recensement en trois seaux sur les trois étages qui ont des données : **zéro
 absent, zéro vide**. Trois seaux et non deux parce que l'intégration résout la
@@ -252,15 +252,15 @@ erreur à corriger.
 
 ## Compte — les clés de la carte limiteur
 
-| clé | attributs |
-| --- | --- |
-| `sensor:limiter_state` | `options` (`array<string>`), `reason`, `until`, `consecutive_failures` (`number`) |
-| `sensor:remaining_budget` | `daily_cap`, `hourly_rate`, `tokens` |
-| `sensor:calls_today` | `by_tier` (`object`, palier → nombre), `logins`, `failed_logins` |
-| `sensor:next_collection` | `tiers_due` (`array<string>`), `overdue_by` (secondes), `failing` (`object`, palier → nombre d'échecs consécutifs) |
-| `sensor:last_collection` | `tier`, `duration_ms`, `calls` |
-| `sensor:logins_today` | `failed`, `cap` |
-| `sensor:session_age`, `sensor:session_lifetime` | voir « Le piège des unités » |
+| clé                                             | attributs                                                                                                          |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `sensor:limiter_state`                          | `options` (`array<string>`), `reason`, `until`, `consecutive_failures` (`number`)                                  |
+| `sensor:remaining_budget`                       | `daily_cap`, `hourly_rate`, `tokens`                                                                               |
+| `sensor:calls_today`                            | `by_tier` (`object`, palier → nombre), `logins`, `failed_logins`                                                   |
+| `sensor:next_collection`                        | `tiers_due` (`array<string>`), `overdue_by` (secondes), `failing` (`object`, palier → nombre d'échecs consécutifs) |
+| `sensor:last_collection`                        | `tier`, `duration_ms`, `calls`                                                                                     |
+| `sensor:logins_today`                           | `failed`, `cap`                                                                                                    |
+| `sensor:session_age`, `sensor:session_lifetime` | voir « Le piège des unités »                                                                                       |
 
 `consecutive_failures` du limiteur et `failing` de la prochaine collecte **ne
 comptent pas la même chose**, délibérément : le premier ne compte que les
@@ -295,7 +295,7 @@ parce que ce sont trois cas où le nom de l'attribut ne dit pas ce qu'il fait.
 **1. Le capteur du jour ne sert pas forcément le déjeuner.** `_menu_for`
 (`sensor.py:816-820`) :
 
-> *« The lunch menu for one day, falling back to any meal that day. »*
+> _« The lunch menu for one day, falling back to any meal that day. »_
 > `return lunch or (same_day[0] if same_day else None)`
 
 Un établissement qui publie un dîner et pas de déjeuner alimente donc

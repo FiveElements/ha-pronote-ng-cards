@@ -17,10 +17,20 @@ beforeAll(() => {
 
 const items = [
   { id: 'h1', subject: 'Maths', description: 'Exercices 4 à 7', due: '2026-09-09', done: false },
-  { id: 'h2', subject: 'Anglais', description: 'Lire le chapitre 3', due: '2026-09-10', done: false },
+  {
+    id: 'h2',
+    subject: 'Anglais',
+    description: 'Lire le chapitre 3',
+    due: '2026-09-10',
+    done: false,
+  },
 ];
 
-const hw = (attributes: Record<string, unknown>, state = '2', extra: Parameters<typeof makeHass>[0] = []) =>
+const hw = (
+  attributes: Record<string, unknown>,
+  state = '2',
+  extra: Parameters<typeof makeHass>[0] = []
+) =>
   makeHass([
     {
       key: 'sensor:homework_todo',
@@ -170,12 +180,20 @@ describe('carte devoirs', () => {
   // --- Critique n°3 : `items` mal formé ne doit jamais faire disparaître la carte. ---
 
   it("ne casse pas le rendu quand l'attribut items est un objet", async () => {
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hw({ items: {} }));
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: {} })
+    );
     expect(text(el)).toContain('Rien à faire');
   });
 
   it("ne casse pas le rendu quand l'attribut items est une chaîne", async () => {
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hw({ items: 'x' }));
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: 'x' })
+    );
     expect(text(el)).toContain('Rien à faire');
   });
 
@@ -202,7 +220,7 @@ describe('carte devoirs', () => {
     }
   );
 
-  it("ne rend aucune case quand supported_features=2 (DELETE_TODO_ITEM, pas UPDATE_TODO_ITEM)", async () => {
+  it('ne rend aucune case quand supported_features=2 (DELETE_TODO_ITEM, pas UPDATE_TODO_ITEM)', async () => {
     const el = await mountCard(
       'pronote-ng-devoirs',
       { device_id: 'dev_enfant' },
@@ -346,7 +364,11 @@ describe('carte devoirs', () => {
       { id: 'h2', subject: 'Maths', description: 'A', due: '2026-09-01' },
       { id: 'h3', subject: 'Histoire', description: 'C' },
     ];
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hw({ items: mixed }));
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: mixed })
+    );
     const primaries = Array.from(el.shadowRoot?.querySelectorAll('.row .primary') ?? []).map(
       (n) => n.textContent ?? ''
     );

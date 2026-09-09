@@ -83,7 +83,12 @@ const emptyFor = (c: Config): string =>
 
 /** Clé de jour calendaire (AAAA-MM-JJ) dans le fuseau donné : compare des jours, pas des instants. */
 const dayKey = (d: Date, timeZone: string): string =>
-  new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
 
 /** Un devoir est en retard si son échéance (jour calendaire) est strictement avant aujourd'hui. */
 const isOverdue = (due: string | undefined, timeZone: string): boolean => {
@@ -95,7 +100,6 @@ const isOverdue = (due: string | undefined, timeZone: string): boolean => {
 const truncate = <T>(items: T[], limit: number | undefined): T[] =>
   limit === undefined || limit < 0 ? items : items.slice(0, limit);
 
-
 interface Group {
   label: string;
   items: Homework[];
@@ -106,7 +110,12 @@ interface Group {
  * partagent la même clé de regroupement se suivent donc dans le tableau, et
  * l'ordre d'apparition des groupes suit l'ordre du tri.
  */
-const groupOf = (items: Homework[], by: 'date' | 'subject', timeZone: string, language: string): Group[] => {
+const groupOf = (
+  items: Homework[],
+  by: 'date' | 'subject',
+  timeZone: string,
+  language: string
+): Group[] => {
   const groups: Group[] = [];
   const index = new Map<string, Group>();
   for (const h of items) {
@@ -114,7 +123,7 @@ const groupOf = (items: Homework[], by: 'date' | 'subject', timeZone: string, la
       by === 'subject'
         ? (h.subject ?? '—')
         : h.due
-          ? (formatDayLabel(h.due, language, timeZone) || '—')
+          ? formatDayLabel(h.due, language, timeZone) || '—'
           : '—';
     let g = index.get(label);
     if (!g) {
@@ -213,7 +222,8 @@ export const SPEC: CardSpec<Config> = {
     const sorted = sortedBy(raw, (a, b) =>
       by === 'subject'
         ? (a.subject ?? '').localeCompare(b.subject ?? '')
-        : (parseTimestamp(a.due)?.getTime() ?? Infinity) - (parseTimestamp(b.due)?.getTime() ?? Infinity)
+        : (parseTimestamp(a.due)?.getTime() ?? Infinity) -
+          (parseTimestamp(b.due)?.getTime() ?? Infinity)
     );
 
     const limited = truncate(sorted, ctx.config.limit);
@@ -265,25 +275,26 @@ export const SPEC: CardSpec<Config> = {
           stacked: true,
           accent: accent ?? null,
           primary: html`
-            ${writable
-              ? html`<input
-                  type="checkbox"
-                  .checked=${h.done === true}
-                  @change=${(event: Event): void => {
+            ${
+              writable
+                ? html`<input
+                    type="checkbox"
+                    .checked=${h.done === true}
+                    @change=${(event: Event): void => {
                     const target = event.currentTarget;
                     if (target instanceof HTMLInputElement) void toggle(h, target);
                   }}
-                />`
-              : ''}
+                  />`
+                : ''
+            }
             ${h.subject ?? ctx.t('devoirs.name')}
           `,
           // Le texte simple publié par l'intégration s'il existe, sinon
           // l'énoncé HTML dévêtu ici — jamais injecté.
           secondary: h.description_text ?? plainText(h.description),
           trailing: html`
-            ${overdue ? chip(ctx.t('devoirs.overdue'), 'problem') : ''} ${dueLabel
-              ? ctx.t('devoirs.due', { date: dueLabel })
-              : ''}
+            ${overdue ? chip(ctx.t('devoirs.overdue'), 'problem') : ''}
+            ${dueLabel ? ctx.t('devoirs.due', { date: dueLabel }) : ''}
           `,
         })}
       `;

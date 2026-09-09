@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { createResolveCache, isChildDevice, resolveDevice, resolveEntities } from '../src/core/resolve';
+import {
+  createResolveCache,
+  isChildDevice,
+  resolveDevice,
+  resolveEntities,
+} from '../src/core/resolve';
 import { makeHass } from './fixtures/hass';
 
-const enfant = (key: string, entity_id: string, extra = {}) =>
-  ({ key, entity_id, device: 'dev_enfant' as const, ...extra });
+const enfant = (key: string, entity_id: string, extra = {}) => ({
+  key,
+  entity_id,
+  device: 'dev_enfant' as const,
+  ...extra,
+});
 
 describe('resolveDevice', () => {
   it("rend l'appareil lui-même pour une carte d'enfant", () => {
@@ -11,7 +20,7 @@ describe('resolveDevice', () => {
     expect(resolveDevice(hass, 'dev_enfant', 'child')).toBe('dev_enfant');
   });
 
-  it("suit via_device_id pour une carte de compte", () => {
+  it('suit via_device_id pour une carte de compte', () => {
     const hass = makeHass([]);
     expect(resolveDevice(hass, 'dev_enfant', 'account')).toBe('dev_compte');
   });
@@ -257,7 +266,9 @@ describe('garde : une carte ne se lie jamais a une periode close', () => {
     // Et la preuve que l'entite etait bien la, donc que l'absence vient de la
     // comparaison et non d'un registre vide.
     expect(
-      resolveEntities(hass, 'dev_enfant', 'child', ['sensor:grades_period']).get('sensor:grades_period')
+      resolveEntities(hass, 'dev_enfant', 'child', ['sensor:grades_period']).get(
+        'sensor:grades_period'
+      )
     ).toBe('sensor.abc_notes_t1');
   });
 });

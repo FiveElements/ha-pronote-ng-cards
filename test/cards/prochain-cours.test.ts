@@ -65,7 +65,11 @@ describe('carte prochain-cours', () => {
   it('dit « aucun cours à venir » quand l’entité ne porte pas d’horodatage exploitable', async () => {
     // L'intégration expose 'none' — distinct de 'unknown'/'unavailable', qui
     // restent du ressort du socle — quand il n'y a plus de cours à venir.
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, lesson('none'));
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant' },
+      lesson('none')
+    );
     expect(text(el)).toContain('Aucun cours à venir');
   });
 
@@ -98,12 +102,20 @@ describe('carte prochain-cours', () => {
   });
 
   it('dit « pas encore collectée » quand l’entité est indisponible', async () => {
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, lesson('unavailable'));
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant' },
+      lesson('unavailable')
+    );
     expect(text(el)).toContain('pas encore collectée');
   });
 
   it("dit « introuvable » et nomme la clé quand l'entité manque", async () => {
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, makeHass([]));
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant' },
+      makeHass([])
+    );
     const t = text(el);
     expect(t).toContain('sensor:next_lesson');
     expect(t).toContain('introuvable');
@@ -331,7 +343,7 @@ describe('carte prochain-cours', () => {
     expect(titres).toContain('Prochain cours');
   });
 
-  it("ne pose pas d’intitulé « Prochain cours » quand aucun cours n’est en train de se dérouler", async () => {
+  it('ne pose pas d’intitulé « Prochain cours » quand aucun cours n’est en train de se dérouler', async () => {
     // Sans pastille, il n'y a aucune ambiguïté à lever : l'intitulé ne serait
     // qu'une redite du nom de la carte.
     const el = await mountCard(

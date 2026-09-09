@@ -451,10 +451,7 @@ describe('carte vue journée — l’heure de fin déduite', () => {
   });
 
   it('marque la zone repas quand sa borne gauche est une fin déduite', async () => {
-    const el = await monter({}, [
-      { ...JOURNEE[1], end_inferred: true },
-      JOURNEE[2],
-    ]);
+    const el = await monter({}, [{ ...JOURNEE[1], end_inferred: true }, JOURNEE[2]]);
     const repas = lignes(el).find((x) => x.repas);
     expect(repas?.heures[0]).toBe('10:00≈');
   });
@@ -538,9 +535,7 @@ describe('carte vue journée — le reste', () => {
 
 describe('carte vue journée — la salle et le professeur', () => {
   it('affiche la salle puis le professeur, séparés d’un point médian', async () => {
-    const el = await monter({}, [
-      { ...JOURNEE[0], teachers: ['MARTIN P.'] },
-    ]);
+    const el = await monter({}, [{ ...JOURNEE[0], teachers: ['MARTIN P.'] }]);
     // La salle d'abord : c'est ce qu'on cherche en marchant dans le couloir.
     expect(lignes(el)[0]?.detail).toBe('2.14 · MARTIN P.');
   });
@@ -564,9 +559,7 @@ describe('carte vue journée — la salle et le professeur', () => {
   });
 
   it('sait taire le professeur sans taire la salle', async () => {
-    const el = await monter({ show_teachers: false }, [
-      { ...JOURNEE[0], teachers: ['MARTIN P.'] },
-    ]);
+    const el = await monter({ show_teachers: false }, [{ ...JOURNEE[0], teachers: ['MARTIN P.'] }]);
     expect(lignes(el)[0]?.detail).toBe('2.14');
   });
 
@@ -656,7 +649,6 @@ describe('carte vue journée — l’en-tête de journée', () => {
     expect(lignes(el).length).toBeGreaterThan(0);
   });
 });
-
 
 describe('carte vue journée — la navigation d’un jour à l’autre', () => {
   beforeEach(() => {

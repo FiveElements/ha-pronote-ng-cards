@@ -51,9 +51,7 @@ export function resolveEntities(
 
   // Un index par appareil évite de reparcourir tout le registre par clé.
   const onDevice = target
-    ? Object.values(hass.entities).filter(
-        (e) => e.device_id === target && e.platform === PLATFORM
-      )
+    ? Object.values(hass.entities).filter((e) => e.device_id === target && e.platform === PLATFORM)
     : [];
 
   for (const key of keys) {

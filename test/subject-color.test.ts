@@ -77,7 +77,9 @@ describe('subjectColor', () => {
       // arbitraire — `position: fixed`, un fond, un `content` — donc une
       // possibilité de recouvrir la page depuis une donnée de serveur.
       expect(subjectColor('#fff; position: fixed; inset: 0')).toBeUndefined();
-      expect(subjectColor('#fff;background:url(https://demo.example.invalid/p.gif)')).toBeUndefined();
+      expect(
+        subjectColor('#fff;background:url(https://demo.example.invalid/p.gif)')
+      ).toBeUndefined();
     });
 
     it('refuse une URL et un pseudo-protocole', () => {

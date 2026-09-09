@@ -112,7 +112,8 @@ export const SPEC: CardSpec<Config> = {
     // réel est le plus tardif des deux.
     const sorted = sortedBy(
       lessons,
-      (a, b) => (parseTimestamp(a.start)?.getTime() ?? 0) - (parseTimestamp(b.start)?.getTime() ?? 0)
+      (a, b) =>
+        (parseTimestamp(a.start)?.getTime() ?? 0) - (parseTimestamp(b.start)?.getTime() ?? 0)
     );
 
     const lang = ctx.language;

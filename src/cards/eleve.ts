@@ -20,7 +20,7 @@ const PERIOD: EntityKey = 'sensor:current_period';
 export const SPEC: CardSpec<Config> = {
   type: 'pronote-ng-eleve',
   name: 'Pronote NG — Élève',
-  description: "En-tête de synthèse : classe, état du jour, prochain cours.",
+  description: 'En-tête de synthèse : classe, état du jour, prochain cours.',
   key: 'eleve',
   scope: 'child',
   size: 3,
@@ -29,14 +29,7 @@ export const SPEC: CardSpec<Config> = {
   // explicitement demandé.
   stub: {},
   requires: () => [CLASS],
-  optional: (c) => [
-    ...(c.show_photo ? [PHOTO] : []),
-    IN_CLASS,
-    SCHOOL_DAY,
-    HOLIDAYS,
-    NEXT,
-    PERIOD,
-  ],
+  optional: (c) => [...(c.show_photo ? [PHOTO] : []), IN_CLASS, SCHOOL_DAY, HOLIDAYS, NEXT, PERIOD],
   schema: () => [
     { name: 'show_photo', selector: { boolean: {} } },
     { name: 'show_establishment', selector: { boolean: {} } },
@@ -55,7 +48,9 @@ export const SPEC: CardSpec<Config> = {
     // n'est résolu (palier désactivé — ils sont `optional`), on ne rend
     // aucune pastille plutôt que d'affirmer « pas de cours » par défaut.
     const stateKnown =
-      ctx.status(HOLIDAYS) === 'ok' || ctx.status(IN_CLASS) === 'ok' || ctx.status(SCHOOL_DAY) === 'ok';
+      ctx.status(HOLIDAYS) === 'ok' ||
+      ctx.status(IN_CLASS) === 'ok' ||
+      ctx.status(SCHOOL_DAY) === 'ok';
 
     let tone: 'ok' | 'neutral' = 'neutral';
     let stateLabel: string | undefined;

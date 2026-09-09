@@ -258,9 +258,11 @@ export const SPEC: CardSpec<Config> = {
           </button>
         </div>
         <div id="limiteur-refresh-note" class="notice">${ctx.t('limiteur.refresh_note')}</div>
-        ${ctx.refreshFailed
-          ? html`<div class="notice problem">${ctx.t('limiteur.refresh_failed')}</div>`
-          : ''}
+        ${
+          ctx.refreshFailed
+            ? html`<div class="notice problem">${ctx.t('limiteur.refresh_failed')}</div>`
+            : ''
+        }
       `);
     }
 

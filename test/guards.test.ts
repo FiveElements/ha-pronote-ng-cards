@@ -161,9 +161,10 @@ describe('garde : liste blanche des appels de service', () => {
   it('hass.callService ne s’atteint que depuis le socle', () => {
     for (const [file, body] of read(walk('src', ['.ts']))) {
       if (file === BRIDGE) continue;
-      expect(/\bhass\.callService\s*\(/.test(body), `${file} appelle hass.callService directement`).toBe(
-        false
-      );
+      expect(
+        /\bhass\.callService\s*\(/.test(body),
+        `${file} appelle hass.callService directement`
+      ).toBe(false);
     }
   });
 });
@@ -213,7 +214,10 @@ describe('garde : src/ ne dépend d’aucun module Node natif', () => {
   it("aucun fichier de src/ n'importe un module node:", () => {
     for (const [file, body] of read(walk('src', ['.ts', '.json']))) {
       const hit = body.match(NODE_IMPORT);
-      expect(hit, `${file} importe « ${hit?.[0]} » : src/ part dans un navigateur, pas dans Node.`).toBeNull();
+      expect(
+        hit,
+        `${file} importe « ${hit?.[0]} » : src/ part dans un navigateur, pas dans Node.`
+      ).toBeNull();
     }
   });
 });
@@ -277,7 +281,10 @@ describe('garde : aucune donnée réelle', () => {
    * faux positif.
    */
   const TLD = 'fr|com|net|org|io|xyz|edu|dev|app|eu|be|ch';
-  const BARE_HOST = new RegExp(String.raw`(?<![\w./@-])((?:[a-z0-9-]+\.)+(?:${TLD}))(?![\w-])`, 'g');
+  const BARE_HOST = new RegExp(
+    String.raw`(?<![\w./@-])((?:[a-z0-9-]+\.)+(?:${TLD}))(?![\w-])`,
+    'g'
+  );
 
   it('aucun nom d’hôte nu, sans schéma, n’échappe à la liste blanche', () => {
     for (const [file, body] of scanned()) {

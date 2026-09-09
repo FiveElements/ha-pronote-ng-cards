@@ -184,14 +184,16 @@ describe('carte eleve', () => {
   // carte depuis le sélecteur : elle ne doit jamais publier la photo par
   // défaut, sans quoi tout parent qui accepte la carte proposée publie la
   // photo de son enfant sans l'avoir demandé.
-  it("ne propose pas show_photo dans la config par défaut du sélecteur (SPEC.stub)", () => {
+  it('ne propose pas show_photo dans la config par défaut du sélecteur (SPEC.stub)', () => {
     expect(SPEC.stub?.show_photo).toBeFalsy();
   });
 
   it("n'affiche aucune photo en partant de la config par défaut telle que Home Assistant la consomme (getStubConfig)", async () => {
     const ctor = customElements.get('pronote-ng-eleve');
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- getStubConfig est un statique propre aux cartes Pronote NG, absent de l'interface DOM générique CustomElementConstructor.
-    const stubConfig = (ctor as unknown as { getStubConfig(): Record<string, unknown> }).getStubConfig();
+    const stubConfig = (
+      ctor as unknown as { getStubConfig(): Record<string, unknown> }
+    ).getStubConfig();
     const el = await mountCard(
       'pronote-ng-eleve',
       // Comme le ferait Home Assistant : la config du sélecteur, seulement

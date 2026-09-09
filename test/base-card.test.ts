@@ -6,7 +6,6 @@ import type { CardSpec, RenderCtx } from '../src/core/types';
 import { makeHass } from './fixtures/hass';
 import { mountCard, text } from './fixtures/mount';
 
-
 const SPEC: CardSpec = {
   type: 'pronote-ng-test',
   name: 'Test',
@@ -453,7 +452,6 @@ describe('spec.tickMs — minuterie déclarative pour les rendus qui dépendent 
   });
 });
 
-
 describe('resolveTimeZone', () => {
   // `hass.locale.time_zone` est une PRÉFÉRENCE, pas un identifiant IANA. La
   // passer telle quelle à `Intl.DateTimeFormat` lève une `RangeError`, et une
@@ -463,7 +461,10 @@ describe('resolveTimeZone', () => {
   const browser = new Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   it('rend le fuseau du navigateur sur la préférence « local »', () => {
-    const tz = resolveTimeZone({ locale: { time_zone: 'local' }, config: { time_zone: 'Asia/Tokyo' } });
+    const tz = resolveTimeZone({
+      locale: { time_zone: 'local' },
+      config: { time_zone: 'Asia/Tokyo' },
+    });
     expect(tz).toBe(browser);
     expect(() => new Intl.DateTimeFormat('fr', { timeZone: tz })).not.toThrow();
   });

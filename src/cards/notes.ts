@@ -218,8 +218,7 @@ export const SPEC: CardSpec<Config> = {
             trailing: formatGrade(a.student, a.out_of, ctx.language),
             // La seule ligne colorée de cette carte, quand l'intégration
             // publie le champ.
-            accent:
-              subjectAccent(a.background_color, a.subject, c.subject_colors) ?? NO_COLOR,
+            accent: subjectAccent(a.background_color, a.subject, c.subject_colors) ?? NO_COLOR,
           })
         );
       }

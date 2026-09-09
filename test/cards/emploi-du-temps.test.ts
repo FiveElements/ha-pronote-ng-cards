@@ -106,7 +106,11 @@ describe('carte emploi-du-temps', () => {
   });
 
   it('barre un cours annulé sans le retirer', async () => {
-    const el = await mountCard('pronote-ng-emploi-du-temps', { device_id: 'dev_enfant' }, day({ lessons }));
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      day({ lessons })
+    );
     expect(text(el)).toContain('Anglais');
     expect(el.shadowRoot?.querySelector('.canceled')).not.toBeNull();
   });
@@ -208,7 +212,11 @@ describe('carte emploi-du-temps', () => {
   });
 
   it('signale les contrôles', async () => {
-    const el = await mountCard('pronote-ng-emploi-du-temps', { device_id: 'dev_enfant' }, day({ lessons }));
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      day({ lessons })
+    );
     expect(text(el)).toContain('contrôle');
   });
 
@@ -376,7 +384,11 @@ describe('carte emploi-du-temps', () => {
   });
 
   it("dit « introuvable » quand l'entité manque", async () => {
-    const el = await mountCard('pronote-ng-emploi-du-temps', { device_id: 'dev_enfant' }, makeHass([]));
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      makeHass([])
+    );
     expect(text(el)).toContain('sensor:lessons_today');
   });
 

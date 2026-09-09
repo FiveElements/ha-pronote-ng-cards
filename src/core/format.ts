@@ -6,11 +6,7 @@ export function parseTimestamp(value: string | undefined): Date | undefined {
   return Number.isNaN(d.getTime()) ? undefined : d;
 }
 
-export function formatTime(
-  value: string | undefined,
-  language: string,
-  timeZone: string
-): string {
+export function formatTime(value: string | undefined, language: string, timeZone: string): string {
   const d = parseTimestamp(value);
   if (!d) return '';
   return new Intl.DateTimeFormat(language, {
@@ -72,10 +68,7 @@ export function formatRelative(
  * sortie stable entre versions d'ICU.
  */
 function normalize(s: string): string {
-  return s
-    .replace(/[  ]/g, ' ')
-    .replace(/\.$/, '')
-    .trim();
+  return s.replace(/[  ]/g, ' ').replace(/\.$/, '').trim();
 }
 
 /**

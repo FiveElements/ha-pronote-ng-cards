@@ -545,5 +545,4 @@ describe('carte vie-scolaire', () => {
     // La somme des deux créneaux : 90 minutes.
     expect(t).toContain('1 h 30');
   });
-
 });

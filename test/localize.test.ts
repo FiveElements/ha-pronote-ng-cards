@@ -16,9 +16,7 @@ describe('localize', () => {
     expect(localize('common.inexistante')).toBe('common.inexistante');
   });
   it('retombe sur le français pour une langue inconnue', () => {
-    expect(localize('common.unavailable', undefined, 'de')).toBe(
-      'Donnée pas encore collectée.'
-    );
+    expect(localize('common.unavailable', undefined, 'de')).toBe('Donnée pas encore collectée.');
   });
 
   it('traduit dans les trois autres langues', () => {
@@ -31,10 +29,9 @@ describe('localize', () => {
 const byLocale = (a: string, b: string): number => a.localeCompare(b);
 
 // oxlint-disable-next-line unicorn/no-array-sort -- `sort` mute son receveur, d'où la règle ; ici le receveur est une copie fraîche que personne d'autre ne détient. `toSorted` imposerait `lib: ES2023` à tout le projet — donc à src/, où il légaliserait en silence des méthodes d'exécution que le bundle ne peut pas polyfiller — pour une commodité de test qui ne s'expédie jamais.
-const sortedCopy = <T,>(xs: readonly T[], cmp?: (a: T, b: T) => number): T[] => [...xs].sort(cmp);
+const sortedCopy = <T>(xs: readonly T[], cmp?: (a: T, b: T) => number): T[] => [...xs].sort(cmp);
 
-const isRecord = (v: unknown): v is Record<string, unknown> =>
-  typeof v === 'object' && v !== null;
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null;
 
 const paths = (d: unknown, prefix = ''): string[] =>
   isRecord(d)
