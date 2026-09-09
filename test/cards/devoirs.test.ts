@@ -380,4 +380,29 @@ describe('carte devoirs', () => {
     );
     expect(titles).toEqual(['Anglais', 'Maths']);
   });
+
+  it('affiche l’énoncé en texte lisible, pas le balisage que PRONOTE envoie', async () => {
+    // Forme réelle : l'intégration recopie le HTML du serveur. La carte
+    // affichait les balises et les entités à l'écran.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({
+        items: [
+          {
+            id: 'h1',
+            subject: 'Anglais',
+            description: '<div>Prenez votre cahier.<br>Pensez à l&#039;acheter !</div>',
+            due: '2026-09-11',
+            done: false,
+          },
+        ],
+      })
+    );
+    const t = text(el);
+    expect(t).toContain('Prenez votre cahier.');
+    expect(t).toContain("Pensez à l'acheter !");
+    expect(t).not.toContain('<div>');
+    expect(t).not.toContain('&#039;');
+  });
 });

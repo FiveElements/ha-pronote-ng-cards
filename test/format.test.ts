@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatDayLabel,
   formatDuration,
+  plainText,
   formatGrade,
   formatRelative,
   formatTime,
@@ -95,6 +96,41 @@ describe('formatGrade', () => {
     it("retombe sur 'fr' quand la langue n'est pas fournie — ne casse pas les appelants existants", () => {
       expect(formatGrade(14.5, 20)).toBe(formatGrade(14.5, 20, 'fr'));
     });
+  });
+});
+
+
+describe('plainText', () => {
+  // Forme réelle d'un énoncé de devoir : l'intégration recopie le HTML de
+  // PRONOTE. La carte l'affichait tel quel, et le parent lisait les balises.
+  const enonce =
+    '<div>Prenez votre cahier.<br>\nPour rappel, il vous faudra le livre &quot;Titre&quot;, pensez à l&#039;acheter !</div>';
+
+  it('retire les balises et décode les entités', () => {
+    const out = plainText(enonce);
+    expect(out).toContain('Prenez votre cahier.');
+    expect(out).toContain('il vous faudra le livre "Titre", pensez à l\'acheter !');
+    expect(out).not.toContain('<');
+    expect(out).not.toContain('&#039;');
+    expect(out).not.toContain('&quot;');
+  });
+
+  it('garde un retour à la ligne là où le balisage en posait un', () => {
+    expect(plainText(enonce).split('\n')).toHaveLength(2);
+  });
+
+  it('décode l’hexadécimal et laisse une entité inconnue telle quelle', () => {
+    expect(plainText('a&#x27;b')).toBe("a'b");
+    expect(plainText('&pasuneentite;')).toBe('&pasuneentite;');
+  });
+
+  it('ne rend rien sur une valeur absente ou vide', () => {
+    expect(plainText(undefined)).toBe('');
+    expect(plainText('<div></div>')).toBe('');
+  });
+
+  it('préfixe les puces d’une liste', () => {
+    expect(plainText('<ul><li>un</li><li>deux</li></ul>')).toBe('• un\n• deux');
   });
 });
 

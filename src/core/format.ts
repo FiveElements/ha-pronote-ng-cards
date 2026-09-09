@@ -143,3 +143,55 @@ export function formatDuration(minutes: number | undefined, language = 'fr'): st
   );
   return m === 0 ? hourPart : `${hourPart} ${String(m).padStart(2, '0')}`;
 }
+
+/**
+ * Entités HTML nommées reconnues. La liste est courte à dessein : PRONOTE
+ * échappe en numérique (`&#039;`) sauf pour ces quelques-unes. Une entité
+ * inconnue est laissée telle quelle plutôt que devinée.
+ */
+const NAMED_ENTITIES: Record<string, string> = {
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+  amp: '&',
+};
+
+const codePoint = (value: number): string =>
+  Number.isInteger(value) && value > 0 && value <= 0x10ffff ? String.fromCodePoint(value) : '';
+
+const decodeEntities = (s: string): string =>
+  s
+    .replace(/&#(\d+);/g, (_, d: string) => codePoint(Number(d)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h: string) => codePoint(Number.parseInt(h, 16)))
+    .replace(/&([a-z]+);/gi, (whole, name: string) => NAMED_ENTITIES[name.toLowerCase()] ?? whole);
+
+/**
+ * Le texte lisible d'un champ que PRONOTE écrit en HTML.
+ *
+ * Les énoncés de devoirs arrivent balisés — `<div>`, `<br>`, entités
+ * numériques — et une carte n'a que deux mauvaises options si elle les prend
+ * tels quels : les injecter (une faille, sur du texte venu du serveur), ou
+ * les afficher tels quels, ce qu'elle faisait — le parent lisait
+ * littéralement « &lt;div&gt;Pour notre premier cours, vous n&#039;avez
+ * pas… ».
+ *
+ * On ne passe JAMAIS par `innerHTML` pour dévêtir ce texte : ce serait
+ * exécuter le balisage pour s'en débarrasser. Le retrait est purement
+ * textuel, et les balises de bloc laissent un retour à la ligne pour ne pas
+ * coller deux phrases.
+ */
+export function plainText(value: string | undefined): string {
+  if (!value) return '';
+  const flattened = value
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<li\b[^>]*>/gi, '\n• ')
+    .replace(/<\/(?:p|div|li|tr|h[1-6]|ul|ol)>/gi, '\n')
+    .replace(/<[^>]*>/g, '');
+  return decodeEntities(flattened)
+    .split('\n')
+    .map((line) => line.replace(/[\t  ]+/g, ' ').trim())
+    .filter((line) => line !== '')
+    .join('\n');
+}

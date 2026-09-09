@@ -34,6 +34,10 @@ export const sharedStyles = css`
   .row .secondary {
     color: var(--secondary-text-color);
     font-size: 0.9em;
+    /* Les énoncés de devoirs comptent plusieurs lignes : sans ceci, les
+       retours posés par plainText() se replient en espaces et deux phrases
+       se collent. */
+    white-space: pre-line;
   }
   .row .trailing {
     margin-left: auto;

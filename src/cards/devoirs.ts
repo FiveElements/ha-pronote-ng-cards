@@ -2,7 +2,7 @@ import { html, type TemplateResult } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } from '../core/types';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
-import { formatDayLabel, parseTimestamp } from '../core/format';
+import { formatDayLabel, parseTimestamp, plainText } from '../core/format';
 
 interface Config extends PronoteCardConfig {
   filter?: 'todo' | 'tomorrow' | 'all';
@@ -226,7 +226,8 @@ export const SPEC: CardSpec<Config> = {
               : ''}
             ${h.subject ?? ctx.t('devoirs.name')}
           `,
-          secondary: h.description ?? '',
+          // L'énoncé arrive en HTML : dévêtu, jamais injecté.
+          secondary: plainText(h.description),
           trailing: html`
             ${overdue ? chip(ctx.t('devoirs.overdue'), 'problem') : ''} ${dueLabel
               ? ctx.t('devoirs.due', { date: dueLabel })
