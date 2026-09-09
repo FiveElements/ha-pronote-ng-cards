@@ -4,6 +4,8 @@ repo_url: https://github.com/FiveElements/ha-pronote-ng-cards
 theme:
   name: material
   language: fr
+  logo: assets/logo.png
+  favicon: assets/logo.png
   palette:
     - scheme: default
       toggle: { icon: material/brightness-7, name: Mode sombre }
