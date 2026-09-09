@@ -223,3 +223,152 @@ describe('code couleur des matières — moyennes par matière', () => {
     expect(el.shadowRoot?.textContent).toContain('14,2');
   });
 });
+
+
+describe('code couleur des matières — la table de l’utilisateur', () => {
+  /**
+   * Le deuxième rang, et aujourd'hui le seul qui produise quelque chose :
+   * l'intégration décode la couleur de matière et ne la publie sur aucune
+   * entité. Sans cette table, toutes les gouttières du tableau de bord d'une
+   * installation réelle sont transparentes.
+   *
+   * Une table par carte plutôt qu'un réglage global : chaque carte se
+   * configure seule dans Home Assistant, et un réglage transverse n'aurait eu
+   * nulle part où vivre — sauf dans une entité, ce qui aurait fait d'un choix
+   * d'affichage une donnée de l'intégration.
+   */
+  const TABLE = { MATHEMATIQUES: '#1e88e5', 'histoire-geographie': '#43a047' };
+
+  const COURS = [
+    {
+      subject: 'MATHEMATIQUES',
+      start: '2026-09-08T08:00:00+02:00',
+      end: '2026-09-08T09:00:00+02:00',
+    },
+    {
+      subject: 'Histoire-Géographie',
+      start: '2026-09-08T09:00:00+02:00',
+      end: '2026-09-08T10:00:00+02:00',
+    },
+    {
+      subject: 'Permanence',
+      start: '2026-09-08T10:00:00+02:00',
+      end: '2026-09-08T11:00:00+02:00',
+    },
+  ];
+
+  it('colore l’emploi du temps depuis la table, sans casse ni accents', async () => {
+    // Les deux directions sur une seule fixture : « MATHEMATIQUES » écrit en
+    // capitales des deux côtés, et « histoire-geographie » sans accents dans
+    // la table contre « Histoire-Géographie » côté serveur. Sans le repli des
+    // accents, la seconde ligne reste grise SANS un mot — et rien ne
+    // distinguerait « j'ai mal écrit la matière » de « cette matière n'a pas
+    // de couleur ».
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant', range: 'today', subject_colors: TABLE },
+      withLessons(COURS)
+    );
+    expect(accents(el)).toEqual(['#1e88e5', '#43a047', null]);
+  });
+
+  it('colore aussi quand ce sont les ACCENTS qui sont dans la table', async () => {
+    // Le repli marche dans les deux sens : une table écrite avec les accents
+    // de PRONOTE contre un libellé que le serveur enverrait sans.
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      {
+        device_id: 'dev_enfant',
+        range: 'today',
+        subject_colors: { 'Histoire-Géographie': '#43a047' },
+      },
+      withLessons([{ ...COURS[1], subject: 'HISTOIRE-GEOGRAPHIE' }])
+    );
+    expect(accents(el)).toEqual(['#43a047']);
+  });
+
+  it('laisse la couleur du serveur primer sur la table', async () => {
+    // Le rang 1 gagne, et il doit gagner : le jour où l'intégration publiera
+    // ses couleurs, la table de l'utilisateur ne doit pas les recouvrir. Elle
+    // reste le repli des matières que le serveur ne colore pas — donc rien à
+    // supprimer ce jour-là.
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant', range: 'today', subject_colors: TABLE },
+      withLessons([{ ...COURS[0], background_color: '#fb8c00' }])
+    );
+    expect(accents(el)).toEqual(['#fb8c00']);
+  });
+
+  it('filtre les couleurs de la table comme celles du serveur', async () => {
+    // L'origine d'une valeur ne dit rien de son innocuité : une chaîne de
+    // configuration atteint le même attribut `style`. « red » est un nom CSS
+    // valide et se voit quand même refuser -- accepter une famille de
+    // syntaxes prendrait tout l'analyseur CSS comme frontière de confiance.
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      {
+        device_id: 'dev_enfant',
+        range: 'today',
+        subject_colors: { MATHEMATIQUES: 'red; position: fixed' },
+      },
+      withLessons([COURS[0]])
+    );
+    expect(accents(el)).toEqual([null]);
+    expect(el.shadowRoot?.textContent).toContain('MATHEMATIQUES');
+  });
+
+  it('colore les devoirs depuis la table', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', filter: 'todo', subject_colors: TABLE },
+      makeHass([
+        {
+          key: 'sensor:homework_todo',
+          entity_id: 'sensor.abc_devoirs_a_faire',
+          device: 'dev_enfant',
+          state: '2',
+          attributes: {
+            items: [
+              {
+                subject: 'MATHEMATIQUES',
+                description_text: 'Exercices 3 à 7',
+                due: '2026-09-10T00:00:00+02:00',
+              },
+              {
+                subject: 'Permanence',
+                description_text: 'Rien',
+                due: '2026-09-11T00:00:00+02:00',
+              },
+            ],
+          },
+        },
+      ])
+    );
+    expect(accents(el)).toEqual(['#1e88e5', null]);
+    expect(el.shadowRoot?.textContent).toContain('Exercices 3 à 7');
+  });
+
+  it('colore les moyennes par matière depuis la table', async () => {
+    const el = await mountCard(
+      'pronote-ng-notes',
+      { device_id: 'dev_enfant', sections: ['subjects'], subject_colors: TABLE },
+      makeHass([
+        {
+          key: 'sensor:averages',
+          entity_id: 'sensor.abc_moyennes',
+          device: 'dev_enfant',
+          state: '2',
+          attributes: {
+            items: [
+              { subject: 'MATHEMATIQUES', student: 14.5, out_of: 20 },
+              { subject: 'Permanence', student: 12, out_of: 20 },
+            ],
+          },
+        },
+      ])
+    );
+    expect(accents(el)).toEqual(['#1e88e5', null]);
+    expect(el.shadowRoot?.textContent).toContain('MATHEMATIQUES');
+  });
+});

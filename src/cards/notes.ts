@@ -3,13 +3,26 @@ import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } fro
 import { formatGrade } from '../core/format';
 import { emptyState, listRow } from '../core/ui/parts';
 import { latestFirst, listAttr } from '../core/list';
-import { subjectColor } from '../core/subject-color';
+import { subjectAccent } from '../core/subject-color';
 
 type Section = 'average' | 'latest' | 'subjects' | 'report_card';
 
 interface Config extends PronoteCardConfig {
   sections?: Section[];
   limit?: number;
+  /**
+   * Table matière → couleur, renseignée par l'utilisateur.
+   *
+   * C'est le **deuxième** rang de couleur, et aujourd'hui le seul qui produise
+   * quelque chose : l'intégration décode la couleur de matière et ne la publie
+   * pas encore. Voir `subjectAccent`.
+   *
+   * Absente du formulaire d'éditeur, et pour une raison : aucun sélecteur
+   * `ha-form` ne rend correctement un dictionnaire ouvert dont les clés sont
+   * les matières de l'établissement. En YAML, l'utilisateur a au moins la
+   * coloration syntaxique de Home Assistant.
+   */
+  subject_colors?: Record<string, string>;
 }
 
 interface Grade {
@@ -205,7 +218,8 @@ export const SPEC: CardSpec<Config> = {
             trailing: formatGrade(a.student, a.out_of, ctx.language),
             // La seule ligne colorée de cette carte, quand l'intégration
             // publie le champ.
-            accent: subjectColor(a.background_color) ?? NO_COLOR,
+            accent:
+              subjectAccent(a.background_color, a.subject, c.subject_colors) ?? NO_COLOR,
           })
         );
       }

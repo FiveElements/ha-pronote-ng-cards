@@ -3,12 +3,25 @@ import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } fro
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
 import { formatDayLabel, parseTimestamp, plainText } from '../core/format';
-import { subjectColor } from '../core/subject-color';
+import { subjectAccent } from '../core/subject-color';
 
 interface Config extends PronoteCardConfig {
   filter?: 'todo' | 'tomorrow' | 'all';
   group_by?: 'date' | 'subject';
   limit?: number;
+  /**
+   * Table matière → couleur, renseignée par l'utilisateur.
+   *
+   * C'est le **deuxième** rang de couleur, et aujourd'hui le seul qui produise
+   * quelque chose : l'intégration décode la couleur de matière et ne la publie
+   * pas encore. Voir `subjectAccent`.
+   *
+   * Absente du formulaire d'éditeur, et pour une raison : aucun sélecteur
+   * `ha-form` ne rend correctement un dictionnaire ouvert dont les clés sont
+   * les matières de l'établissement. En YAML, l'utilisateur a au moins la
+   * coloration syntaxique de Home Assistant.
+   */
+  subject_colors?: Record<string, string>;
 }
 
 interface Homework {
@@ -253,7 +266,7 @@ export const SPEC: CardSpec<Config> = {
           `,
           // La même gouttière que sur l'emploi du temps, et le même `?? null`
           // pour que les devoirs sans couleur restent alignés.
-          accent: subjectColor(h.background_color) ?? null,
+          accent: subjectAccent(h.background_color, h.subject, ctx.config.subject_colors) ?? null,
         })}
       `;
     };

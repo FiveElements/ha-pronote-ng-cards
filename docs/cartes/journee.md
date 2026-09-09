@@ -180,9 +180,17 @@ subject_colors:
   Anglais: '#fb8c00'
 ```
 
-Les noms sont comparés **sans tenir compte de la casse** ni des espaces de
-bord : PRONOTE écrit souvent les matières en capitales, et vous n'avez pas à
-les recopier à l'identique.
+Les noms sont comparés **sans tenir compte de la casse, des espaces de bord ni
+des accents** : `histoire-geographie` colore « Histoire-Géographie ». PRONOTE
+écrit souvent les matières en capitales, et vous n'avez pas à les recopier à
+l'identique.
+
+Le repli des accents n'est pas un confort. Sans lui, une table écrite sans
+accents laissait la ligne grise **sans un mot** — et rien ne distinguait alors
+« j'ai mal écrit la matière » de « cette matière n'a pas de couleur ».
+
+La même table se renseigne sur les cartes [Emploi du temps](emploi-du-temps.md),
+[Devoirs](devoirs.md) et [Notes](notes.md), avec exactement les mêmes règles.
 
 Deux règles encadrent ces couleurs, et elles ne changeront pas :
 
@@ -192,7 +200,9 @@ Deux règles encadrent ces couleurs, et elles ne changeront pas :
 - **Seul l'hexadécimal strict est accepté** (`#1e88e5` ou `#f80`). Un nom de
   couleur CSS ou un `rgb()` est ignoré, et la ligne s'affiche sans couleur.
   Cette valeur finit dans une propriété de style : un filtre étroit est ce
-  qui empêche une chaîne de configuration d'y injecter autre chose.
+  qui empêche une chaîne de configuration d'y injecter autre chose. La règle
+  vaut aussi pour **votre** table — l'origine d'une valeur ne dit rien de son
+  innocuité.
 
 Le filet **ne porte aucune information à lui seul**. Il situe et il décore ;
 les horaires, l'intitulé et les pastilles informent. Une carte lue par

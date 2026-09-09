@@ -228,6 +228,12 @@ describe('garde : aucune donnée réelle', () => {
     'developers.home-assistant.io',
     'hacs.xyz',
     'demo.example.invalid',
+    // Les badges du README. Cette garde existe pour empecher une adresse
+    // d'instance PRONOTE de fuir dans le depot, pas pour interdire un service
+    // d'images : un badge ne porte que le nom du depot public et l'etat d'un
+    // workflow. La liste reste blanche plutot que de laisser passer les
+    // sous-domaines d'un hote connu.
+    'img.shields.io',
   ]);
 
   const scanned = () =>

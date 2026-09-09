@@ -4,7 +4,7 @@ import { formatDayLabel, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
 import { isCanceled, statusLabel, teachersOf, type Lesson } from '../core/lesson';
-import { subjectColor } from '../core/subject-color';
+import { subjectAccent } from '../core/subject-color';
 
 /**
  * La journée en grille : une colonne d'horaires, un filet de couleur, la
@@ -306,25 +306,6 @@ const boundsOf = (lessons: Lesson[]): Bounds => {
     }
   }
   return out;
-};
-
-/** La couleur du filet, en trois rangs, ou `undefined` pour l'accent neutre. */
-const accentFor = (l: Lesson, table: Record<string, string> | undefined): string | undefined => {
-  // Rang 1 : ce que le serveur publie, filtré strictement.
-  const published = subjectColor(l.background_color);
-  if (published !== undefined) return published;
-
-  // Rang 2 : ce que l'utilisateur déclare. Jamais de couleur DÉRIVÉE du
-  // libellé par hachage : une couleur déclarée est assumée et corrigible, une
-  // couleur calculée aurait l'apparence d'une information sans en porter
-  // aucune, et deux matières prendraient deux teintes qu'on lirait comme une
-  // catégorie.
-  const subject = (l.subject ?? '').trim().toLowerCase();
-  if (subject === '' || table === undefined) return undefined;
-  for (const [name, color] of Object.entries(table)) {
-    if (name.trim().toLowerCase() === subject) return subjectColor(color);
-  }
-  return undefined;
 };
 
 /**
@@ -642,7 +623,7 @@ export const SPEC: CardSpec<Config> = {
       if (l === undefined) return html``;
 
       const canceled = isCanceled(l);
-      const accent = accentFor(l, c.subject_colors);
+      const accent = subjectAccent(l.background_color, l.subject, c.subject_colors);
       const start = parseTimestamp(l.start)?.getTime();
       const end = parseTimestamp(l.end)?.getTime();
       const current =

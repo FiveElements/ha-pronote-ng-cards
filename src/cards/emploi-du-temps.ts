@@ -4,12 +4,25 @@ import { formatDayLabel, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
 import { isCanceled, statusLabel, teachersOf, type Lesson } from '../core/lesson';
-import { subjectColor } from '../core/subject-color';
+import { subjectAccent } from '../core/subject-color';
 
 interface Config extends PronoteCardConfig {
   range?: 'today' | 'tomorrow' | 'week';
   show_rooms?: boolean;
   show_teachers?: boolean;
+  /**
+   * Table matière → couleur, renseignée par l'utilisateur.
+   *
+   * C'est le **deuxième** rang de couleur, et aujourd'hui le seul qui produise
+   * quelque chose : l'intégration décode la couleur de matière et ne la publie
+   * pas encore. Voir `subjectAccent`.
+   *
+   * Absente du formulaire d'éditeur, et pour une raison : aucun sélecteur
+   * `ha-form` ne rend correctement un dictionnaire ouvert dont les clés sont
+   * les matières de l'établissement. En YAML, l'utilisateur a au moins la
+   * coloration syntaxique de Home Assistant.
+   */
+  subject_colors?: Record<string, string>;
 }
 
 /**
@@ -199,7 +212,7 @@ export const SPEC: CardSpec<Config> = {
           // `?? null` et non `?? undefined` : la grille entière réserve la
           // gouttière, donc un créneau sans couleur reste aligné sur ses
           // voisins colorés. Voir `RowOptions.accent`.
-          accent: subjectColor(l.background_color) ?? null,
+          accent: subjectAccent(l.background_color, l.subject, c.subject_colors) ?? null,
         })
       );
     }
