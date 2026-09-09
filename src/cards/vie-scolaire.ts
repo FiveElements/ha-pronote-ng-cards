@@ -14,18 +14,37 @@ interface Config extends PronoteCardConfig {
 interface Absence {
   from_date?: string;
   to_date?: string;
-  hours?: number;
+  /**
+   * PRONOTE écrit la durée d'une absence **déjà composée** — « 2h00 » — et
+   * l'intégration la recopie telle quelle (`_absence_dict` : « ``hours``/
+   * ``days``, never ``minutes`` »). C'est donc une chaîne, pas un nombre : la
+   * multiplier par 60 rendait « NaN h NaN » sur une vraie instance.
+   */
+  hours?: string | number;
   justified?: boolean;
+  reasons?: unknown;
 }
 interface Delay {
   date?: string;
+  /** Un retard, lui, porte bien un entier de minutes. */
   minutes?: number;
   justified?: boolean;
+  reasons?: unknown;
+}
+/** Un créneau de punition : c'est ici, et nulle part ailleurs, que vit la durée. */
+interface PunishmentSlot {
+  start?: string;
+  duration_minutes?: number;
 }
 interface Punishment {
   nature?: string;
   giver?: string;
-  duration?: number;
+  /**
+   * Une punition n'a **pas** de champ `duration` au premier niveau : sa durée
+   * se lit sur ses créneaux. L'ancienne lecture d'un `p.duration` inexistant
+   * ne rendait jamais rien, en silence.
+   */
+  schedule?: unknown;
 }
 
 const ABSENCES: EntityKey = 'sensor:absences';
@@ -38,6 +57,63 @@ const UNJUSTIFIED_ABSENCES: EntityKey = 'sensor:unjustified_absences';
 const IN_PROGRESS: EntityKey = 'binary_sensor:absence_in_progress';
 const UPCOMING: EntityKey = 'binary_sensor:punishment_upcoming';
 const NEXT_PUNISHMENT: EntityKey = 'sensor:next_punishment';
+
+/**
+ * Un instant en toutes lettres : « lundi 7 septembre · 14:00 ». Une valeur
+ * illisible rend la chaîne vide, jamais l'horodatage ISO brut — c'est
+ * pourtant ce que la carte affichait, et personne ne lit un ISO.
+ */
+const stamp = (value: string | undefined, language: string, timeZone: string): string =>
+  [formatDayLabel(value, language, timeZone), formatTime(value, language, timeZone)]
+    .filter(Boolean)
+    .join(' · ');
+
+/** L'étendue d'une absence, sans répéter le jour quand elle tient dans la journée. */
+const spanLabel = (
+  from: string | undefined,
+  to: string | undefined,
+  language: string,
+  timeZone: string
+): string => {
+  const start = stamp(from, language, timeZone);
+  if (!start) return stamp(to, language, timeZone);
+  const endTime = formatTime(to, language, timeZone);
+  if (!endTime) return start;
+  const sameDay =
+    formatDayLabel(from, language, timeZone) === formatDayLabel(to, language, timeZone);
+  // Une borne de fin identique à la borne de début n'apprend rien : une
+  // flèche vers la même heure se lit comme une donnée manquante.
+  if (sameDay && endTime === formatTime(from, language, timeZone)) return start;
+  return `${start} → ${sameDay ? endTime : stamp(to, language, timeZone)}`;
+};
+
+/** Les motifs écrits par l'établissement, rendus tels quels — jamais traduits. */
+const reasonsLabel = (value: unknown): string =>
+  listAttr<unknown>(value)
+    .filter((r): r is string => typeof r === 'string' && r.trim() !== '')
+    .join(' · ');
+
+/**
+ * La durée d'une absence. PRONOTE l'écrit déjà composée (« 2h00 ») : ce
+ * texte est rendu tel quel. Un nombre, lui, est bien un nombre d'heures.
+ */
+const absenceDuration = (hours: string | number | undefined, language: string): string => {
+  if (hours === undefined || hours === null) return '';
+  if (typeof hours === 'number') return formatDuration(hours * 60, language);
+  const trimmed = hours.trim();
+  if (trimmed === '') return '';
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? formatDuration(n * 60, language) : trimmed;
+};
+
+/** La durée totale d'une punition : la somme de ses créneaux, seule source réelle. */
+const punishmentDuration = (schedule: unknown, language: string): string => {
+  const total = listAttr<PunishmentSlot>(schedule).reduce(
+    (sum, slot) => sum + (typeof slot.duration_minutes === 'number' ? slot.duration_minutes : 0),
+    0
+  );
+  return total > 0 ? formatDuration(total, language) : '';
+};
 
 const sectionsOf = (c: Config): Section[] =>
   c.sections && c.sections.length > 0 ? c.sections : ['absences', 'delays', 'punishments'];
@@ -172,9 +248,11 @@ export const SPEC: CardSpec<Config> = {
           rows++;
           out.push(
             listRow({
-              primary: `${a.from_date ?? '—'} → ${a.to_date ?? '—'}`,
+              primary: spanLabel(a.from_date, a.to_date, ctx.language, ctx.timeZone) || '—',
               secondary:
-                a.hours !== undefined ? formatDuration(a.hours * 60, ctx.language) : undefined,
+                [absenceDuration(a.hours, ctx.language), reasonsLabel(a.reasons)]
+                  .filter(Boolean)
+                  .join(' · ') || undefined,
               trailing: chip(
                 // « justifiée » est féminin : correct pour une absence. Le
                 // retard, plus bas, prend les clés masculines dédiées.
@@ -196,9 +274,11 @@ export const SPEC: CardSpec<Config> = {
           rows++;
           out.push(
             listRow({
-              primary: d.date ?? '—',
+              primary: stamp(d.date, ctx.language, ctx.timeZone) || '—',
               secondary:
-                d.minutes !== undefined ? formatDuration(d.minutes, ctx.language) : undefined,
+                [formatDuration(d.minutes, ctx.language), reasonsLabel(d.reasons)]
+                  .filter(Boolean)
+                  .join(' · ') || undefined,
               trailing: chip(
                 // Un retard est masculin : `justified_m` / `unjustified_m`.
                 // Les clés `justified` / `unjustified` (féminin) restent
@@ -215,8 +295,8 @@ export const SPEC: CardSpec<Config> = {
     }
 
     if (wanted.includes('punishments')) {
-      // Pas de champ date exploitable dans l'attribut consommé ici (`nature`,
-      // `giver`, `duration`) : rien à trier avant de tronquer.
+      // Pas de date au premier niveau d'une punition (`nature`, `giver`,
+      // `schedule`) : rien à trier avant de tronquer.
       const items = latestFirst<Punishment>(ctx.attr(PUNISHMENTS, 'items'), limit);
       if (items.length > 0) {
         out.push(html`<div class="title">${ctx.t('vie_scolaire.punishments')}</div>`);
@@ -226,8 +306,7 @@ export const SPEC: CardSpec<Config> = {
             listRow({
               primary: p.nature ?? '—',
               secondary: p.giver ?? undefined,
-              trailing:
-                p.duration !== undefined ? formatDuration(p.duration, ctx.language) : undefined,
+              trailing: punishmentDuration(p.schedule, ctx.language) || undefined,
             })
           );
         }

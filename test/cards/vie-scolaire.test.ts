@@ -38,7 +38,15 @@ const full = () =>
       entity_id: 'sensor.abc_punitions',
       device: 'dev_enfant',
       state: '1',
-      attributes: { items: [{ nature: 'Retenue', giver: 'M. Dupont', duration: 60 }] },
+      attributes: {
+        items: [
+          {
+            nature: 'Retenue',
+            giver: 'M. Dupont',
+            schedule: [{ start: '2026-09-08T17:00:00+02:00', duration_minutes: 60 }],
+          },
+        ],
+      },
     },
   ]);
 
@@ -94,8 +102,8 @@ describe('carte vie-scolaire', () => {
       hass
     );
     const t = text(el);
-    expect(t).toContain('2026-09-05');
-    expect(t).not.toContain('2026-09-01');
+    expect(t).toContain('5 septembre');
+    expect(t).not.toContain('1 septembre');
   });
 
   it('restreint aux blocs choisis via sections', async () => {
@@ -259,16 +267,18 @@ describe('carte vie-scolaire', () => {
     const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
 
-    const posAbsence5 = t.indexOf('2026-09-05');
-    const posAbsence3 = t.indexOf('2026-09-03');
-    const posAbsence1 = t.indexOf('2026-09-01');
+    // Les dates sont mises en toutes lettres : c'est le libellé rendu qu'on
+    // repère, plus jamais l'horodatage ISO brut.
+    const posAbsence5 = t.indexOf('5 septembre');
+    const posAbsence3 = t.indexOf('3 septembre');
+    const posAbsence1 = t.indexOf('1 septembre');
     expect(posAbsence5).toBeGreaterThanOrEqual(0);
     expect(posAbsence3).toBeGreaterThan(posAbsence5);
     expect(posAbsence1).toBeGreaterThan(posAbsence3);
 
-    const posDelay10 = t.indexOf('2026-09-10');
-    const posDelay06 = t.indexOf('2026-09-06');
-    const posDelay02 = t.indexOf('2026-09-02');
+    const posDelay10 = t.indexOf('10 septembre');
+    const posDelay06 = t.indexOf('6 septembre');
+    const posDelay02 = t.indexOf('2 septembre');
     expect(posDelay10).toBeGreaterThanOrEqual(0);
     expect(posDelay06).toBeGreaterThan(posDelay10);
     expect(posDelay02).toBeGreaterThan(posDelay06);
@@ -292,7 +302,7 @@ describe('carte vie-scolaire', () => {
       hass
     );
     const t = text(el);
-    expect(t).not.toContain('2026-09-01');
+    expect(t).not.toContain('1 septembre');
     expect(t).toContain('Rien à signaler');
   });
 
@@ -429,4 +439,111 @@ describe('carte vie-scolaire', () => {
       { value: 'punishments', label: '[vie_scolaire.punishments]' },
     ]);
   });
+
+  // Les quatre cas ci-dessous viennent d'une instance réelle : la carte y
+  // affichait des horodatages ISO bruts, un « NaN h NaN », et taisait la
+  // durée d'une punition. La forme des attributs est celle que
+  // l'intégration publie (`_absence_dict`, `_delay_dict`, `_punishment_dict`).
+  it('met les bornes d’une absence en toutes lettres, jamais en ISO brut', async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:absences',
+        entity_id: 'sensor.abc_absences',
+        device: 'dev_enfant',
+        state: '1',
+        attributes: {
+          items: [
+            {
+              from_date: '2026-09-07T14:00:00+02:00',
+              to_date: '2026-09-07T16:00:00+02:00',
+              justified: true,
+            },
+          ],
+        },
+      },
+    ]);
+    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('7 septembre');
+    expect(t).toContain('14:00');
+    expect(t).toContain('16:00');
+    expect(t).not.toContain('2026-09-07T14:00:00+02:00');
+  });
+
+  it('rend la durée d’absence écrite par l’établissement telle quelle', async () => {
+    // PRONOTE écrit « 2h00 » : une chaîne. La multiplier par 60 rendait
+    // « NaN h NaN » — le défaut exact observé en production.
+    const hass = makeHass([
+      {
+        key: 'sensor:absences',
+        entity_id: 'sensor.abc_absences',
+        device: 'dev_enfant',
+        state: '1',
+        attributes: {
+          items: [
+            {
+              from_date: '2026-09-07T14:00:00+02:00',
+              to_date: '2026-09-07T16:00:00+02:00',
+              hours: '2h00',
+              justified: true,
+              reasons: ['MALADIE SANS CERTIFICAT'],
+            },
+          ],
+        },
+      },
+    ]);
+    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('2h00');
+    expect(t).not.toContain('NaN');
+    // Le motif écrit par l'établissement, rendu tel quel.
+    expect(t).toContain('MALADIE SANS CERTIFICAT');
+  });
+
+  it('accepte encore un nombre d’heures, converti en durée', async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:absences',
+        entity_id: 'sensor.abc_absences',
+        device: 'dev_enfant',
+        state: '1',
+        attributes: {
+          items: [{ from_date: '2026-09-01', to_date: '2026-09-01', hours: 2, justified: false }],
+        },
+      },
+    ]);
+    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('2 h');
+    expect(t).not.toContain('NaN');
+  });
+
+  it('lit la durée d’une punition sur ses créneaux, où elle vit réellement', async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:punishments',
+        entity_id: 'sensor.abc_punitions',
+        device: 'dev_enfant',
+        state: '1',
+        attributes: {
+          items: [
+            {
+              nature: 'Retenue',
+              giver: 'M. Dupont',
+              schedule: [
+                { start: '2026-09-08T17:00:00+02:00', duration_minutes: 60 },
+                { start: '2026-09-09T17:00:00+02:00', duration_minutes: 30 },
+              ],
+            },
+          ],
+        },
+      },
+    ]);
+    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Retenue');
+    // La somme des deux créneaux : 90 minutes.
+    expect(t).toContain('1 h 30');
+  });
+
 });

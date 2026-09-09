@@ -99,6 +99,13 @@ describe('formatGrade', () => {
 });
 
 describe('formatDuration', () => {
+  it('ne rend rien sur un NaN, plutôt que « NaN h NaN »', () => {
+    // `NaN < 0` et `NaN < 60` sont tous deux faux : sans garde-fou explicite,
+    // un NaN traversait les deux tests et ressortait affiché sur la carte.
+    expect(formatDuration(Number.NaN)).toBe('');
+    expect(formatDuration(Number('2h00') * 60)).toBe('');
+  });
+
   it('rend les minutes sous l’heure', () => {
     expect(formatDuration(45)).toBe('45 min');
   });

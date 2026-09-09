@@ -122,7 +122,11 @@ function formatGradeValue(grade: number | string, language: string): string {
  * à l'œil) : sans elle, le rendu varie selon la version d'ICU du moteur.
  */
 export function formatDuration(minutes: number | undefined, language = 'fr'): string {
-  if (minutes === undefined || minutes < 0) return '';
+  // `NaN < 0` et `NaN < 60` sont tous deux faux : sans ce garde-fou, un NaN
+  // traversait les deux tests et ressortait en « NaN h NaN » sur la carte.
+  // C'est arrivé en production, sur une durée d'absence que PRONOTE écrit en
+  // toutes lettres (« 2h00 ») et qu'un appelant multipliait par 60.
+  if (minutes === undefined || !Number.isFinite(minutes) || minutes < 0) return '';
   if (minutes < 60) {
     return normalize(
       new Intl.NumberFormat(language, {
