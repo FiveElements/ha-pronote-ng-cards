@@ -16,10 +16,12 @@ import { mountCard } from '../fixtures/mount';
  * la même façon sur l'emploi du temps, les devoirs et les moyennes. Trois
  * tests dispersés dans trois fichiers auraient laissé la divergence passer.
  *
- * Ce qui n'est PAS transverse, et que ce fichier vérifie aussi : le
- * placement. Les devoirs posent leur filet après l'intitulé de la matière,
- * les trois autres familles le posent en gouttière à gauche. La résolution est
- * commune, le rendu ne l'est pas.
+ * Le **placement** est transverse lui aussi, depuis la décision « la
+ * gouttière à gauche, partout » : les six cartes qui portent une matière
+ * bordent la ligne du même côté, avec la même variable CSS. Ce fichier a
+ * porté l'exigence inverse pour les devoirs — un filet séparateur posé APRES
+ * l'intitulé — et les tests qui l'affirmaient ont été renversés plutôt que
+ * supprimés, pour que la trace de la décision reste lisible.
  *
  * **Les couleurs de ces fixtures sont inventées**, comme toutes les valeurs du
  * dépôt. Un établissement réel choisit les siennes.
@@ -79,39 +81,50 @@ const accents = (el: HTMLElement): (string | null)[] =>
   );
 
 /**
- * Les filets séparateurs d'une carte — le placement propre aux devoirs. La
- * couleur passe par la même variable CSS que la gouttière : un test qui
- * lirait `style.backgroundColor` dépendrait de la normalisation en `rgb(...)`
- * du moteur de rendu, et casserait sans que le rendu ait changé.
+ * Le nombre de filets séparateurs encore rendus, tous placements confondus.
+ *
+ * Zéro partout, désormais : le filet pleine hauteur entre la matière et
+ * l'énoncé a été annulé au profit de la gouttière. Ce compteur reste parce
+ * qu'une classe CSS retirée de la feuille de styles mais toujours émise par
+ * une carte ne se voit **pas** — l'élément est simplement invisible, et rien
+ * ne le signale.
  */
-const separateurs = (el: HTMLElement): string[] =>
-  [...(el.shadowRoot?.querySelectorAll('.row > .filet-matiere') ?? [])].map((bar) =>
-    bar instanceof HTMLElement ? bar.style.getPropertyValue('--pronote-subject-color').trim() : ''
-  );
+const separateurs = (el: HTMLElement): number =>
+  el.shadowRoot?.querySelectorAll('.filet-matiere').length ?? 0;
 
 /**
- * Les rangs de l'intitulé, du filet et de l'énoncé parmi les enfants de la
- * ligne qui porte un filet. Rend -1 pour ce qui manque.
+ * La structure d'un bloc de devoir : les rangs du titre et de l'énoncé parmi
+ * les enfants **directs** de la ligne, et où se trouve chaque partie. Rend -1
+ * pour ce qui manque.
  *
- * On part du filet et on remonte à son parent plutôt que de prendre la
- * première `.row` : la carte pose aussi une bannière « en retard » qui est
- * une `.row` sans filet, et la sélection aurait dépendu d'un état d'entité
- * absent de cette fixture.
- *
- * Une version antérieure de ce test parcourait les `childNodes` de
- * l'intitulé et lisait `lastElementChild`. Mesuré en déplaçant le filet avant
- * l'intitulé : les treize tests du fichier passaient toujours, parce que le
- * filet restait le dernier *élément* dans les deux ordres. Un test de
- * position qui ignore l'ordre réel ne teste aucune position.
+ * On part de la ligne en bloc (`.row.empile`) et on lit ses `children` — donc
+ * les éléments dans leur ordre réel. Une version antérieure de ce test lisait
+ * `lastElementChild` : mesuré en déplaçant l'élément au mauvais endroit, les
+ * treize tests du fichier passaient toujours, parce que `lastElementChild`
+ * ignore les nœuds texte et rendait le même élément dans les deux ordres. Un
+ * test de position qui ignore l'ordre réel ne teste aucune position.
  */
-const rangs = (el: HTMLElement): { intitule: number; filet: number; enonce: number } => {
-  const bar = el.shadowRoot?.querySelector('.filet-matiere');
-  const enfants = [...(bar?.parentElement?.children ?? [])];
+const structure = (
+  el: HTMLElement
+): {
+  tete: number;
+  enonce: number;
+  matiereDansTete: boolean;
+  echeanceDansTete: boolean;
+  enonceHorsTete: boolean;
+} => {
+  const ligne = el.shadowRoot?.querySelector('.row.empile');
+  const enfants = [...(ligne?.children ?? [])];
   const rangDe = (classe: string): number => enfants.findIndex((n) => n.classList.contains(classe));
+  const tete = ligne?.querySelector('.empile-tete');
   return {
-    intitule: rangDe('primary'),
-    filet: rangDe('filet-matiere'),
+    tete: rangDe('empile-tete'),
     enonce: rangDe('secondary'),
+    matiereDansTete: tete?.querySelector('.primary') != null,
+    echeanceDansTete: tete?.querySelector('.trailing') != null,
+    // L'énoncé enfant DIRECT de la ligne, et non descendant du titre : c'est
+    // ce qui lui donne toute la largeur de la carte.
+    enonceHorsTete: tete?.querySelector('.secondary') == null,
   };
 };
 
@@ -242,46 +255,96 @@ describe('code couleur des matières — devoirs', () => {
   it('reprend la couleur de chaque devoir', async () => {
     const el = await monter();
 
-    expect(separateurs(el)).toEqual(['#1e88e5']);
+    // La fixture porte un devoir coloré et un devoir sans couleur, dans cet
+    // ordre. Le second réserve sa gouttière sans la peindre.
+    expect(accents(el)).toEqual(['#1e88e5', null]);
     expect(el.shadowRoot?.textContent).toContain('Exercices 3 à 7');
   });
 
-  it('sépare l’intitulé de l’énoncé par le filet', async () => {
+  /**
+   * Le RENVERSEMENT n°1. Ce test affirmait l'inverse : « sépare l'intitulé de
+   * l'énoncé par le filet », et vérifiait que le filet se rendait entre les
+   * deux, dans cet ordre.
+   *
+   * Pourquoi il est renversé : mise en colonne à côté de la matière, la
+   * largeur laissée à l'énoncé tombait à 132 pixels sur une carte de 420, et
+   * l'énoncé EST ce que la carte a à dire — c'est le devoir à faire. Ce qui a
+   * changé n'est pas l'argument du séparateur, qui tenait, c'est l'arbitrage
+   * entre l'alignement de la colonne et la largeur du contenu.
+   */
+  it('titre le bloc par la matière et donne toute la largeur à l’énoncé', async () => {
     const el = await monter();
 
-    const { intitule, filet, enonce } = rangs(el);
-    // Les trois bornes d'abord : sans elles, trois -1 se compareraient
+    const { tete, enonce, matiereDansTete, echeanceDansTete, enonceHorsTete } = structure(el);
+    // Les deux bornes d'abord : sans elles, deux -1 se compareraient
     // sereinement et le test passerait sur une ligne vide.
-    expect(intitule).toBeGreaterThanOrEqual(0);
-    expect(filet).toBeGreaterThanOrEqual(0);
+    expect(tete).toBeGreaterThanOrEqual(0);
     expect(enonce).toBeGreaterThanOrEqual(0);
-    expect(intitule).toBeLessThan(filet);
-    expect(filet).toBeLessThan(enonce);
+    // L'ordre du DOM est l'ordre visuel : le titre, PUIS l'énoncé.
+    expect(tete).toBeLessThan(enonce);
+    // La matière et l'échéance dans le titre, l'énoncé en dehors : c'est ce
+    // dernier point qui lui donne la largeur de la carte.
+    expect(matiereDansTete).toBe(true);
+    expect(echeanceDansTete).toBe(true);
+    expect(enonceHorsTete).toBe(true);
+    // Et plus aucun filet séparateur nulle part.
+    expect(separateurs(el)).toBe(0);
   });
 
-  it('groupe les lignes d’un même jour pour aligner leurs colonnes', async () => {
+  it('garde les retours à la ligne de l’énoncé', async () => {
+    // `plainText()` pose de vrais retours dans l'énoncé : sans
+    // `white-space: pre-line`, deux phrases se collent. La règle vit sur
+    // `.row .secondary`, un sélecteur de DESCENDANT — le bloc a intercalé un
+    // élément de titre entre la ligne et ses parties, et un sélecteur
+    // d'enfant direct aurait été rompu par là sans un mot.
+    const el = await monter();
+    const enonce = el.shadowRoot?.querySelector('.row.empile > .secondary');
+    expect(enonce).not.toBeNull();
+    if (!(enonce instanceof HTMLElement)) throw new Error('énoncé absent');
+    expect(globalThis.getComputedStyle(enonce).whiteSpace).toBe('pre-line');
+  });
+
+  /**
+   * Le RENVERSEMENT n°2. Ce test affirmait « groupe les lignes d'un même jour
+   * pour aligner leurs colonnes », et vérifiait l'enveloppe `.devoirs-groupe`
+   * qui portait la sous-grille.
+   *
+   * Il n'y a plus de colonne de matière à aligner : la matière titre son
+   * bloc. L'enveloppe n'avait plus d'autre raison d'être, et une enveloppe
+   * sans raison finit par recevoir une règle CSS qu'on ne saura plus
+   * expliquer. Le regroupement par jour, lui, RESTE — ce sont les intertitres
+   * `.title`, que ce test vérifie donc à la place.
+   */
+  it('ne groupe plus les lignes d’un même jour dans une enveloppe', async () => {
     const el = await monter();
 
-    // Deux échéances distinctes dans la fixture, donc deux groupes.
-    const groupes = [...(el.shadowRoot?.querySelectorAll('.devoirs-groupe') ?? [])];
-    expect(groupes).toHaveLength(2);
-    // Et chaque ligne appartient à un groupe : une ligne restée en dehors ne
-    // partagerait les colonnes de personne, ce que le comptage seul ne dirait
-    // pas.
+    expect(el.shadowRoot?.querySelectorAll('.devoirs-groupe').length).toBe(0);
+    // Appariée à un positif : les deux lignes sont bien là, et les deux
+    // intertitres de jour aussi — le regroupement n'a pas disparu avec
+    // l'enveloppe, seule l'enveloppe a disparu.
     const lignes = [...(el.shadowRoot?.querySelectorAll('.row') ?? [])];
     expect(lignes).toHaveLength(2);
-    for (const ligne of lignes) {
-      expect(ligne.parentElement?.classList.contains('devoirs-groupe')).toBe(true);
-    }
+    expect(el.shadowRoot?.querySelectorAll('.title').length).toBe(2);
   });
 
-  it('ne réserve aucune gouttière à gauche', async () => {
+  /**
+   * Le RENVERSEMENT n°3. Ce test s'appelait « ne réserve aucune gouttière à
+   * gauche » et c'était la contrepartie du filet séparateur : la ligne étant
+   * un flux, il n'y avait rien à réserver.
+   *
+   * La gouttière est désormais le placement de toutes les cartes qui portent
+   * une matière, devoirs comprises, et la réservation redevient nécessaire —
+   * une ligne sans gouttière se décale de neuf pixels (bordure de trois plus
+   * marge de six) par rapport à sa voisine colorée, ce qui se lit comme un
+   * défaut d'affichage et non comme une matière sans couleur.
+   */
+  it('réserve la gouttière à gauche comme les cinq autres cartes', async () => {
     const el = await monter();
 
-    // Une assertion d'absence seule passerait aussi si la carte ne rendait
-    // plus rien du tout : la seconde ligne est ce qui la rend concluante.
-    expect(accents(el)).toEqual([]);
-    expect(separateurs(el)).toEqual(['#1e88e5']);
+    // Aucune ligne hors gouttière : ni les devoirs, ni la ligne de prochaine
+    // échéance, ni la bannière « en retard » quand elle est là.
+    expect(plainRows(el)).toBe(0);
+    expect(accents(el)).toEqual(['#1e88e5', null]);
   });
 });
 
@@ -443,7 +506,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
         },
       ])
     );
-    expect(separateurs(el)).toEqual(['#1e88e5']);
+    expect(accents(el)).toEqual(['#1e88e5', null]);
     expect(el.shadowRoot?.textContent).toContain('Exercices 3 à 7');
   });
 

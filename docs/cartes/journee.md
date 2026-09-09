@@ -1,9 +1,9 @@
 # Vue journée
 
 La journée d'aujourd'hui en grille : la date et les bornes de la journée de
-classe en en-tête, puis une colonne d'horaires, un filet de couleur par
-matière, l'intitulé, la salle, le professeur, et les créneaux sans cours du
-midi.
+classe en en-tête, puis un filet de couleur par matière, une colonne
+d'horaires, l'intitulé, la salle, le professeur, et les créneaux sans cours
+du midi.
 
 C'est un portage d'apparence de l'ancienne carte `lovelace-pronote`. Elle
 ouvre sur **aujourd'hui**, et deux flèches parcourent les autres jours de la

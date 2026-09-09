@@ -44,20 +44,20 @@ limit: 12
 
 ## Les couleurs de matière
 
-Le filet de couleur de la matière est ici un **séparateur pleine hauteur**,
-posé entre l'intitulé de la matière et l'énoncé du devoir : il coupe la
-ligne en deux. Les trois autres cartes le gardent en gouttière à gauche.
-Ce n'est pas un réglage du même placement mais deux placements distincts,
-et la différence est de sens : **la gouttière borde la ligne entière, donc
-elle qualifie la ligne ; le séparateur coupe la ligne en deux, donc il se
-lit comme une frontière entre l'intitulé et le contenu.**
+La couleur de la matière est une **gouttière à gauche** du bloc, comme sur
+les cinq autres cartes qui portent une matière. Un devoir sans couleur
+garde sa gouttière, réservée mais transparente : sans elle, la ligne se
+décalerait de neuf pixels par rapport à sa voisine colorée, ce qui se lit
+comme un défaut d'affichage plutôt que comme une matière sans couleur.
 
-Ce placement n'a **pas de troisième cas** : un devoir sans couleur n'a
-simplement pas de filet. Une gouttière a besoin d'un repli transparent
-pour réserver sa place, sinon la ligne se décale par rapport à sa voisine
-colorée ; la ligne d'un devoir est un **flux** et non une grille à
-colonnes fixes, il n'y a donc rien à réserver. Et un filet gris de repli
-affirmerait que la matière a une couleur, et que cette couleur est grise. Il n'y en a aucune tant que vous n'avez pas écrit de table
+Cette page a décrit pendant un temps un autre placement — un filet pleine
+hauteur posé entre la matière et l'énoncé, qui coupait la ligne en deux —
+et une colonne de matière de largeur commune à toutes les lignes d'un même
+jour. Les deux ont été retirés par la même décision, et pour une raison qui
+n'est pas l'esthétique : la matière **titre** désormais le bloc, et
+l'énoncé passe dessous sur toute la largeur de la carte. En colonne, il ne
+disposait que de 132 pixels sur une carte de 420 — or l'énoncé est ce que
+la carte a à dire. Il n'y en a aucune tant que vous n'avez pas écrit de table
 `subject_colors` : l'intégration ne publie pas encore la couleur de
 votre établissement.
 

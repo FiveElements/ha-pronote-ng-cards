@@ -193,6 +193,11 @@ export const SPEC: CardSpec<Config> = {
         primary: ctx.t('devoirs.next_due'),
         secondary: message,
         trailing: when || undefined,
+        // La gouttière est réservée sans être colorée : cette ligne n'est pas
+        // une matière, mais la liste est désormais codée par couleur et une
+        // ligne sans gouttière se décalerait de neuf pixels vers la gauche.
+        // Voir `RowOptions.accent`, troisième valeur.
+        accent: null,
       });
     })();
 
@@ -236,18 +241,29 @@ export const SPEC: CardSpec<Config> = {
     };
 
     const overdueOn = ctx.entity(OVERDUE)?.state === 'on';
-    const overdueBanner = overdueOn ? html`<div class="row">${chip(ctx.t('devoirs.overdue'), 'problem')}</div>` : '';
+    // Passe par `listRow` plutôt que par un `div` de classe `row` écrit ici :
+    // la bannière doit réserver la gouttière comme les lignes de devoir, et
+    // `listRow` est le seul endroit qui sache la poser.
+    const overdueBanner = overdueOn
+      ? listRow({ primary: chip(ctx.t('devoirs.overdue'), 'problem'), accent: null })
+      : '';
 
     const rowFor = (h: Homework): TemplateResult => {
       const overdue = isOverdue(h.due, ctx.timeZone);
       const dueLabel = h.due ? formatDayLabel(h.due, ctx.language, ctx.timeZone) : '';
-      // La couleur de matière est un SEPARATEUR ici, pas une gouttière : un
-      // filet pleine hauteur entre l'intitulé et l'énoncé. Voir
-      // `RowOptions.divider` pour ce que ce placement dit de plus que celui
-      // des trois autres cartes.
+      // La couleur de matière est une gouttière à gauche, comme sur les cinq
+      // autres cartes qui portent une matière. Voir `RowOptions.accent` pour
+      // ses trois valeurs, et la règle `.row.empile` de `styles.ts` pour les
+      // deux dispositifs que ce placement a annulés.
       const accent = subjectAccent(h.background_color, h.subject, ctx.config.subject_colors);
       return html`
         ${listRow({
+          // La matière TITRE le bloc, elle n'occupe plus une colonne à sa
+          // gauche : c'est l'énoncé qui est le contenu de la carte, et une
+          // colonne de matière le comprimait à 132 pixels sur une carte de
+          // 420. Le bloc lui rend toute la largeur.
+          stacked: true,
+          accent: accent ?? null,
           primary: html`
             ${writable
               ? html`<input
@@ -261,7 +277,6 @@ export const SPEC: CardSpec<Config> = {
               : ''}
             ${h.subject ?? ctx.t('devoirs.name')}
           `,
-          divider: accent,
           // Le texte simple publié par l'intégration s'il existe, sinon
           // l'énoncé HTML dévêtu ici — jamais injecté.
           secondary: h.description_text ?? plainText(h.description),
@@ -278,13 +293,10 @@ export const SPEC: CardSpec<Config> = {
     const out: (TemplateResult | string)[] = [overdueBanner, nextDue];
     for (const g of groups) {
       out.push(html`<div class="title">${g.label}</div>`);
-      // Les lignes d'un groupe sont enveloppées pour qu'elles partagent leurs
-      // colonnes : la matière la plus longue du jour fixe la largeur, et les
-      // filets d'un même jour s'alignent. Un groupe et non la carte entière,
-      // parce que c'est ce qui a été demandé et que c'est aussi le bon
-      // découpage — une colonne dimensionnée sur toute la carte serait tenue
-      // en otage par la matière la plus longue d'un jour qu'on ne regarde pas.
-      out.push(html`<div class="devoirs-groupe">${g.items.map((h) => rowFor(h))}</div>`);
+      // Les lignes d'un jour ne sont plus enveloppées. L'enveloppe existait
+      // pour leur faire partager une colonne de matière de largeur unique ;
+      // il n'y a plus de colonne de matière, la matière titre son bloc.
+      out.push(html`${g.items.map((h) => rowFor(h))}`);
     }
 
     return html`${out}`;

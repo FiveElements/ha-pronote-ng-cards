@@ -44,11 +44,12 @@ La couleur d'une matière se prend dans cet ordre :
 
 1. **la couleur publiée par le serveur**, quand l'intégration l'expose ;
 2. **sinon votre table** ;
-3. **sinon rien.** Sur les trois cartes qui posent le filet en gouttière à
-   gauche, la gouttière reste réservée mais transparente, pour que la ligne
-   garde son alignement. Sur [Devoirs](cartes/devoirs.md), où le filet est
-   un séparateur pleine hauteur entre la matière et l'énoncé, la ligne est
-   un flux et il n'y a rien à réserver : elle n'a pas de filet du tout.
+3. **sinon rien.** La gouttière reste réservée mais transparente, pour que
+   la ligne garde son alignement. C'est le cas sur les six cartes : le
+   placement de la couleur est le même partout, une gouttière à gauche.
+   [Devoirs](cartes/devoirs.md) a porté un temps un séparateur pleine
+   hauteur entre la matière et l'énoncé — il a été retiré, et la carte
+   réserve donc sa gouttière comme les autres.
 
 **Il n'y a pas de quatrième rang, et surtout pas une couleur calculée à partir
 du nom.** C'est le rang qui n'existe pas, volontairement. Une couleur déclarée

@@ -59,38 +59,57 @@ export interface RowOptions {
    */
   accent?: string | null;
   /**
-   * L'autre placement de la couleur de matière : un filet **pleine hauteur**
-   * posé entre l'intitulé et le contenu, qui sépare l'un de l'autre. C'est
-   * celui des devoirs.
+   * La ligne en **bloc de deux niveaux** au lieu d'un flux à trois parties, et
+   * ses deux valeurs.
    *
-   * Deux placements et non un réglage, parce que les deux ne disent pas la
-   * même chose. La gouttière de `accent` borde la ligne entière : elle
-   * qualifie la ligne. Ce filet-ci coupe la ligne en deux et se lit comme une
-   * séparation entre la matière et ce qu'il y a à faire.
+   * - `undefined` ou `false` : le flux d'origine — intitulé, contenu et partie
+   *   finale se suivent sur une seule ligne, chacun pris dans la largeur que
+   *   les autres lui laissent. C'est le cas de toutes les cartes sauf une.
+   * - `true` : l'intitulé et la partie finale forment le **titre** du bloc, et
+   *   le contenu passe **dessous, sur toute la largeur de la carte**.
    *
-   * Pas de troisième cas ici, contrairement à `accent` : une ligne sans
-   * couleur n'a pas de filet, et rien ne se décale puisque la mise en page
-   * est un flux et non une grille à colonnes fixes.
+   * Le cas qui a créé cette option, les devoirs : mis en colonne à côté de la
+   * matière, l'énoncé disposait de 132 pixels sur une carte de 420 et se
+   * dépliait sur une dizaine de lignes. Or l'énoncé EST le contenu de la carte
+   * — c'est ce qu'il y a à faire. Il passe donc devant l'alignement de la
+   * colonne qui le comprimait.
    *
-   * Comme `accent`, la valeur doit avoir traversé `subjectColor` : elle finit
-   * dans un attribut `style`.
+   * La ligne reste **une seule boîte** dans les deux cas : c'est elle qui
+   * porte le trait de séparation entre deux entrées et la gouttière de
+   * `accent`. Le titre est un élément interne, pas une ligne sœur.
    */
-  divider?: string;
+  stacked?: boolean;
 }
 
-export const listRow = (o: RowOptions): TemplateResult => html`
-  <div
-    class="row ${o.canceled ? 'canceled' : ''} ${o.accent === undefined ? '' : 'accented'}"
-    style=${typeof o.accent === 'string' ? `--pronote-subject-color: ${o.accent}` : nothing}
-  >
-    <span class="primary">${o.primary}</span>
-    ${o.divider === undefined
-      ? ''
-      : html`<span
-          class="filet-matiere"
-          style=${`--pronote-subject-color: ${o.divider}`}
-        ></span>`}
-    ${o.secondary ? html`<span class="secondary">${o.secondary}</span>` : ''}
-    ${o.trailing ? html`<span class="trailing">${o.trailing}</span>` : ''}
-  </div>
-`;
+/**
+ * La ligne de liste, et le seul endroit du projet qui pose la gouttière de
+ * couleur — d'où le drapeau `stacked` plutôt qu'une seconde fonction à côté.
+ *
+ * Une `stackedRow` séparée aurait dû reproduire les trois valeurs de `accent`
+ * (aucune gouttière, gouttière réservée, gouttière colorée) ainsi que le
+ * filtrage de la valeur qui atteint l'attribut `style`. C'est exactement le
+ * genre de copie qui dérive : six cartes doivent placer la couleur de matière
+ * identiquement, et la garantie tient à ce qu'une seule fonction la place.
+ */
+export const listRow = (o: RowOptions): TemplateResult => {
+  const primary = html`<span class="primary">${o.primary}</span>`;
+  const secondary = o.secondary ? html`<span class="secondary">${o.secondary}</span>` : '';
+  const trailing = o.trailing ? html`<span class="trailing">${o.trailing}</span>` : '';
+  return html`
+    <div
+      class="row ${o.canceled ? 'canceled' : ''} ${o.accent === undefined
+        ? ''
+        : 'accented'} ${o.stacked === true ? 'empile' : ''}"
+      style=${typeof o.accent === 'string' ? `--pronote-subject-color: ${o.accent}` : nothing}
+    >
+      ${o.stacked === true
+        ? // L'ordre du DOM est l'ordre visuel : titre puis contenu. Un `order`
+          // en CSS aurait donné le même rendu en laissant le DOM mentir sur la
+          // position — donc un test de placement qui passe alors que le
+          // lecteur d'écran lit l'énoncé avant sa matière.
+          html`<div class="empile-tete">${primary}${trailing}</div>
+            ${secondary}`
+        : html`${primary}${secondary}${trailing}`}
+    </div>
+  `;
+};

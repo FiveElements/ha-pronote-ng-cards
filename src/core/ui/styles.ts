@@ -108,104 +108,38 @@ export const sharedStyles = css`
     padding-left: 6px;
   }
 
-  /* Le filet de matière en SEPARATEUR, entre l'intitulé et le contenu de la
-     ligne. C'est le placement des devoirs : la couleur ne borde pas la ligne,
-     elle coupe la matière de ce qu'il y a à faire.
+  /* La ligne en BLOC de deux niveaux : le titre en haut, le contenu dessous
+     sur toute la largeur. Voir RowOptions.stacked. C'est le rendu des
+     devoirs.
 
-     Deux propriétés portent tout le comportement. Le align-self surcharge le
-     align-items: baseline de la ligne, sans quoi le filet se cale sur la
-     ligne de base du texte et ne mesure que sa propre hauteur au lieu de
-     celle de la ligne. Et le flex à zero-zero-auto l'empêche de se laisser
-     comprimer par un enonce long, qui le réduirait à un cheveu.
+     Ce bloc REMPLACE deux dispositifs qui ont vécu ici et qu'il ne faut pas
+     restaurer en croyant réparer une régression :
 
-     Pas de repli transparent ici, contrairement a la gouttière, et c'est
-     voulu : la mise en page est un flux et non une grille a colonnes fixes,
-     donc une ligne sans couleur ne décale rien. Un filet gris de repli
-     affirmerait au contraire que la matière a une couleur, et qu'elle est
-     grise. */
-  .filet-matiere {
-    align-self: stretch;
-    flex: 0 0 auto;
-    width: 4px;
-    border-radius: 2px;
-    background: var(--pronote-subject-color);
+     - un filet de matière pleine hauteur, posé entre l'intitulé et le
+       contenu, qui coupait la ligne en deux ;
+     - une sous-grille par jour, qui donnait la même largeur à la colonne de
+       matière sur toutes les lignes d'un même jour.
+
+     Les deux étaient demandés, les deux marchaient, et les deux ont été
+     annulés par la même décision : la couleur de matière est une gouttière à
+     gauche PARTOUT, et l'énoncé du devoir prend toute la largeur. Ce qui a
+     changé n'est pas l'argument de l'alignement, c'est l'arbitrage. Mesure à
+     l'appui : sur une carte de 420 pixels, la colonne bornée laissait 132
+     pixels à l'énoncé, qui est le contenu même de la carte. En bloc il en a
+     la largeur entière.
+
+     Le align-items en valeur stretch surcharge le baseline de la ligne :
+     sans lui, les deux niveaux du bloc se caleraient sur une ligne de base
+     commune au lieu de prendre la largeur disponible. */
+  .row.empile {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
   }
-
-  /* Les devoirs d'un même jour alignent leurs colonnes : intitulé de matière,
-     filet, énoncé, échéance. Sans ça la largeur de l'intitulé suit la
-     longueur de chaque nom de matière, et les filets d'un même jour se
-     décalent les uns par rapport aux autres.
-
-     Pourquoi une sous-grille, et pourquoi elle est sous condition. La ligne
-     doit garder sa propre boîte, parce que c'est elle qui porte le trait de
-     séparation et la marge intérieure entre deux devoirs. Un display de
-     valeur contents sur la ligne alignerait aussi les colonnes, mais en
-     supprimant sa boîte : les traits entre devoirs disparaîtraient. La
-     sous-grille aligne sans détruire.
-
-     La condition n'est pas de la prudence rituelle. Sans elle, un navigateur
-     qui ignore la sous-grille garderait le display grid en jetant la seule
-     déclaration qui décrit les colonnes — chaque ligne deviendrait une
-     colonne unique et le contenu s'empilerait verticalement. Le repli serait
-     donc PIRE que l'absence de la fonctionnalité. Sous condition, il est
-     exactement le rendu d'avant : le flux flex de la ligne.
-
-     Les colonnes sont posées explicitement sur chaque enfant, et non
-     laissées au placement automatique. Une ligne sans couleur n'a pas de
-     filet et une ligne sans échéance n'a pas de partie finale : en placement
-     automatique, l'énoncé remonterait dans la colonne du filet et l'alignement
-     se perdrait sur les lignes mêmes qu'il devait aligner.
-
-     Les deux colonnes de bord sont BORNEES, et c'est la correction d'un
-     défaut mesuré. La première version les dimensionnait toutes deux en
-     max-content : sur une carte de 420 pixels de large, l'échéance prenait
-     248 pixels parce que « à rendre le lundi 14 septembre » ne se replie pas
-     en max-content, et il restait 67 pixels à l'énoncé — qui se dépliait sur
-     trente lignes. La ligne la plus haute mesurait 619 pixels. Avec les
-     bornes, la même ligne en mesure 296 et l'énoncé dispose de 132 pixels.
-
-     C'est un piège propre à la grille : en flux flex, la partie finale se
-     laissait comprimer et se repliait d'elle-même. Une piste max-content ne
-     se replie JAMAIS — elle prend la largeur de son texte déplié, quoi qu'il
-     en coûte à ses voisines. La fonction fit-content borne ce maximum : la
-     piste vaut sa largeur naturelle tant qu'elle tient sous la borne, et se
-     replie au-delà. Le pourcentage se résout sur la largeur de la carte,
-     donc la borne suit la place disponible au lieu d'être un nombre de
-     pixels choisi pour une carte en particulier.
-
-     Le minmax de zéro à une fraction sur l'énoncé dit le reste : sans le
-     zéro, une piste en fraction a un minimum automatique égal à son contenu
-     minimal, et un mot long y rouvrirait le débordement que les bornes
-     viennent de fermer.
-
-     L'alignement demandé n'en souffre pas : une piste bornée reste UNE piste
-     partagée par toutes les lignes du groupe, donc la colonne de matière a
-     toujours la même largeur sur toutes les lignes du jour. La borne change
-     sa largeur, pas son unicité. */
-  @supports (grid-template-columns: subgrid) {
-    .devoirs-groupe {
-      display: grid;
-      grid-template-columns: fit-content(45%) 4px minmax(0, 1fr) fit-content(30%);
-      column-gap: 8px;
-    }
-    .devoirs-groupe > .row {
-      display: grid;
-      grid-template-columns: subgrid;
-      grid-column: 1 / -1;
-      align-items: baseline;
-    }
-    .devoirs-groupe > .row > .primary {
-      grid-column: 1;
-    }
-    .devoirs-groupe > .row > .filet-matiere {
-      grid-column: 2;
-    }
-    .devoirs-groupe > .row > .secondary {
-      grid-column: 3;
-    }
-    .devoirs-groupe > .row > .trailing {
-      grid-column: 4;
-    }
+  .row.empile > .empile-tete {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
   }
 
   /* La photo de l'élève. La carte qui l'affiche la laisse désactivée par
@@ -242,10 +176,17 @@ export const sharedStyles = css`
   }
 
   /* ---- La vue journée -------------------------------------------------
-     Une grille à trois colonnes : les horaires, le filet de couleur, le
+     Une grille à trois colonnes : le filet de couleur, les horaires, le
      corps. La colonne d'horaires est de largeur fixe pour que tous les
-     filets s'alignent verticalement, ce qui est ce qui fait lire la journée
-     comme une journée et non comme une liste. */
+     horaires s'alignent verticalement, ce qui est ce qui fait lire la journée
+     comme une journée et non comme une liste.
+
+     Le filet est en PREMIERE colonne, comme la gouttière des cinq autres
+     cartes. Il était auparavant posé après les horaires, ce qui se défendait
+     — il y touchait le corps qu'il colore. La décision est de placer la
+     couleur de matière à gauche partout : le placement uniforme vaut plus que
+     l'argument local, parce que six cartes qui codent la couleur au même
+     endroit se lisent sans avoir à réapprendre chacune. */
   .jour {
     display: flex;
     flex-direction: column;
@@ -332,10 +273,10 @@ export const sharedStyles = css`
   }
   .jour-ligne {
     display: grid;
-    /* Deux chiffres, deux points, deux chiffres, plus le marqueur de fin
-       déduite : 4,5em tient « ≈08:00 » sans que la police du thème puisse
-       le tronquer. */
-    grid-template-columns: 4.5em 4px 1fr;
+    /* Le filet, puis les horaires, puis le corps. Deux chiffres, deux points,
+       deux chiffres, plus le marqueur de fin déduite : 4,5em tient
+       « ≈08:00 » sans que la police du thème puisse le tronquer. */
+    grid-template-columns: 4px 4.5em 1fr;
     gap: 10px;
     align-items: stretch;
     padding: 8px 0;
@@ -353,15 +294,25 @@ export const sharedStyles = css`
     font-variant-numeric: tabular-nums;
     line-height: 1.35;
   }
-  /* Le filet. Sa couleur vient du serveur ou de la table de l'utilisateur,
-     posée en style en ligne ; le repli neutre est une variable de thème,
-     jamais une couleur écrite ici. Un ACCENT et non un aplat : il situe et
-     décore, il ne porte aucune information à lui seul — les horaires,
-     l'intitulé et les pastilles informent. */
+  /* Le filet. Sa couleur vient du serveur ou de la table de l'utilisateur, et
+     elle arrive par la propriété personnalisée --pronote-subject-color, comme
+     sur les cinq autres cartes. La carte écrivait auparavant un fond en style
+     en ligne : même rendu, mais un second mécanisme pour la même chose, donc
+     un endroit de plus où le filtrage de la valeur pouvait divorcer.
+
+     Le repli est une variable de thème, jamais une couleur écrite ici. Un
+     ACCENT et non un aplat : il situe et décore, il ne porte aucune
+     information à lui seul — les horaires, l'intitulé et les pastilles
+     informent. */
   .jour-filet {
     border-radius: 2px;
-    background: var(--divider-color);
+    background: var(--pronote-subject-color, var(--divider-color));
   }
+  /* La variante neutre reste une CLASSE et non le seul repli de la variable.
+     Elle dit explicitement « cette ligne n'a pas de couleur de matière », ce
+     qu'une propriété simplement absente ne dit à personne — ni au test qui
+     distingue les deux cas, ni à celui qui inspecte le DOM en cherchant
+     pourquoi une matière est grise. */
   .jour-filet-neutre {
     background: var(--divider-color);
   }

@@ -79,10 +79,23 @@ const lignes = (el: HTMLElement) =>
       heures: [...l.querySelectorAll('.jour-heures span')].map((s) => s.textContent?.trim() ?? ''),
       matiere: l.querySelector('.jour-matiere')?.textContent?.trim() ?? '',
       barre: l.querySelector('.jour-matiere')?.classList.contains('canceled') ?? false,
+      // La couleur telle que la carte la POSE : une propriété personnalisée,
+      // la même que la gouttière des cinq autres cartes. La carte écrivait
+      // auparavant un fond en style en ligne ; ce test lisait donc
+      // `style.background`. Le rendu, lui, n'a pas changé — voir le test
+      // « le filet peint la même couleur qu'avant ».
       couleur:
         filet instanceof HTMLElement
-          ? filet.style.background.trim() || null
+          ? filet.style.getPropertyValue('--pronote-subject-color').trim() || null
           : null,
+      // Ce que le filet PEINT réellement, variables résolues. C'est la seule
+      // lecture qui ne dépende pas du mécanisme employé pour y arriver.
+      peint:
+        filet instanceof HTMLElement ? globalThis.getComputedStyle(filet).background.trim() : '',
+      // Le rang du filet parmi les enfants de la ligne : la gouttière est à
+      // gauche, donc AVANT les horaires.
+      rangFilet: [...l.children].findIndex((n) => n.classList.contains('jour-filet')),
+      rangHeures: [...l.children].findIndex((n) => n.classList.contains('jour-heures')),
       neutre: filet?.classList.contains('jour-filet-neutre') ?? false,
       pastilles: [...l.querySelectorAll('.chip')].map((c) => c.textContent?.trim() ?? ''),
       detail: l.querySelector('.jour-detail')?.textContent?.trim() ?? '',
@@ -231,6 +244,43 @@ describe('carte vue journée — les cinq éléments requis', () => {
     // Et la matière sans couleur déclarée garde l'accent neutre du thème.
     expect(l[1]?.couleur).toBeNull();
     expect(l[1]?.neutre).toBe(true);
+  });
+
+  it('pose le filet en GOUTTIERE, avant les horaires', async () => {
+    // « La gouttière à gauche, partout » : le filet était auparavant posé
+    // entre les horaires et le corps, ce qui se défendait puisqu'il touchait
+    // là le contenu qu'il colore. Le placement uniforme sur les six cartes a
+    // été jugé plus utile que cet argument local.
+    const el = await monter({ subject_colors: { maths: '#1e88e5' } });
+    const l = lignes(el);
+    // Le rang, et non `firstElementChild` : celui-ci ignore les nœuds texte
+    // et rendrait le même élément quel que soit l'ordre réel des deux
+    // premiers enfants.
+    expect(l[0]?.rangFilet).toBe(0);
+    expect(l[0]?.rangHeures).toBe(1);
+    // Sur toutes les lignes, la zone repas comprise.
+    expect(l.map((x) => x.rangFilet)).toEqual(l.map(() => 0));
+    // Appariée à un positif : les horaires sont bien rendus, la ligne n'est
+    // pas vide.
+    expect(l[0]?.heures).toEqual(['08:00', '09:00']);
+  });
+
+  it('peint la même couleur qu’avant le passage à la propriété personnalisée', async () => {
+    // Le changement de mécanisme — un fond en style en ligne remplacé par la
+    // variable `--pronote-subject-color` que les cinq autres cartes emploient
+    // — devait être sans effet visuel. Mesuré, pas supposé : ce sont les
+    // valeurs relevées AVANT la modification, variables résolues.
+    //
+    // Le vide des lignes sans couleur n'est pas un défaut du test : c'est
+    // `var(--divider-color)` non résolue, faute de thème Home Assistant dans
+    // happy-dom, et c'était déjà sa valeur avant.
+    const el = await monter({ subject_colors: { maths: '#1e88e5' } });
+    expect(lignes(el).map((x) => x.peint)).toEqual([
+      '#1e88e5',
+      '',
+      'repeating-linear-gradient(to bottom, 0 4px, transparent 4px 8px)',
+      '',
+    ]);
   });
 
   it('préfère la couleur publiée par le serveur à celle de l’utilisateur', async () => {

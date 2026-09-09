@@ -1,4 +1,4 @@
-import { html, type TemplateResult } from 'lit';
+import { html, nothing, type TemplateResult } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
 import { formatDayLabel, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState } from '../core/ui/parts';
@@ -7,7 +7,7 @@ import { isCanceled, statusLabel, teachersOf, type Lesson } from '../core/lesson
 import { subjectAccent } from '../core/subject-color';
 
 /**
- * La journée en grille : une colonne d'horaires, un filet de couleur, la
+ * La journée en grille : un filet de couleur, une colonne d'horaires, la
  * matière.
  *
  * C'est un portage d'apparence de l'ancienne carte `lovelace-pronote`. Elle
@@ -603,11 +603,11 @@ export const SPEC: CardSpec<Config> = {
       if (slot.kind === 'meal') {
         return html`
           <div class="jour-ligne jour-repas">
+            <div class="jour-filet" aria-hidden="true"></div>
             <div class="jour-heures">
               <span>${formatTime(slot.start, lang, tz)}${mealInferred ? '≈' : ''}</span>
               <span>${formatTime(slot.end, lang, tz)}</span>
             </div>
-            <div class="jour-filet" aria-hidden="true"></div>
             <div class="jour-corps">
               <span
                 class="jour-matiere"
@@ -656,6 +656,21 @@ export const SPEC: CardSpec<Config> = {
 
       return html`
         <div class="jour-ligne ${current ? 'jour-courant' : ''}">
+          <!-- Le filet AVANT les horaires : la couleur de matière est une
+               gouttière à gauche sur les six cartes, et la valeur passe par
+               la même propriété personnalisée que la règle .row.accented —
+               pas par un fond en style en ligne.
+
+               Sans guillemet oblique dans ce commentaire : il est à
+               l'intérieur du gabarit html, qu'un guillemet oblique fermerait
+               au milieu. Ici l'erreur signalée était « Property row does not
+               exist on type TemplateResult », à deux lignes du vrai
+               coupable. -->
+          <div
+            class="jour-filet ${accent === undefined ? 'jour-filet-neutre' : ''}"
+            style=${accent === undefined ? nothing : `--pronote-subject-color: ${accent}`}
+            aria-hidden="true"
+          ></div>
           <div class="jour-heures">
             <span>${formatTime(l.start, lang, tz)}</span>
             <!-- L'heure de FIN, et le « ≈ » quand l'intégration l'a déduite
@@ -667,11 +682,6 @@ export const SPEC: CardSpec<Config> = {
               >${l.end_inferred === true ? '≈' : ''}${formatTime(l.end, lang, tz)}</span
             >
           </div>
-          <div
-            class="jour-filet ${accent === undefined ? 'jour-filet-neutre' : ''}"
-            style=${accent === undefined ? '' : `background: ${accent}`}
-            aria-hidden="true"
-          ></div>
           <div class="jour-corps">
             <div class="jour-tete">
               <span class="jour-matiere ${canceled ? 'canceled' : ''}"
