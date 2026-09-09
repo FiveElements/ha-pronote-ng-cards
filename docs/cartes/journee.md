@@ -152,61 +152,23 @@ s'affiche et les bornes disparaissent — rien n'est inventé.
 
 ## Les couleurs de matière
 
-Le filet vertical prend sa couleur à **trois rangs**, dans cet ordre :
-
-1. **la couleur publiée par PRONOTE**, quand l'intégration l'expose ;
-2. **sinon votre table `subject_colors`** ;
-3. **sinon un accent neutre**, pris dans les couleurs de votre thème.
-
-!!! info "Aujourd'hui, seul le rang 2 donne des couleurs"
-
-    L'intégration décode la couleur que votre établissement associe à chaque
-    matière, mais ne la publie pas encore dans ses entités. Votre table est
-    donc ce qui colore la carte pour l'instant. Le jour où l'intégration
-    expose le champ, le rang 1 prend le dessus **sans que vous ayez rien à
-    supprimer** : votre table reste le repli des matières que le serveur ne
-    colore pas.
-
-La table se renseigne en YAML, parce qu'aucun formulaire de Home Assistant ne
-rend correctement un dictionnaire dont les clés sont les matières de votre
-établissement :
+Le filet vertical à gauche de chaque créneau prend la couleur de sa matière. Il n'y en a aucune tant que vous n'avez pas écrit de table
+`subject_colors` : l'intégration ne publie pas encore la couleur de
+votre établissement.
 
 ```yaml
 type: custom:pronote-ng-journee
 device_id: <appareil de l'enfant>
 subject_colors:
   MATHEMATIQUES: '#1e88e5'
-  histoire-geographie: '#43a047'
-  Anglais: '#fb8c00'
+  histoire-géographie: '#8d6e63'
+  Sciences: '#43a047'
 ```
 
-Les noms sont comparés **sans tenir compte de la casse, des espaces de bord ni
-des accents** : `histoire-geographie` colore « Histoire-Géographie ». PRONOTE
-écrit souvent les matières en capitales, et vous n'avez pas à les recopier à
-l'identique.
-
-Le repli des accents n'est pas un confort. Sans lui, une table écrite sans
-accents laissait la ligne grise **sans un mot** — et rien ne distinguait alors
-« j'ai mal écrit la matière » de « cette matière n'a pas de couleur ».
-
-La même table se renseigne sur les cartes [Emploi du temps](emploi-du-temps.md),
-[Devoirs](devoirs.md) et [Notes](notes.md), avec exactement les mêmes règles.
-
-Deux règles encadrent ces couleurs, et elles ne changeront pas :
-
-- **Un filet, jamais un aplat.** Une couleur derrière du texte casse le
-  contraste dès qu'un thème sombre est actif, et votre thème n'y peut alors
-  plus rien. En filet, le pire cas est un accent peu visible.
-- **Seul l'hexadécimal strict est accepté** (`#1e88e5` ou `#f80`). Un nom de
-  couleur CSS ou un `rgb()` est ignoré, et la ligne s'affiche sans couleur.
-  Cette valeur finit dans une propriété de style : un filtre étroit est ce
-  qui empêche une chaîne de configuration d'y injecter autre chose. La règle
-  vaut aussi pour **votre** table — l'origine d'une valeur ne dit rien de son
-  innocuité.
-
-Le filet **ne porte aucune information à lui seul**. Il situe et il décore ;
-les horaires, l'intitulé et les pastilles informent. Une carte lue par
-quelqu'un qui ne distingue pas ces teintes ne perd donc rien.
+Les trois rangs de la couleur, le format accepté — hexadécimal strict,
+le reste est refusé sans un mot — le repliement de la casse et des
+accents, et ce que l'option ne fait pas sont décrits une fois pour
+toutes dans [Les couleurs de matière](../couleurs-de-matiere.md).
 
 ## La zone repas
 

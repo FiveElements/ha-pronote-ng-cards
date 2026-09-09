@@ -39,6 +39,11 @@ ordre disposer les cartes, quelle largeur donner à l'emploi du temps de
 la semaine, comment s'organiser avec plusieurs enfants, et pourquoi la
 carte limiteur ne se met qu'une fois.
 
+Et si les matières s'affichent toutes en gris :
+[Les couleurs de matière](couleurs-de-matiere.md) explique pourquoi rien
+n'est coloré tant que vous n'avez pas écrit de table, et comment
+l'écrire.
+
 ## Ce que ces cartes ne feront jamais
 
 Certaines données ne deviennent volontairement jamais des entités —

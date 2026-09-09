@@ -310,7 +310,7 @@ côté intégration.
 - [Assembler un tableau de bord](https://fiveelements.github.io/ha-pronote-ng-cards/tableaux-de-bord/)
 - [Documentation de chaque carte](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/eleve/) — une page par carte
 - Exemples YAML — un exemple complet sur la page de chaque carte
-- [Personnalisation des couleurs de matière](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/journee/)
+- [Personnalisation des couleurs de matière](https://fiveelements.github.io/ha-pronote-ng-cards/couleurs-de-matiere/)
 - [Limites connues](https://fiveelements.github.io/ha-pronote-ng-cards/limites/)
 - [Guide pour les contributeurs](CONTRIBUTING.md)
 
