@@ -86,6 +86,18 @@ const STATE: EntityKey = 'sensor:limiter_state';
  * Optionnel, et le rester même après sa parution : un utilisateur peut très
  * bien ne pas vouloir de forçage manuel, et le socle écarterait alors la
  * carte entière au lieu de lui laisser afficher l'état.
+ *
+ * **Deux modes, et le troisième a été refusé** — arrêté avec l'intégration le
+ * 10 septembre 2026 : `normal` et `quiet_hours`, les deux que les quatre
+ * catalogues traduisent déjà. Un mode « suspendu », qui ne collecterait plus
+ * du tout, a été écarté pour une raison qui vaut d'être retenue : il est
+ * **indistinguable d'une panne** pour tout ce qui lit ces entités. La nuit du
+ * 9 au 10 septembre a montré ce que coûte un « indisponible sans raison
+ * lisible » ; un réglage qui le produirait exprès serait un piège.
+ *
+ * La carte ne s'appuie pas sur ce nombre pour autant — elle lit `options` sur
+ * l'entité. Si un troisième mode paraît un jour, son bouton apparaît, et son
+ * libellé sera la valeur brute jusqu'à ce qu'un catalogue le traduise.
  */
 const MODE: EntityKey = 'select:collection_mode';
 
@@ -138,7 +150,7 @@ export const SPEC: CardSpec<Config> = {
      * Une clé absente rend le chemin lui-même — c'est le contrat de
      * `localize`, et il sert ici de test d'existence. Un mode que
      * l'intégration inventerait demain s'affiche donc **tel qu'elle
-     * l'envoie**, plutôt qu'en `mode_collecte.mode_suspendu` au milieu de la
+     * l'envoie**, plutôt qu'en `mode_collecte.mode_futur` au milieu de la
      * carte.
      */
     const labelOf = (value: string, root: string): string => {

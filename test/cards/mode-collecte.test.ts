@@ -134,8 +134,14 @@ describe('carte mode de collecte — avec le sélecteur, le contrat', () => {
   it('prend la liste des modes sur ENTITÉ et non dans une constante de carte', async () => {
     // C'est l'intégration qui décide quels modes existent. Une liste écrite
     // dans la carte afficherait un mode qu'elle aurait retiré.
-    const el = await monter({}, avecSelecteur('normal', ['normal', 'suspendu']));
-    expect(boutons(el).map((b) => b.libelle)).toEqual(['Normal', 'suspendu']);
+    //
+    // `futur` est un mode que personne ne prévoit, et c'est volontaire. Ce cas
+    // nommait d'abord `suspendu` — or l'intégration a explicitement **refusé**
+    // ce mode-là. Une fixture qui nomme une piste écartée finit par se lire
+    // comme une feuille de route ; ce que le test mesure est qu'un mode
+    // inconnu du catalogue passe quand même, pas lequel.
+    const el = await monter({}, avecSelecteur('normal', ['normal', 'futur']));
+    expect(boutons(el).map((b) => b.libelle)).toEqual(['Normal', 'futur']);
   });
 
   it('appelle select.select_option sur clic, et jamais au montage', async () => {

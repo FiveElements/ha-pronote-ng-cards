@@ -37,6 +37,11 @@ carte [limiteur](limiteur.md).
     une version de l'intégration expose le contrôle, les boutons apparaissent
     **tout seuls** — vous n'aurez rien à modifier dans votre tableau de bord.
 
+    Il y en aura **deux** : *Normal* et *Heures calmes*. Un troisième mode qui
+    suspendrait la collecte a été écarté par l'intégration, parce qu'une
+    intégration qui ne collecte plus est indistinguable d'une panne pour qui
+    regarde ses cartes.
+
 D'ici là, pour changer le mode : **Paramètres → Appareils et services →
 Pronote NG → Configurer → Limitation de débit**. Et sachez qu'enregistrer cette
 page recharge l'intégration, donc vide temporairement les cartes. C'est

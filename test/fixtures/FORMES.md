@@ -84,6 +84,31 @@ des diagnostics de l'intégration — `data.account.limiter` → `calls_by_tier`
 là et le problème est l'affichage ; `homeassistant.update_entity` suffit alors à
 la faire réapparaître, sans redémarrage ni publication.
 
+**Le pendant positif, et c'est lui qui rend la règle utilisable.** Une entité
+`unknown` **qui porte ses attributs** est un cas entièrement différent : elle
+est disponible, l'intégration l'a bien nourrie, et sa valeur est légitimement
+inconnue. Mesuré par la session de l'intégration le 10 septembre 2026 à 00:47 :
+`sensor:menu_du_jour` à `unknown` avec `fetched_at` renseigné — aucun menu
+publié ce jour-là, et la collecte avait pourtant réussi.
+
+C'est exactement ce que `CardSpec.attributeDriven` exploite pour la cantine, et
+c'est pourquoi la règle ci-dessus porte sur le mot `unavailable` et non sur
+« pas d'attributs ». Les deux états se confondent à l'œil sur un tableau de
+bord — tous les deux affichent un tiret — et ils ne se confondent pas du tout
+dans les attributs. Le test est donc : `unavailable` + rien = on ne sait pas ce
+que l'intégration porte ; `unknown` + `fetched_at` = elle porte la donnée, et
+la valeur est vide pour de vrai.
+
+**Un palier peut rester indisponible pour une raison qui n'est ni la carte ni
+le socle.** `sensor:equipe_pedagogique` — palier `static` — restait
+`unavailable` après le correctif du 10 septembre, seule sur trente-quatre
+entités : PRONOTE répond sans la clé attendue, et le composant traite ce
+mappage vide comme un échec plutôt que comme une collection vide, **exprès**,
+pour ne pas écraser une donnée valide par du néant. Aucune carte de ce dépôt
+ne lit cette clé aujourd'hui ; celle qui le fera un jour ne doit pas chercher
+la panne chez elle. Rapporté par la session de l'intégration, trois occurrences
+le même soir.
+
 ## Le piège des unités
 
 Deux capteurs de durée, **deux unités différentes**, toutes deux déclarées :
