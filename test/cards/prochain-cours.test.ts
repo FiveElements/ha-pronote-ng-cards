@@ -69,6 +69,34 @@ describe('carte prochain-cours', () => {
     expect(text(el)).toContain('Aucun cours à venir');
   });
 
+  it('affiche la matière malgré un état non parsable, sans effacer les attributs', async () => {
+    // `parseTimestamp` rend `undefined` pour toute chaîne que `new Date()`
+    // refuse, pas seulement pour 'none' : un format local ou un libellé de
+    // l'intégration ne doit pas effacer matière/salle/professeur.
+    const hass = lesson('Lundi 8h30', {
+      subject: 'Mathématiques',
+      classroom: 'B204',
+      teachers: ['M. Dupont'],
+    });
+    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Mathématiques');
+    expect(t).toContain('B204');
+    expect(t).toContain('M. Dupont');
+    expect(t).not.toContain('Aucun cours à venir');
+  });
+
+  it('affiche la plage horaire de début et de fin quand `end` est présent', async () => {
+    const hass = lesson('2026-09-08T08:30:00+02:00', {
+      subject: 'Mathématiques',
+      end: '2026-09-08T09:25:00+02:00',
+    });
+    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('08:30');
+    expect(t).toContain('09:25');
+  });
+
   it('dit « pas encore collectée » quand l’entité est indisponible', async () => {
     const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, lesson('unavailable'));
     expect(text(el)).toContain('pas encore collectée');

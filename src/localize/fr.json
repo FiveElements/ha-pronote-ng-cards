@@ -129,6 +129,7 @@
     "until": "jusqu'à {time}",
     "show_refresh": "Afficher le bouton de rafraîchissement",
     "refresh_tier": "Palier à prioriser",
-    "refresh_note": "Ne déclenche aucun appel : relève une priorité, dans la limite du budget."
+    "refresh_note": "Ne déclenche aucun appel : relève une priorité, dans la limite du budget.",
+    "refresh_failed": "La demande n'a pas abouti. Réessayez dans un instant."
   }
 }

@@ -57,7 +57,29 @@ describe('carte limiteur', () => {
       }),
     ]);
     const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
-    expect(text(el)).not.toContain('abc123');
+    const t = text(el);
+    // L'absence seule passerait sur un rendu entièrement vide : on l'apparie
+    // à une assertion positive prouvant que la carte a bien rendu autre chose.
+    expect(t).toContain('Nominal');
+    expect(t).not.toContain('abc123');
+  });
+
+  it("retombe sur l'état brut pour un état que le catalogue ne connaît pas encore", async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'maintenance'),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    // Ni la clé technique manquante...
+    expect(t).not.toContain('limiteur.state_maintenance');
+    // ...ni un repli optimiste : l'état brut, tel quel.
+    expect(t).toContain('maintenance');
+  });
+
+  it("n'affiche pas le bouton de rafraîchissement quand show_refresh n'est pas posé", async () => {
+    const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    expect(el.shadowRoot?.querySelector('button')).toBeNull();
   });
 
   it('appelle pronote_ng.refresh sur clic et non au montage', async () => {
@@ -77,6 +99,44 @@ describe('carte limiteur', () => {
     button?.click();
     await el.updateComplete;
     expect(spy).toHaveBeenCalledWith('pronote_ng', 'refresh', {}, { device_id: 'dev_enfant' });
+  });
+
+  it('transmet le palier choisi à pronote_ng.refresh', async () => {
+    const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
+    const spy = vi.fn().mockResolvedValue(undefined);
+    hass.callService = spy;
+    const el = await mountCard(
+      'pronote-ng-limiteur',
+      { device_id: 'dev_enfant', show_refresh: true, refresh_tier: 'marks' },
+      hass
+    );
+    const button = el.shadowRoot?.querySelector('button');
+    button?.click();
+    await el.updateComplete;
+    expect(spy).toHaveBeenCalledWith(
+      'pronote_ng',
+      'refresh',
+      { tier: 'marks' },
+      { device_id: 'dev_enfant' }
+    );
+  });
+
+  it('affiche un avertissement quand la demande de rafraîchissement échoue', async () => {
+    const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
+    hass.callService = vi.fn().mockRejectedValue(new Error('échec simulé'));
+    const el = await mountCard(
+      'pronote-ng-limiteur',
+      { device_id: 'dev_enfant', show_refresh: true },
+      hass
+    );
+    const button = el.shadowRoot?.querySelector('button');
+    button?.click();
+    // ctx.refresh() capture le rejet après avoir attendu hass.callService (une
+    // microtâche) : on laisse la file se vider avant de ré-attendre le
+    // prochain cycle de rendu de Lit, comme pour le test de garde ci-dessous.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await el.updateComplete;
+    expect(el.shadowRoot?.querySelectorAll('.notice.problem').length).toBeGreaterThan(0);
   });
 
   it('grise le bouton pendant l’intervalle de garde suivant un refresh', async () => {
@@ -107,5 +167,18 @@ describe('carte limiteur', () => {
   it("dit « introuvable » quand l'entité manque", async () => {
     const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, makeHass([]));
     expect(text(el)).toContain('sensor:limiter_state');
+  });
+
+  it("dégrade proprement quand `tiers_due` n'est pas un tableau", async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:next_collection', 'sensor.cpt_prochaine', '2026-09-08T09:00:00+02:00', {
+        // Attribut publié hors-contrat : une chaîne au lieu d'un tableau.
+        // `join` lèverait ici et effacerait toute la carte sans `listAttr`.
+        tiers_due: 'marks',
+      }),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    expect(text(el)).toContain('aucun');
   });
 });

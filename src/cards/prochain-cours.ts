@@ -31,26 +31,49 @@ export const SPEC: CardSpec<Config> = {
     { name: 'show_wake_up', selector: { boolean: {} } },
     { name: 'show_end_of_day', selector: { boolean: {} } },
   ],
+  // Le rendu affiche `formatRelative` (« dans 30 min »), calculé sur
+  // Date.now() : sans repeint périodique, ce texte resterait figé pendant des
+  // heures entre deux cycles de collecte PRONOTE alors qu'aucune propriété
+  // réactive ne change. Le socle pose et retire lui-même la minuterie.
+  tickMs: 60_000,
   render(ctx: RenderCtx<Config>) {
-    const e = ctx.entity(NEXT);
+    // Le socle garantit `e` défini et hors unknown/unavailable ici (spec §4.3) :
+    // NEXT est la seule entité requise, sans `requiresAny`, et `render` n'est
+    // appelé qu'une fois l'état 2 (indisponible) écarté par le socle.
+    const e = ctx.entity(NEXT)!;
     // Le socle ne traite comme « indisponible » que unknown/unavailable : un
     // horodatage qui ne se parse pas (état 'none' notamment, publié par
-    // l'intégration quand il n'y a plus de cours) reste ici du ressort de la
-    // carte — c'est le vide qui lui appartient.
-    const start = e ? parseTimestamp(e.state) : undefined;
-    if (!start) return emptyState(ctx.t('prochain_cours.empty'));
+    // l'intégration quand il n'y a plus de cours — mais aussi tout autre état
+    // que l'intégration pourrait publier sans que ce soit un vide) reste ici
+    // du ressort de la carte — c'est le vide qui lui appartient. Un état non
+    // parsable ne veut pas dire que la carte n'a rien à montrer : matière,
+    // salle et professeurs peuvent rester exploitables.
+    const start = parseTimestamp(e.state);
 
-    const tz = ctx.hass.locale.time_zone;
-    const lang = ctx.hass.language;
+    const tz = ctx.timeZone;
+    const lang = ctx.language;
     const subject = (ctx.attr<string>(NEXT, 'subject') ?? '').trim();
     const room = ctx.attr<string>(NEXT, 'classroom');
     const teachers = teachersOf(ctx.attr(NEXT, 'teachers'));
     const canceled = ctx.attr<boolean>(NEXT, 'canceled') === true;
 
+    // Rien d'exploitable nulle part : c'est là, et seulement là, que le vide
+    // appartient à la carte.
+    if (!start && !subject && !room && !teachers) {
+      return emptyState(ctx.t('prochain_cours.empty'));
+    }
+
+    const endRaw = ctx.attr<string>(NEXT, 'end');
+    const endTime = parseTimestamp(endRaw) ? formatTime(endRaw, lang, tz) : '';
+    const startTime = start ? formatTime(e.state, lang, tz) : '';
+    const timeRange = endTime ? `${startTime} – ${endTime}` : startTime;
+
     return html`
       ${listRow({
         primary: subject || ctx.t('prochain_cours.name'),
-        secondary: html`${formatTime(e?.state, lang, tz)} · ${formatRelative(e?.state, lang)}`,
+        secondary: start
+          ? html`${timeRange} · ${formatRelative(e.state, lang)}`
+          : undefined,
         trailing: canceled ? chip(ctx.t('prochain_cours.canceled'), 'problem') : undefined,
         canceled,
       })}

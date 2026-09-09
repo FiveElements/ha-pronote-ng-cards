@@ -129,6 +129,7 @@
     "until": "fino alle {time}",
     "show_refresh": "Mostra il pulsante di aggiornamento",
     "refresh_tier": "Livello da privilegiare",
-    "refresh_note": "Non genera alcuna chiamata: segnala una priorità, nei limiti del budget."
+    "refresh_note": "Non genera alcuna chiamata: segnala una priorità, nei limiti del budget.",
+    "refresh_failed": "La richiesta non è andata a buon fine. Riprova tra poco."
   }
 }

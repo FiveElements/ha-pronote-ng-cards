@@ -79,4 +79,50 @@ export const sharedStyles = css`
     text-decoration: line-through;
     opacity: 0.6;
   }
+
+  /* La photo de l'élève. La carte qui l'affiche la laisse désactivée par
+     défaut : une photo d'enfant sur un tableau de bord se retrouve dans une
+     capture d'écran ou un partage de vue. */
+  .photo {
+    width: 64px;
+    height: 64px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  /* Le seul bouton du projet — celui qui demande un relèvement de priorité au
+     limiteur. Sans ces règles il s'affichait avec le chrome natif du
+     navigateur : gris clair sur un thème sombre, et aucun état de focus
+     visible au clavier. */
+  button {
+    font: inherit;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background: var(--primary-color);
+    color: var(--text-primary-color);
+    cursor: pointer;
+  }
+  button:disabled {
+    background: var(--disabled-text-color);
+    cursor: default;
+  }
+  button:focus-visible {
+    outline: 2px solid var(--accent-color, var(--primary-color));
+    outline-offset: 2px;
+  }
+
+  /* Photo et lignes d'identité côte à côte. Un flux flex plutôt qu'un
+     flottement, qui se comporte mal dès qu'une ligne est plus haute que la
+     photo. */
+  .ident {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .ident-body {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 `;

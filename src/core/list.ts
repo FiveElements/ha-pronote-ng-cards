@@ -49,3 +49,33 @@ export function latestFirst<T>(value: unknown, limit?: number): T[] {
   }
   return out;
 }
+
+/**
+ * Tri stable, sans muter son entrée.
+ *
+ * `Array#sort()` mute son receveur, ce que la configuration de lint du projet
+ * proscrit ; `Array#toSorted()` est ES2023, hors de la cible `lib` du projet
+ * (ES2022), et rien ne la polyfille dans un navigateur. Trois cartes ont
+ * résolu ce même dilemme de trois façons différentes — deux tris par
+ * insertion recopiés à l'identique et une suppression de règle de lint. La
+ * primitive vit donc ici, une seule fois.
+ *
+ * Le tri par insertion est stable et largement suffisant : les listes triées
+ * sont celles d'une journée de cours ou d'une liste de devoirs bornée.
+ */
+export function sortedBy<T>(items: T[], compare: (a: T, b: T) => number): T[] {
+  const out = [...items];
+  for (let i = 1; i < out.length; i++) {
+    const cur = out[i];
+    if (cur === undefined) continue;
+    let j = i - 1;
+    while (j >= 0) {
+      const prev = out[j];
+      if (prev === undefined || compare(prev, cur) <= 0) break;
+      out[j + 1] = prev;
+      j--;
+    }
+    out[j + 1] = cur;
+  }
+  return out;
+}

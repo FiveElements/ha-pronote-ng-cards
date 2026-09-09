@@ -2,6 +2,7 @@ import { html, type TemplateResult } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
 import { formatRelative, formatTime } from '../core/format';
 import { chip, listRow } from '../core/ui/parts';
+import { listAttr } from '../core/list';
 
 interface Config extends PronoteCardConfig {
   show_refresh?: boolean;
@@ -33,6 +34,12 @@ export const SPEC: CardSpec<Config> = {
   // comme pour les sept autres cartes.
   scope: 'account',
   size: 5,
+  // tickMs déclaratif : ce n'est pas un changement de propriété réactive qui
+  // regrise le bouton en fin d'intervalle de garde (`ctx.refreshCoolingDown`
+  // est calculé une fois par rendu, à partir de `Date.now()`) — sans cette
+  // minuterie, la carte resterait grisée bien après la fin de la garde. Le
+  // socle pose et retire l'intervalle ; on ne met jamais de `setInterval` ici.
+  tickMs: 30_000,
   requires: () => [STATE],
   optional: () => [BUDGET, CALLS, NEXT, LAST],
   schema: () => [
@@ -40,19 +47,31 @@ export const SPEC: CardSpec<Config> = {
     { name: 'refresh_tier', selector: { text: {} } },
   ],
   render(ctx: RenderCtx<Config>) {
-    const lang = ctx.hass.language;
-    const tz = ctx.hass.locale.time_zone;
+    const lang = ctx.language;
+    const tz = ctx.timeZone;
     const out: TemplateResult[] = [];
 
-    const state = ctx.entity(STATE)?.state ?? 'nominal';
+    // STATE est la seule entité requise (pas de `requiresAny`) : le socle
+    // garantit qu'elle est résolue et hors unknown/unavailable avant d'appeler
+    // `render` (spec §4.3). Un repli `?? 'nominal'` ici serait du code mort
+    // dangereux : s'il s'exécutait un jour, il afficherait une pastille verte
+    // « Nominal » pour un état que la carte n'a en réalité pas pu lire.
+    const state = ctx.entity(STATE)!.state;
     const until = ctx.attr<string>(STATE, 'until');
+    // `localize` (via `ctx.t`) rend le chemin lui-même quand la clé manque :
+    // c'est le signal du repli, jamais un texte à montrer tel quel. Un état
+    // que le catalogue ne connaît pas encore (l'intégration en ajoute un avant
+    // que les traductions suivent) retombe donc sur l'état brut plutôt que sur
+    // la clé technique.
+    const stateKey = `limiteur.state_${state}`;
+    const stateLabel = ctx.t(stateKey);
     out.push(
       listRow({
         primary: ctx.t('limiteur.state'),
         secondary: until
           ? ctx.t('limiteur.until', { time: formatTime(until, lang, tz) })
           : undefined,
-        trailing: chip(ctx.t(`limiteur.state_${state}`), TONES[state] ?? 'neutral'),
+        trailing: chip(stateLabel === stateKey ? state : stateLabel, TONES[state] ?? 'neutral'),
       })
     );
 
@@ -92,7 +111,10 @@ export const SPEC: CardSpec<Config> = {
     }
 
     if (ctx.status(NEXT) === 'ok') {
-      const due = ctx.attr<string[]>(NEXT, 'tiers_due') ?? [];
+      // `tiers_due` n'est typé nulle part côté registre : un attribut qui
+      // n'est pas un tableau ferait lever `join` ici, ce qui effacerait toute
+      // la carte plutôt que de dégrader seulement cette ligne.
+      const due = listAttr<string>(ctx.attr(NEXT, 'tiers_due'));
       out.push(
         listRow({
           primary: ctx.t('limiteur.next_collection'),
@@ -107,10 +129,14 @@ export const SPEC: CardSpec<Config> = {
       // grise après appel, parce qu'une interface qui laisse cliquer sans
       // effet est une interface qui ment. L'appel ne part jamais d'ici — il
       // ne part que depuis ce gestionnaire de clic, jamais depuis render.
+      // `aria-describedby` relie le bouton à la note explicative ci-dessous :
+      // sans ça, rien ne dit au lecteur d'écran — ni à l'œil qui ne lit pas
+      // le petit texte en italique — pourquoi le bouton est grisé.
       out.push(html`
         <div class="row">
           <button
             ?disabled=${ctx.refreshCoolingDown}
+            aria-describedby="limiteur-refresh-note"
             @click=${() => {
               void ctx.refresh(ctx.config.refresh_tier);
             }}
@@ -118,7 +144,10 @@ export const SPEC: CardSpec<Config> = {
             ${ctx.refreshCoolingDown ? ctx.t('common.refresh_pending') : ctx.t('common.refresh')}
           </button>
         </div>
-        <div class="notice">${ctx.t('limiteur.refresh_note')}</div>
+        <div id="limiteur-refresh-note" class="notice">${ctx.t('limiteur.refresh_note')}</div>
+        ${ctx.refreshFailed
+          ? html`<div class="notice problem">${ctx.t('limiteur.refresh_failed')}</div>`
+          : ''}
       `);
     }
 

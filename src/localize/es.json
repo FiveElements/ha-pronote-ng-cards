@@ -129,6 +129,7 @@
     "until": "hasta las {time}",
     "show_refresh": "Mostrar el botón de actualización",
     "refresh_tier": "Nivel a priorizar",
-    "refresh_note": "No genera ninguna llamada: marca una prioridad, dentro del límite del presupuesto."
+    "refresh_note": "No genera ninguna llamada: marca una prioridad, dentro del límite del presupuesto.",
+    "refresh_failed": "La solicitud no se ha completado. Inténtalo de nuevo en un momento."
   }
 }

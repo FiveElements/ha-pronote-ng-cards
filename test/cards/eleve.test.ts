@@ -119,6 +119,31 @@ describe('carte eleve', () => {
     expect(text(el)).toContain('Vacances');
   });
 
+  it("ne rend aucune pastille d'état quand les trois capteurs binaires sont introuvables (palier désactivé)", async () => {
+    // Sans binary_sensor:holidays / in_class / school_day résolus (tous
+    // `optional`, un mercredi matin par exemple), la carte ne doit pas
+    // affirmer « Pas de cours aujourd'hui » : elle tait ce qu'elle ignore.
+    const el = await mountCard('pronote-ng-eleve', { device_id: 'dev_enfant' }, base());
+    expect(el.shadowRoot?.querySelector('.chip')).toBeNull();
+  });
+
+  it("rend la pastille d'état dès qu'un seul des trois capteurs binaires est résolu", async () => {
+    const el = await mountCard(
+      'pronote-ng-eleve',
+      { device_id: 'dev_enfant' },
+      base({}, '4e B', [
+        {
+          key: 'binary_sensor:school_day',
+          entity_id: 'binary_sensor.abc_jour_de_classe',
+          device: 'dev_enfant',
+          state: 'on',
+        },
+      ])
+    );
+    expect(el.shadowRoot?.querySelector('.chip')).not.toBeNull();
+    expect(text(el)).toContain('Jour de classe');
+  });
+
   it("n'affiche aucune photo par défaut, même si l'entité image est disponible", async () => {
     const el = await mountCard(
       'pronote-ng-eleve',
@@ -153,5 +178,36 @@ describe('carte eleve', () => {
     const img = el.shadowRoot?.querySelector('img.photo');
     expect(img).not.toBeNull();
     expect(img?.getAttribute('src')).toBe('/api/image_proxy/image.abc_photo');
+  });
+
+  // `stub` est la config que Home Assistant propose au parent qui ajoute la
+  // carte depuis le sélecteur : elle ne doit jamais publier la photo par
+  // défaut, sans quoi tout parent qui accepte la carte proposée publie la
+  // photo de son enfant sans l'avoir demandé.
+  it("ne propose pas show_photo dans la config par défaut du sélecteur (SPEC.stub)", () => {
+    expect(SPEC.stub?.show_photo).toBeFalsy();
+  });
+
+  it("n'affiche aucune photo en partant de la config par défaut telle que Home Assistant la consomme (getStubConfig)", async () => {
+    const ctor = customElements.get('pronote-ng-eleve');
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- getStubConfig est un statique propre aux cartes Pronote NG, absent de l'interface DOM générique CustomElementConstructor.
+    const stubConfig = (ctor as unknown as { getStubConfig(): Record<string, unknown> }).getStubConfig();
+    const el = await mountCard(
+      'pronote-ng-eleve',
+      // Comme le ferait Home Assistant : la config du sélecteur, seulement
+      // complétée du device_id que l'éditeur pose ensuite — jamais une
+      // config écrite à la main par le test.
+      { ...stubConfig, device_id: 'dev_enfant' },
+      base({}, '4e B', [
+        {
+          key: 'image:photo',
+          entity_id: 'image.abc_photo',
+          device: 'dev_enfant',
+          state: '2026-09-08T07:00:00+00:00',
+          attributes: { entity_picture: '/api/image_proxy/image.abc_photo' },
+        },
+      ])
+    );
+    expect(el.shadowRoot?.querySelector('img.photo')).toBeNull();
   });
 });

@@ -129,6 +129,7 @@
     "until": "até às {time}",
     "show_refresh": "Mostrar o botão de atualização",
     "refresh_tier": "Nível a priorizar",
-    "refresh_note": "Não desencadeia nenhuma chamada: assinala uma prioridade, dentro do limite do orçamento."
+    "refresh_note": "Não desencadeia nenhuma chamada: assinala uma prioridade, dentro do limite do orçamento.",
+    "refresh_failed": "O pedido não foi concluído. Tente novamente dentro de instantes."
   }
 }

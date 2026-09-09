@@ -24,7 +24,10 @@ export const SPEC: CardSpec<Config> = {
   key: 'eleve',
   scope: 'child',
   size: 3,
-  stub: { show_photo: true },
+  // Faux par défaut : `stub` est la config proposée par le sélecteur HA, et
+  // aucune photo d'enfant ne doit être publiée sans que le parent l'ait
+  // explicitement demandé.
+  stub: {},
   requires: () => [CLASS],
   optional: (c) => [
     ...(c.show_photo ? [PHOTO] : []),
@@ -39,8 +42,8 @@ export const SPEC: CardSpec<Config> = {
     { name: 'show_establishment', selector: { boolean: {} } },
   ],
   render(ctx: RenderCtx<Config>) {
-    const lang = ctx.hass.language;
-    const tz = ctx.hass.locale.time_zone;
+    const lang = ctx.language;
+    const tz = ctx.timeZone;
     const rows: TemplateResult[] = [];
 
     // Le nom vient du registre d'appareils, jamais d'une chaîne du code.
@@ -48,19 +51,28 @@ export const SPEC: CardSpec<Config> = {
       ? ctx.attr<string>(CLASS, 'establishment')
       : undefined;
 
+    // Une carte tait ce qu'elle ignore : si aucun des trois capteurs d'état
+    // n'est résolu (palier désactivé — ils sont `optional`), on ne rend
+    // aucune pastille plutôt que d'affirmer « pas de cours » par défaut.
+    const stateKnown =
+      ctx.status(HOLIDAYS) === 'ok' || ctx.status(IN_CLASS) === 'ok' || ctx.status(SCHOOL_DAY) === 'ok';
+
     let tone: 'ok' | 'neutral' = 'neutral';
-    let stateLabel = ctx.t('eleve.no_class');
-    if (ctx.entity(HOLIDAYS)?.state === 'on') stateLabel = ctx.t('eleve.holidays');
-    else if (ctx.entity(IN_CLASS)?.state === 'on') {
-      stateLabel = ctx.t('eleve.in_class');
-      tone = 'ok';
-    } else if (ctx.entity(SCHOOL_DAY)?.state === 'on') stateLabel = ctx.t('eleve.school_day');
+    let stateLabel: string | undefined;
+    if (stateKnown) {
+      stateLabel = ctx.t('eleve.no_class');
+      if (ctx.entity(HOLIDAYS)?.state === 'on') stateLabel = ctx.t('eleve.holidays');
+      else if (ctx.entity(IN_CLASS)?.state === 'on') {
+        stateLabel = ctx.t('eleve.in_class');
+        tone = 'ok';
+      } else if (ctx.entity(SCHOOL_DAY)?.state === 'on') stateLabel = ctx.t('eleve.school_day');
+    }
 
     rows.push(
       listRow({
         primary: ctx.deviceName,
         secondary: [ctx.entity(CLASS)?.state, secondary].filter(Boolean).join(' · '),
-        trailing: chip(stateLabel, tone),
+        trailing: stateLabel ? chip(stateLabel, tone) : undefined,
       })
     );
 
@@ -91,15 +103,10 @@ export const SPEC: CardSpec<Config> = {
         : undefined;
 
     return html`
-      ${picture
-        ? html`<img
-            class="photo"
-            src=${picture}
-            alt=""
-            style="width:64px;height:64px;border-radius:32px;object-fit:cover;float:left;margin-right:12px"
-          />`
-        : ''}
-      ${rows}
+      <div class="ident">
+        ${picture ? html`<img class="photo" src=${picture} alt="" />` : ''}
+        <div class="ident-body">${rows}</div>
+      </div>
     `;
   },
 };
