@@ -58,6 +58,24 @@ export interface RowOptions {
    * propriétés CSS arbitraires.
    */
   accent?: string | null;
+  /**
+   * L'autre placement de la couleur de matière : un filet **pleine hauteur**
+   * posé entre l'intitulé et le contenu, qui sépare l'un de l'autre. C'est
+   * celui des devoirs.
+   *
+   * Deux placements et non un réglage, parce que les deux ne disent pas la
+   * même chose. La gouttière de `accent` borde la ligne entière : elle
+   * qualifie la ligne. Ce filet-ci coupe la ligne en deux et se lit comme une
+   * séparation entre la matière et ce qu'il y a à faire.
+   *
+   * Pas de troisième cas ici, contrairement à `accent` : une ligne sans
+   * couleur n'a pas de filet, et rien ne se décale puisque la mise en page
+   * est un flux et non une grille à colonnes fixes.
+   *
+   * Comme `accent`, la valeur doit avoir traversé `subjectColor` : elle finit
+   * dans un attribut `style`.
+   */
+  divider?: string;
 }
 
 export const listRow = (o: RowOptions): TemplateResult => html`
@@ -66,6 +84,12 @@ export const listRow = (o: RowOptions): TemplateResult => html`
     style=${typeof o.accent === 'string' ? `--pronote-subject-color: ${o.accent}` : nothing}
   >
     <span class="primary">${o.primary}</span>
+    ${o.divider === undefined
+      ? ''
+      : html`<span
+          class="filet-matiere"
+          style=${`--pronote-subject-color: ${o.divider}`}
+        ></span>`}
     ${o.secondary ? html`<span class="secondary">${o.secondary}</span>` : ''}
     ${o.trailing ? html`<span class="trailing">${o.trailing}</span>` : ''}
   </div>

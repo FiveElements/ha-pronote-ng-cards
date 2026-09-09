@@ -65,34 +65,39 @@ const accents = (el: HTMLElement): (string | null)[] =>
   );
 
 /**
- * Les filets de matière posés DANS la ligne, après l'intitulé — le placement
- * propre aux devoirs. La couleur passe par la même variable CSS que la
- * gouttière : un test qui lirait `style.backgroundColor` dépendrait de la
- * normalisation en `rgb(...)` du moteur de rendu, et casserait sans que le
- * rendu ait changé.
+ * Les filets séparateurs d'une carte — le placement propre aux devoirs. La
+ * couleur passe par la même variable CSS que la gouttière : un test qui
+ * lirait `style.backgroundColor` dépendrait de la normalisation en `rgb(...)`
+ * du moteur de rendu, et casserait sans que le rendu ait changé.
  */
-const filetsEnLigne = (el: HTMLElement): string[] =>
-  [...(el.shadowRoot?.querySelectorAll('.primary .filet-matiere') ?? [])].map((bar) =>
+const separateurs = (el: HTMLElement): string[] =>
+  [...(el.shadowRoot?.querySelectorAll('.row > .filet-matiere') ?? [])].map((bar) =>
     bar instanceof HTMLElement ? bar.style.getPropertyValue('--pronote-subject-color').trim() : ''
   );
 
 /**
- * Les rangs, dans les nœuds enfants de la première ligne, de l'intitulé de la
- * matière et du filet. Rend -1 pour ce qui manque.
+ * Les rangs de l'intitulé, du filet et de l'énoncé parmi les enfants de la
+ * ligne qui porte un filet. Rend -1 pour ce qui manque.
  *
- * Pourquoi parcourir `childNodes` et non les éléments : l'intitulé est un
- * **nœud de texte**, pas un élément. Une première version de ce test lisait
- * `lastElementChild` et affirmait tenir le placement — mesuré en déplaçant le
- * filet avant l'intitulé, les treize tests du fichier passaient toujours,
- * parce que le filet reste le dernier *élément* dans les deux ordres. Un test
- * de position qui ignore les nœuds de texte ne teste aucune position.
+ * On part du filet et on remonte à son parent plutôt que de prendre la
+ * première `.row` : la carte pose aussi une bannière « en retard » qui est
+ * une `.row` sans filet, et la sélection aurait dépendu d'un état d'entité
+ * absent de cette fixture.
+ *
+ * Une version antérieure de ce test parcourait les `childNodes` de
+ * l'intitulé et lisait `lastElementChild`. Mesuré en déplaçant le filet avant
+ * l'intitulé : les treize tests du fichier passaient toujours, parce que le
+ * filet restait le dernier *élément* dans les deux ordres. Un test de
+ * position qui ignore l'ordre réel ne teste aucune position.
  */
-const rangs = (el: HTMLElement): { intitule: number; filet: number } => {
-  const primary = el.shadowRoot?.querySelector('.row .primary');
-  const nodes = [...(primary?.childNodes ?? [])];
+const rangs = (el: HTMLElement): { intitule: number; filet: number; enonce: number } => {
+  const bar = el.shadowRoot?.querySelector('.filet-matiere');
+  const enfants = [...(bar?.parentElement?.children ?? [])];
+  const rangDe = (classe: string): number => enfants.findIndex((n) => n.classList.contains(classe));
   return {
-    intitule: nodes.findIndex((n) => (n.textContent ?? '').includes('Maths')),
-    filet: nodes.findIndex((n) => n instanceof HTMLElement && n.classList.contains('filet-matiere')),
+    intitule: rangDe('primary'),
+    filet: rangDe('filet-matiere'),
+    enonce: rangDe('secondary'),
   };
 };
 
@@ -223,19 +228,21 @@ describe('code couleur des matières — devoirs', () => {
   it('reprend la couleur de chaque devoir', async () => {
     const el = await monter();
 
-    expect(filetsEnLigne(el)).toEqual(['#1e88e5']);
+    expect(separateurs(el)).toEqual(['#1e88e5']);
     expect(el.shadowRoot?.textContent).toContain('Exercices 3 à 7');
   });
 
-  it('pose le filet après l’intitulé de la matière', async () => {
+  it('sépare l’intitulé de l’énoncé par le filet', async () => {
     const el = await monter();
 
-    const { intitule, filet } = rangs(el);
-    // Les deux bornes d'abord : sans elles, deux -1 se compareraient
+    const { intitule, filet, enonce } = rangs(el);
+    // Les trois bornes d'abord : sans elles, trois -1 se compareraient
     // sereinement et le test passerait sur une ligne vide.
     expect(intitule).toBeGreaterThanOrEqual(0);
     expect(filet).toBeGreaterThanOrEqual(0);
+    expect(enonce).toBeGreaterThanOrEqual(0);
     expect(intitule).toBeLessThan(filet);
+    expect(filet).toBeLessThan(enonce);
   });
 
   it('ne réserve aucune gouttière à gauche', async () => {
@@ -244,7 +251,7 @@ describe('code couleur des matières — devoirs', () => {
     // Une assertion d'absence seule passerait aussi si la carte ne rendait
     // plus rien du tout : la seconde ligne est ce qui la rend concluante.
     expect(accents(el)).toEqual([]);
-    expect(filetsEnLigne(el)).toEqual(['#1e88e5']);
+    expect(separateurs(el)).toEqual(['#1e88e5']);
   });
 });
 
@@ -406,7 +413,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
         },
       ])
     );
-    expect(filetsEnLigne(el)).toEqual(['#1e88e5']);
+    expect(separateurs(el)).toEqual(['#1e88e5']);
     expect(el.shadowRoot?.textContent).toContain('Exercices 3 à 7');
   });
 

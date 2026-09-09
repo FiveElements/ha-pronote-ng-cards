@@ -108,22 +108,26 @@ export const sharedStyles = css`
     padding-left: 6px;
   }
 
-  /* Le filet de matière posé DANS la ligne, juste après l'intitulé. C'est le
-     placement des devoirs : la couleur suit le nom de la matière au lieu de
-     border la ligne entière.
+  /* Le filet de matière en SEPARATEUR, entre l'intitulé et le contenu de la
+     ligne. C'est le placement des devoirs : la couleur ne borde pas la ligne,
+     elle coupe la matière de ce qu'il y a à faire.
 
-     Pas de repli transparent ici, contrairement à la gouttière, et c'est
-     voulu. Un filet en ligne suit un texte de longueur variable : une ligne
-     sans couleur ne décale donc rien, et n'a pas besoin qu'on lui réserve la
-     place. Un filet gris de repli affirmerait au contraire que la matière a
-     une couleur, et que cette couleur est grise. */
+     Deux propriétés portent tout le comportement. Le align-self surcharge le
+     align-items: baseline de la ligne, sans quoi le filet se cale sur la
+     ligne de base du texte et ne mesure que sa propre hauteur au lieu de
+     celle de la ligne. Et le flex à zero-zero-auto l'empêche de se laisser
+     comprimer par un enonce long, qui le réduirait à un cheveu.
+
+     Pas de repli transparent ici, contrairement a la gouttière, et c'est
+     voulu : la mise en page est un flux et non une grille a colonnes fixes,
+     donc une ligne sans couleur ne décale rien. Un filet gris de repli
+     affirmerait au contraire que la matière a une couleur, et qu'elle est
+     grise. */
   .filet-matiere {
-    display: inline-block;
+    align-self: stretch;
+    flex: 0 0 auto;
     width: 4px;
-    height: 1em;
-    margin-left: 6px;
     border-radius: 2px;
-    vertical-align: -0.15em;
     background: var(--pronote-subject-color);
   }
 
