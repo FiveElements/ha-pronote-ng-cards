@@ -27,6 +27,33 @@ d'établissement : les identifiants dépendent de l'installation, et seule la cl
 qualifiée est stable. C'est aussi pourquoi le tableau est indexé par clé et non
 par `entity_id`.
 
+## D'où vient un identifiant d'entité, et le piège du suffixe
+
+Le suffixe d'un identifiant d'entité est le **nom affiché** replié par Home
+Assistant. Il ne vient **pas** de la clé de traduction, et il ne vient pas non
+plus de l'`unique_id`.
+
+La distinction n'est pas théorique : elle a produit un défaut dans ce dépôt et
+onze dans la documentation de l'intégration, le même jour.
+
+| ce qu'on croit lire | ce que l'installation produit |
+| --- | --- |
+| `sensor.<é>_averages` (la clé `averages`) | `sensor.<é>_subject_averages` — le nom est « Subject averages » |
+| `sensor.<é>_homework_todo` (la clé `homework_todo`) | `sensor.<é>_homework_to_do` — le nom est « Homework to do » |
+| `sensor.<é>_notes_p1` (le `p<n>` de l'`unique_id`) | le nom est « Notes ({period}) », donc le suffixe porte le **libellé de période de l'établissement** |
+
+Le troisième cas est le pire, et il n'a pas de forme fixe : le nom contient un
+trou que Home Assistant remplit avec une donnée qu'aucun test ne peut voir. Une
+fixture ne peut donc que montrer une forme *plausible* — d'où
+`sensor.abc_notes_trimestre_1` dans `resolve.test.ts`, avec le commentaire qui
+dit pourquoi elle est plausible et non exacte.
+
+**Ce que cela ne change pas :** aucune carte ne cible un identifiant. La
+résolution passe par la clé qualifiée comparée en égalité stricte, et c'est
+précisément ce qui rend le dépôt insensible à ce piège. Un identifiant de
+fixture est un décor — mais un décor qu'un lecteur prendra pour la réalité,
+donc il doit rester honnête.
+
 ## Les deux attributs que portent presque toutes les entités de données
 
 | attribut | type | sens |

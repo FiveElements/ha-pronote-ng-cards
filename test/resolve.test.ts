@@ -109,12 +109,26 @@ describe('resolveEntities', () => {
     // translation_key sur le même appareil. La résolution en rend une, sans
     // moyen de choisir laquelle — c'est pourquoi aucune carte n'expose
     // d'option de période (spec §4.1).
+    //
+    // Les identifiants portent ici la forme RÉELLE, et ce n'est pas un détail
+    // cosmétique. Cette fixture écrivait `sensor.abc_notes_p1` — un suffixe
+    // qui n'existe sur aucune installation. Le `p<n>` est celui de
+    // l'`unique_id` côté intégration ; l'identifiant d'entité, lui, est le
+    // nom AFFICHÉ replié par Home Assistant, et ce nom est « Notes
+    // ({period}) » où l'établissement substitue son propre libellé.
+    //
+    // Rien ne se liait à rien de faux — la résolution compare des clés
+    // qualifiées, jamais un identifiant, jamais un motif — mais une forme
+    // inoffensive qu'un lecteur prendra pour vraie reste une forme fausse.
+    // C'est exactement la faute qui a coûté à ce dépôt ses trois défauts les
+    // plus chers, et l'annexe A de l'intégration venait d'en corriger onze du
+    // même genre le jour où cette ligne a été écrite. Voir `FORMES.md`.
     const hass = makeHass([
-      enfant('sensor:grades_period', 'sensor.abc_notes_p1'),
-      enfant('sensor:grades_period', 'sensor.abc_notes_p2'),
+      enfant('sensor:grades_period', 'sensor.abc_notes_trimestre_1'),
+      enfant('sensor:grades_period', 'sensor.abc_notes_trimestre_2'),
     ]);
     const r = resolveEntities(hass, 'dev_enfant', 'child', ['sensor:grades_period']);
-    expect(['sensor.abc_notes_p1', 'sensor.abc_notes_p2']).toContain(
+    expect(['sensor.abc_notes_trimestre_1', 'sensor.abc_notes_trimestre_2']).toContain(
       r.get('sensor:grades_period')
     );
   });
