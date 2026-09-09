@@ -85,7 +85,44 @@ describe('formatGrade', () => {
     expect(formatGrade('unavailable', 20)).toBe('—');
   });
   it('laisse passer une note textuelle non numérique telle quelle', () => {
+    // « Absent/20 » se lit mal, et c'est assumé : ce cas n'est PAS atteignable
+    // depuis cette intégration. Vérifié dans son modèle — `Grade.value` est
+    // `float | None` et `value`/`status` sont mutuellement exclusifs par
+    // conception, « pour qu'un déclencheur numeric_state fonctionne » ; une
+    // sentinelle laisse l'état à `unknown` avec le motif en attribut. Idem
+    // pour `overall_average`, un `float | None`.
+    //
+    // La tolérance reste, parce qu'un autre producteur pourrait poser une
+    // chaîne et qu'un rendu maladroit vaut mieux qu'un tiret qui effacerait
+    // l'information. Mais ne bâtissez rien sur cette forme, et ne la
+    // « corrigez » pas en croyant réparer un défaut visible : il n'est visible
+    // nulle part.
     expect(formatGrade('Absent', 20)).toBe('Absent/20');
+  });
+
+  /**
+   * Le barème absent va devenir le chemin NORMAL, pas un cas limite.
+   *
+   * L'intégration publie aujourd'hui `out_of: 20` en littéral sur les deux
+   * moyennes générales — une constante lue de nulle part, donc fausse sur un
+   * établissement qui note sur une autre échelle. Le producteur la remplace
+   * par la valeur réelle quand le protocole la porte, et par `null` sinon.
+   *
+   * Ces deux tests figent le comportement attendu ce jour-là : la valeur
+   * seule, sans dénominateur inventé. Ils passent déjà — le garde-fou existe
+   * dans `formatGrade` sans que la signature ne l'exige — et c'est
+   * précisément pour ça qu'ils sont écrits : ce que le type ne garantit pas,
+   * un test doit le vérifier.
+   */
+  it('rend la valeur seule quand le barème est null', () => {
+    // `null` traverse `ctx.attr`, qui annonce `T | undefined` et rend ce que
+    // l'attribut contient : à l'exécution, un `null` JSON reste un `null`
+    // pendant que TypeScript croit lire un nombre.
+    expect(formatGrade(13.5, null)).toBe('13,5');
+  });
+
+  it('rend la valeur seule quand le barème est une chaîne vide', () => {
+    expect(formatGrade(13.5, '')).toBe('13,5');
   });
 
   describe('language', () => {

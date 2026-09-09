@@ -84,8 +84,8 @@ function normalize(s: string): string {
  * rapport de correctifs pour la liste des sites à migrer).
  */
 export function formatGrade(
-  grade: number | string | undefined,
-  outOf: number | string | undefined,
+  grade: number | string | null | undefined,
+  outOf: number | string | null | undefined,
   language = 'fr'
 ): string {
   if (grade === undefined || grade === null || grade === '' || ABSENT.has(String(grade))) {
