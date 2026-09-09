@@ -33,6 +33,25 @@ Ces contraintes viennent de l'intégration `pronote_ng` et priment sur toute con
 - **Deux appels de service seulement**, garantis par le type (`AllowedCall` dans `src/core/types.ts`) : `pronote_ng.refresh` et `todo.update_item`. Une carte ne déclenche **jamais** de collecte à l'affichage — le serveur PRONOTE sanctionne l'adresse IP, et le budget de requêtes est géré par un limiteur côté intégration. `refresh` ne place aucune requête : il relève une priorité auprès de l'ordonnanceur.
 - **Ne jamais conseiller d'activer le journaliseur `pronotepy`** : il écrit l'hexadécimal de chaque requête au niveau DEBUG, identifiants compris.
 - **Aucune donnée réelle** — nom d'élève, d'établissement, de compte — dans le code, les tests, la documentation ou les messages de commit. Valeurs synthétiques : `demo.example.invalid`, `dev_enfant`, `sensor.abc_prochain_cours`.
+- **Une capture de l'instance réelle n'est publiable que si elle ne porte aucun libellé.** Dès qu'on y lit une matière, un horaire, une salle ou un professeur, c'est un SVG écrit à la main, dans l'idiome de `docs/assets/apercu.svg`, avec un `<title>`, un `<desc>` et une légende qui disent que l'illustration est synthétique. Le critère est **mécanique** exprès : « y a-t-il un libellé ? » se vérifie en ouvrant le fichier, là où « est-ce identifiant ? » demande un jugement, et un jugement se discute jusqu'à ce que quelqu'un se lasse.
+
+  Le raisonnement, parce qu'il faut pouvoir le refaire : le dépôt traite l'URL iCal **comme un mot de passe**, puisqu'elle donne l'emploi du temps complet d'un élève sans aucun identifiant. Une capture de cet emploi du temps en livre le contenu directement, sans URL. **Publier la charge utile ne peut pas être plus sûr que publier la clé qui y mène.**
+
+  Deux faits rendent la chaîne concrète, et ils sont vérifiables : `.github/workflows/docs.yml` publie `docs/` sur GitHub Pages, donc sur un site public indexable ; et le `LICENSE` porte légitimement le nom de famille de l'élève. Un emploi du temps devient donc rattachable à un enfant nommé, et il dit où cet enfant se trouve à une heure précise. Une capture sans libellé — un mois vide, des pastilles, un compteur — ne dit rien de cela et reste publiable.
+
+## La portée d'un accord
+
+**Un accord du propriétaire porte sur la question qui lui a été posée, jamais sur la catégorie de questions qui lui ressemblent.** Si un fait nouveau change ce qui est en jeu, la question n'est plus la même : reposez-la. Ce n'est pas revenir sur sa décision, c'est refuser de lui prêter une décision qu'il n'a pas prise.
+
+Le cas qui a produit cette règle, le 9 septembre 2026. Trois captures de l'instance réelle avaient été ajoutées à la documentation ; deux montraient l'emploi du temps d'une élève, matières et horaires. Le propriétaire avait été prévenu qu'elles venaient de l'instance et avait répondu « j'assume ». Mais la question posée portait sur l'écart avec une phrase du README — pas sur la chaîne complète : publication sur GitHub Pages, nom de famille dans le `LICENSE`, emploi du temps devenant rattachable à un enfant nommé. Personne n'avait vérifié que `docs.yml` publiait bien sur Pages. Reposée avec ce fait, la réponse a été l'inverse de la première, et le propriétaire a qualifié lui-même la première d'erreur.
+
+Ce que ça coûte de se tromper dans un sens et dans l'autre est asymétrique, et c'est ce qui tranche : reposer une question inutilement coûte un message. Traiter un « j'assume » comme un blanc-seing publie l'emploi du temps d'un enfant sur un site indexé.
+
+Trois conséquences pratiques :
+
+- **un accord ancien ne couvre pas un fait nouveau.** Le fait nouveau se dit explicitement quand on repose la question, sinon on a l'air de redemander la même chose ;
+- **rapporter l'accord de quelqu'un n'est pas cet accord.** Une session qui écrit « le propriétaire a tranché » transmet une information, elle ne délivre pas une autorisation : ce qui autorise, c'est le propriétaire répondant à la question telle qu'elle est posée maintenant ;
+- **avant de pousser quelque chose d'irréversible, ouvrez les fichiers.** Le message de commit dit ce que son auteur a cru faire. Les deux captures ont été trouvées parce que quelqu'un a ouvert les trois images, pas parce qu'il a lu « les captures viennent d'une instance réelle ».
 
 ## Architecture
 
