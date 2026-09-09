@@ -108,6 +108,25 @@ export const sharedStyles = css`
     padding-left: 6px;
   }
 
+  /* Le filet de matière posé DANS la ligne, juste après l'intitulé. C'est le
+     placement des devoirs : la couleur suit le nom de la matière au lieu de
+     border la ligne entière.
+
+     Pas de repli transparent ici, contrairement à la gouttière, et c'est
+     voulu. Un filet en ligne suit un texte de longueur variable : une ligne
+     sans couleur ne décale donc rien, et n'a pas besoin qu'on lui réserve la
+     place. Un filet gris de repli affirmerait au contraire que la matière a
+     une couleur, et que cette couleur est grise. */
+  .filet-matiere {
+    display: inline-block;
+    width: 4px;
+    height: 1em;
+    margin-left: 6px;
+    border-radius: 2px;
+    vertical-align: -0.15em;
+    background: var(--pronote-subject-color);
+  }
+
   /* La photo de l'élève. La carte qui l'affiche la laisse désactivée par
      défaut : une photo d'enfant sur un tableau de bord se retrouve dans une
      capture d'écran ou un partage de vue. */

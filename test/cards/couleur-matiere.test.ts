@@ -10,9 +10,14 @@ import { mountCard } from '../fixtures/mount';
  * Le code couleur des matières, sur les trois familles qui en portent un.
  *
  * Ce fichier est transverse plutôt que rangé par carte, parce que la propriété
- * testée est transverse : la même couleur de matière doit se lire de la même
- * façon sur l'emploi du temps, les devoirs et les moyennes. Trois tests
- * dispersés dans trois fichiers auraient laissé la divergence passer.
+ * testée est transverse : la même couleur de matière doit se **résoudre** de
+ * la même façon sur l'emploi du temps, les devoirs et les moyennes. Trois
+ * tests dispersés dans trois fichiers auraient laissé la divergence passer.
+ *
+ * Ce qui n'est PAS transverse, et que ce fichier vérifie aussi : le
+ * placement. Les devoirs posent leur filet après l'intitulé de la matière,
+ * les trois autres familles le posent en gouttière à gauche. La résolution est
+ * commune, le rendu ne l'est pas.
  *
  * **Les couleurs de ces fixtures sont inventées**, comme toutes les valeurs du
  * dépôt. Un établissement réel choisit les siennes.
@@ -59,6 +64,38 @@ const accents = (el: HTMLElement): (string | null)[] =>
       : null
   );
 
+/**
+ * Les filets de matière posés DANS la ligne, après l'intitulé — le placement
+ * propre aux devoirs. La couleur passe par la même variable CSS que la
+ * gouttière : un test qui lirait `style.backgroundColor` dépendrait de la
+ * normalisation en `rgb(...)` du moteur de rendu, et casserait sans que le
+ * rendu ait changé.
+ */
+const filetsEnLigne = (el: HTMLElement): string[] =>
+  [...(el.shadowRoot?.querySelectorAll('.primary .filet-matiere') ?? [])].map((bar) =>
+    bar instanceof HTMLElement ? bar.style.getPropertyValue('--pronote-subject-color').trim() : ''
+  );
+
+/**
+ * Les rangs, dans les nœuds enfants de la première ligne, de l'intitulé de la
+ * matière et du filet. Rend -1 pour ce qui manque.
+ *
+ * Pourquoi parcourir `childNodes` et non les éléments : l'intitulé est un
+ * **nœud de texte**, pas un élément. Une première version de ce test lisait
+ * `lastElementChild` et affirmait tenir le placement — mesuré en déplaçant le
+ * filet avant l'intitulé, les treize tests du fichier passaient toujours,
+ * parce que le filet reste le dernier *élément* dans les deux ordres. Un test
+ * de position qui ignore les nœuds de texte ne teste aucune position.
+ */
+const rangs = (el: HTMLElement): { intitule: number; filet: number } => {
+  const primary = el.shadowRoot?.querySelector('.row .primary');
+  const nodes = [...(primary?.childNodes ?? [])];
+  return {
+    intitule: nodes.findIndex((n) => (n.textContent ?? '').includes('Maths')),
+    filet: nodes.findIndex((n) => n instanceof HTMLElement && n.classList.contains('filet-matiere')),
+  };
+};
+
 /** Le nombre de lignes qui ne réservent PAS de gouttière. */
 const plainRows = (el: HTMLElement): number =>
   el.shadowRoot?.querySelectorAll('.row:not(.accented)').length ?? 0;
@@ -74,6 +111,36 @@ const withLessons = (lessons: unknown[]) =>
       attributes: { lessons },
     },
   ]);
+
+/** Deux devoirs : le premier coloré par le serveur, le second sans couleur. */
+const deuxDevoirs = (): ReturnType<typeof makeHass> =>
+  makeHass([
+    {
+      key: 'sensor:homework_todo',
+      entity_id: 'sensor.abc_devoirs_a_faire',
+      device: 'dev_enfant',
+      state: '2',
+      attributes: {
+        items: [
+          {
+            subject: 'Maths',
+            description_text: 'Exercices 3 à 7',
+            due: '2026-09-10T00:00:00+02:00',
+            background_color: '#1e88e5',
+          },
+          {
+            subject: 'Histoire',
+            description_text: 'Lire le chapitre 2',
+            due: '2026-09-11T00:00:00+02:00',
+          },
+        ],
+      },
+    },
+  ]);
+
+const monter = async (): Promise<HTMLElement> =>
+  mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant', filter: 'todo' }, deuxDevoirs());
+
 
 describe('code couleur des matières — emploi du temps', () => {
   it('reprend la couleur de chaque créneau', async () => {
@@ -154,36 +221,30 @@ describe('code couleur des matières — emploi du temps', () => {
 
 describe('code couleur des matières — devoirs', () => {
   it('reprend la couleur de chaque devoir', async () => {
-    const el = await mountCard(
-      'pronote-ng-devoirs',
-      { device_id: 'dev_enfant', filter: 'todo' },
-      makeHass([
-        {
-          key: 'sensor:homework_todo',
-          entity_id: 'sensor.abc_devoirs_a_faire',
-          device: 'dev_enfant',
-          state: '2',
-          attributes: {
-            items: [
-              {
-                subject: 'Maths',
-                description_text: 'Exercices 3 à 7',
-                due: '2026-09-10T00:00:00+02:00',
-                background_color: '#1e88e5',
-              },
-              {
-                subject: 'Histoire',
-                description_text: 'Lire le chapitre 2',
-                due: '2026-09-11T00:00:00+02:00',
-              },
-            ],
-          },
-        },
-      ])
-    );
+    const el = await monter();
 
-    expect(accents(el)).toEqual(['#1e88e5', null]);
+    expect(filetsEnLigne(el)).toEqual(['#1e88e5']);
     expect(el.shadowRoot?.textContent).toContain('Exercices 3 à 7');
+  });
+
+  it('pose le filet après l’intitulé de la matière', async () => {
+    const el = await monter();
+
+    const { intitule, filet } = rangs(el);
+    // Les deux bornes d'abord : sans elles, deux -1 se compareraient
+    // sereinement et le test passerait sur une ligne vide.
+    expect(intitule).toBeGreaterThanOrEqual(0);
+    expect(filet).toBeGreaterThanOrEqual(0);
+    expect(intitule).toBeLessThan(filet);
+  });
+
+  it('ne réserve aucune gouttière à gauche', async () => {
+    const el = await monter();
+
+    // Une assertion d'absence seule passerait aussi si la carte ne rendait
+    // plus rien du tout : la seconde ligne est ce qui la rend concluante.
+    expect(accents(el)).toEqual([]);
+    expect(filetsEnLigne(el)).toEqual(['#1e88e5']);
   });
 });
 
@@ -345,7 +406,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
         },
       ])
     );
-    expect(accents(el)).toEqual(['#1e88e5', null]);
+    expect(filetsEnLigne(el)).toEqual(['#1e88e5']);
     expect(el.shadowRoot?.textContent).toContain('Exercices 3 à 7');
   });
 

@@ -241,6 +241,14 @@ export const SPEC: CardSpec<Config> = {
     const rowFor = (h: Homework): TemplateResult => {
       const overdue = isOverdue(h.due, ctx.timeZone);
       const dueLabel = h.due ? formatDayLabel(h.due, ctx.language, ctx.timeZone) : '';
+      // Le filet de matière est posé DANS la ligne, après l'intitulé, et non
+      // dans la gouttière de gauche des trois autres cartes qui portent une
+      // couleur. Conséquence assumée : il n'y a pas de troisième cas `null` à
+      // réserver ici. Un filet en ligne suit un intitulé de longueur
+      // variable, donc un devoir sans couleur n'a simplement pas de filet et
+      // rien ne se décale — la raison d'être du `null` de `RowOptions.accent`
+      // ne s'applique pas à ce placement.
+      const accent = subjectAccent(h.background_color, h.subject, ctx.config.subject_colors);
       return html`
         ${listRow({
           primary: html`
@@ -254,7 +262,12 @@ export const SPEC: CardSpec<Config> = {
                   }}
                 />`
               : ''}
-            ${h.subject ?? ctx.t('devoirs.name')}
+            ${h.subject ?? ctx.t('devoirs.name')}${accent === undefined
+              ? ''
+              : html`<span
+                  class="filet-matiere"
+                  style=${`--pronote-subject-color: ${accent}`}
+                ></span>`}
           `,
           // Le texte simple publié par l'intégration s'il existe, sinon
           // l'énoncé HTML dévêtu ici — jamais injecté.
@@ -264,9 +277,6 @@ export const SPEC: CardSpec<Config> = {
               ? ctx.t('devoirs.due', { date: dueLabel })
               : ''}
           `,
-          // La même gouttière que sur l'emploi du temps, et le même `?? null`
-          // pour que les devoirs sans couleur restent alignés.
-          accent: subjectAccent(h.background_color, h.subject, ctx.config.subject_colors) ?? null,
         })}
       `;
     };
