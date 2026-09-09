@@ -12,6 +12,17 @@
     "render_error": "Cette carte n'a pas pu s'afficher. Le détail est dans la console du navigateur.",
     "inferred_time": "Heure de fin déduite par l'intégration : le serveur ne l'a pas fournie, et le calcul peut se tromper."
   },
+  "mode_collecte": {
+    "name": "Mode de collecte",
+    "in_force": "Mode en vigueur",
+    "mode_normal": "Normal",
+    "mode_quiet_hours": "Heures calmes",
+    "no_control": "L'intégration ne propose pas encore de bascule manuelle. Cette carte affiche le mode en vigueur ; le contrôle apparaîtra tout seul dès qu'une version l'expose, sans rien changer ici.",
+    "no_modes": "Le sélecteur de mode ne propose aucun mode. Signalez-le : ce n'est pas un état normal.",
+    "note": "Repasser en mode normal peut faire repartir la collecte immédiatement si des paliers sont en attente. Aucun appel ne part de l'affichage de cette carte.",
+    "note_volatile": "Un forçage ne survit pas à un redémarrage de Home Assistant : le mode revient alors à ce que disent les options de l'intégration.",
+    "show_note": "Afficher l'avertissement sous les boutons"
+  },
   "editor": {
     "device_id": "Enfant",
     "device_id_helper": "Toutes les cartes se configurent avec l'appareil de l'enfant, y compris celles qui affichent des données de compte.",

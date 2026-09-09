@@ -12,6 +12,17 @@
     "render_error": "Esta tarjeta no ha podido mostrarse. El detalle está en la consola del navegador.",
     "inferred_time": "Hora de fin deducida por la integración: el servidor no la facilitó y el cálculo puede equivocarse."
   },
+  "mode_collecte": {
+    "name": "Modo de recogida",
+    "in_force": "Modo en vigor",
+    "mode_normal": "Normal",
+    "mode_quiet_hours": "Horas de silencio",
+    "no_control": "La integración aún no ofrece un control manual. Esta tarjeta muestra el modo en vigor; el control aparecerá por sí solo en cuanto una versión lo exponga, sin cambiar nada aquí.",
+    "no_modes": "El selector de modo no propone ningún modo. Comuníquelo: no es un estado normal.",
+    "note": "Volver al modo normal puede reanudar la recogida de inmediato si hay niveles en espera. Ninguna llamada parte de la visualización de esta tarjeta.",
+    "note_volatile": "Un forzado no sobrevive a un reinicio de Home Assistant: el modo vuelve entonces a lo que indican las opciones de la integración.",
+    "show_note": "Mostrar el aviso bajo los botones"
+  },
   "editor": {
     "device_id": "Alumno",
     "device_id_helper": "Todas las tarjetas se configuran con el dispositivo del alumno, incluidas las que muestran datos de la cuenta.",

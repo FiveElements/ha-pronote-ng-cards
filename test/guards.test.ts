@@ -125,7 +125,21 @@ describe("garde : aucun identifiant d'entité en dur", () => {
  * type est la garantie ; ce test est la vérification de texte qui la double,
  * pas un substitut — la nuance a son importance, docs/limites.md l'explique.
  */
-const ALLOWED_CALLS = ['pronote_ng.refresh', 'todo.update_item'];
+const ALLOWED_CALLS = [
+  'pronote_ng.refresh',
+  'todo.update_item',
+  // Ajouté le 10 septembre 2026 avec la carte « mode de collecte », sur
+  // demande du propriétaire. La garde suit le type et ne le précède jamais :
+  // si cette ligne était là sans l'entrée correspondante dans `AllowedCall`,
+  // la vérification de texte autoriserait un appel que le type refuse, et
+  // c'est la vérification qui aurait tort.
+  //
+  // À noter, parce que c'est le vrai changement : `select` n'est pas le
+  // domaine de l'intégration. Cette entrée ouvre donc l'écriture vers une
+  // entité `select` quelconque de l'instance, là où les deux premières
+  // restaient dans le périmètre de PRONOTE et des listes de tâches.
+  'select.select_option',
+];
 
 describe('garde : liste blanche des appels de service', () => {
   // Le seul endroit du socle qui reconstitue domaine et service à partir de

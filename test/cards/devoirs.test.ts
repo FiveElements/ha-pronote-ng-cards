@@ -351,9 +351,50 @@ describe('carte devoirs', () => {
     expect(el.shadowRoot?.querySelectorAll('.chip.problem').length).toBe(2);
   });
 
-  it('ne montre aucune pastille « en retard » quand homework_overdue est off', async () => {
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hw({ items }));
-    expect(el.shadowRoot?.querySelectorAll('.chip.problem').length).toBe(0);
+  it('sépare la pastille de BANDEAU, qui suit le capteur, de celle de LIGNE, qui suit la date', async () => {
+    // Ce test attendait zéro pastille sur la fixture partagée, et il est tombé
+    // à minuit : l'échéance de `items[0]` était « aujourd'hui » le jour où il
+    // a été écrit, elle est devenue « hier ». La carte n'a pas changé, le
+    // calendrier oui — `isOverdue` compare à `new Date()` et cette carte n'a
+    // aucune couture d'horloge, contrairement à la vue journée.
+    //
+    // Il dit maintenant ce qu'il voulait dire, sur des dates qui ne peuvent
+    // plus dériver : le BANDEAU suit `binary_sensor:homework_overdue`, la
+    // pastille de LIGNE suit la DATE, et les deux sont indépendantes. La
+    // version précédente ne prouvait rien de cette séparation — elle comptait
+    // zéro parce qu'aucune des deux ne s'était déclenchée.
+    const capteurEteint = [
+      {
+        key: 'binary_sensor:homework_overdue',
+        entity_id: 'binary_sensor.abc_devoirs_en_retard',
+        device: 'dev_enfant' as const,
+        state: 'off',
+        attributes: {},
+      },
+    ];
+    const futur = [
+      { id: 'h1', subject: 'Maths', description: 'X', due: '2099-01-01', done: false },
+    ];
+    const passe = [
+      { id: 'h1', subject: 'Maths', description: 'X', due: '2020-01-01', done: false },
+    ];
+
+    const rien = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: futur }, '1', capteurEteint)
+    );
+    expect(rien.shadowRoot?.querySelectorAll('.chip.problem').length).toBe(0);
+    // Appariement positif : la carte rend bien sa ligne, elle n'est pas vide.
+    expect(text(rien)).toContain('Maths');
+
+    const uneSeule = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: passe }, '1', capteurEteint)
+    );
+    // Une seule : la ligne. Pas le bandeau, puisque le capteur est éteint.
+    expect(uneSeule.shadowRoot?.querySelectorAll('.chip.problem').length).toBe(1);
   });
 
   // --- Important n°6 : tri par vraie date, affichage via formatDayLabel. ---

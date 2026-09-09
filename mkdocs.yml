@@ -27,6 +27,7 @@ nav:
       - Cantine: cartes/menu.md
       - Vie scolaire: cartes/vie-scolaire.md
       - Limiteur: cartes/limiteur.md
+      - Mode de collecte: cartes/mode-collecte.md
   - Les couleurs de matière: couleurs-de-matiere.md
   - Avec l'agenda natif de Home Assistant: ha-calendar.md
   - Assembler un tableau de bord: tableaux-de-bord.md

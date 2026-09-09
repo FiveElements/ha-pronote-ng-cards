@@ -281,9 +281,9 @@ export const SPEC: CardSpec<Config> = {
                     type="checkbox"
                     .checked=${h.done === true}
                     @change=${(event: Event): void => {
-                    const target = event.currentTarget;
-                    if (target instanceof HTMLInputElement) void toggle(h, target);
-                  }}
+                      const target = event.currentTarget;
+                      if (target instanceof HTMLInputElement) void toggle(h, target);
+                    }}
                   />`
                 : ''
             }

@@ -12,6 +12,17 @@
     "render_error": "Este cartão não conseguiu apresentar-se. O detalhe está na consola do navegador.",
     "inferred_time": "Hora de fim deduzida pela integração: o servidor não a forneceu e o cálculo pode errar."
   },
+  "mode_collecte": {
+    "name": "Modo de recolha",
+    "in_force": "Modo em vigor",
+    "mode_normal": "Normal",
+    "mode_quiet_hours": "Horas de silêncio",
+    "no_control": "A integração ainda não oferece um comando manual. Este cartão mostra o modo em vigor; o comando aparecerá por si só assim que uma versão o expuser, sem alterar nada aqui.",
+    "no_modes": "O seletor de modo não propõe nenhum modo. Comunique-o: não é um estado normal.",
+    "note": "Voltar ao modo normal pode reiniciar a recolha imediatamente se houver níveis em espera. Nenhuma chamada parte da exibição deste cartão.",
+    "note_volatile": "Uma forçagem não sobrevive a um reinício do Home Assistant: o modo volta então ao que indicam as opções da integração.",
+    "show_note": "Mostrar o aviso sob os botões"
+  },
   "editor": {
     "device_id": "Aluno",
     "device_id_helper": "Todos os cartões se configuram com o dispositivo do aluno, incluindo os que mostram dados da conta.",

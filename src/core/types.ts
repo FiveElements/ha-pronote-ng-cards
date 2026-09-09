@@ -46,7 +46,25 @@ type Call<Domain extends string, Service extends string> = `${Domain}.${Service}
  * exporte les identifiants, celui qui rend le numéro INE) ne peut y figurer
  * sans passer par cette liste, revue en revue de code.
  */
-export type AllowedCall = Call<'pronote_ng', 'refresh'> | Call<'todo', 'update_item'>;
+export type AllowedCall =
+  | Call<'pronote_ng', 'refresh'>
+  | Call<'todo', 'update_item'>
+  // La bascule de mode de collecte, ajoutee le 10 septembre 2026 sur demande
+  // du proprietaire. C'est un ELARGISSEMENT de la seule garantie que
+  // `docs/limites.md` presente comme portee par le type, donc il se dit.
+  //
+  // Ce qu'elle ne casse pas : l'invariant est qu'une carte ne declenche
+  // jamais de collecte A L'AFFICHAGE, pas qu'elle ne puisse rien declencher.
+  // `pronote_ng.refresh` etait deja un geste delibere de l'utilisateur. Un
+  // clic sur un mode a la meme forme.
+  //
+  // Ce qu'elle change vraiment : le domaine `select` n'est pas celui de
+  // l'integration. Une carte peut donc desormais ecrire dans une entite
+  // `select` QUELCONQUE de l'instance, si un jour une carte s'y trompait de
+  // cible. La cible vient de `ctx.entityId(cle)`, donc de la resolution, donc
+  // du registre — mais le type ne le garantit plus a lui seul, et c'est le
+  // prix paye ici.
+  | Call<'select', 'select_option'>;
 
 export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
   /** Vue en lecture : `callService` n'y figure pas (voir `HassView`). */

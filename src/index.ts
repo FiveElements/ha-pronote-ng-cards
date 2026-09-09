@@ -13,6 +13,7 @@ import { SPEC as VIE_SCOLAIRE } from './cards/vie-scolaire';
 import { SPEC as MENU } from './cards/menu';
 import { SPEC as ELEVE } from './cards/eleve';
 import { SPEC as LIMITEUR } from './cards/limiteur';
+import { SPEC as MODE_COLLECTE } from './cards/mode-collecte';
 import { SPEC as EVALUATIONS } from './cards/evaluations';
 import { SPEC as JOURNEE } from './cards/journee';
 
@@ -24,6 +25,7 @@ defineCard(VIE_SCOLAIRE);
 defineCard(MENU);
 defineCard(ELEVE);
 defineCard(LIMITEUR);
+defineCard(MODE_COLLECTE);
 defineCard(EVALUATIONS);
 defineCard(JOURNEE);
 
