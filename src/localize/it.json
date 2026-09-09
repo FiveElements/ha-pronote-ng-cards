@@ -178,6 +178,11 @@
     "next_day": "Giorno successivo",
     "today": "Oggi",
     "empty_day": "Nessuna lezione quel giorno.",
-    "show_nav": "Frecce di navigazione tra i giorni"
+    "show_nav": "Frecce di navigazione tra i giorni",
+    "auto_advance": "Passare al prossimo giorno di lezione quando la giornata è finita",
+    "auto_advance_helper": "Senza effetto se la settimana non è stata raccolta: il prossimo giorno di lezione si legge lì. Un giorno senza lezioni viene attraversato, quindi a riposo la carta non mostrerà più « nessuna lezione quel giorno » — le frecce ci portano comunque.",
+    "auto_advance_after": "Ritardo dopo l'ultima lezione, in minuti",
+    "auto_advance_after_helper": "Trenta minuti per impostazione predefinita. Zero avanza al suono della campanella.",
+    "rest_day": "Prossimo giorno di lezione"
   }
 }

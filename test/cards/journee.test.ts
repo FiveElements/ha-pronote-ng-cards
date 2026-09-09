@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineCard } from '../../src/core/registry';
 import { SPEC, testClock } from '../../src/cards/journee';
 import { makeHass } from '../fixtures/hass';
@@ -161,6 +161,31 @@ const JEUDI = [cours('10', 'Physique', '09:00', '10:00')];
 /** Lundi 7 au jeudi 10 septembre 2026. Pas de vendredi : c'est la borne. */
 const SEMAINE = [...LUNDI, ...MARDI, ...JOURNEE, ...JEUDI];
 
+/**
+ * Le `hass` de la semaine, extrait du montage.
+ *
+ * Separe pour qu'un test puisse en reposer un NOUVEAU sur une carte deja
+ * montee : c'est ce que fait Home Assistant a chaque collecte, et c'est la
+ * seule facon de mesurer ce qu'une carte laissee ouverte devient.
+ */
+const hassSemaine = (jourCourant: unknown[] = JOURNEE, semaine: unknown[] = SEMAINE) =>
+  makeHass([
+    {
+      key: 'sensor:lessons_today',
+      entity_id: 'sensor.abc_cours_du_jour',
+      device: 'dev_enfant',
+      state: String(jourCourant.length),
+      attributes: { lessons: jourCourant },
+    },
+    {
+      key: 'sensor:timetable_week',
+      entity_id: 'sensor.abc_emploi_du_temps_de_la_semaine',
+      device: 'dev_enfant',
+      state: String(semaine.length),
+      attributes: { lessons: semaine },
+    },
+  ]);
+
 const monterSemaine = (
   config: Record<string, unknown> = {},
   jourCourant: unknown[] = JOURNEE,
@@ -169,22 +194,7 @@ const monterSemaine = (
   mountCard(
     'pronote-ng-journee',
     { device_id: 'dev_enfant', ...config },
-    makeHass([
-      {
-        key: 'sensor:lessons_today',
-        entity_id: 'sensor.abc_cours_du_jour',
-        device: 'dev_enfant',
-        state: String(jourCourant.length),
-        attributes: { lessons: jourCourant },
-      },
-      {
-        key: 'sensor:timetable_week',
-        entity_id: 'sensor.abc_emploi_du_temps_de_la_semaine',
-        device: 'dev_enfant',
-        state: String(semaine.length),
-        attributes: { lessons: semaine },
-      },
-    ])
+    hassSemaine(jourCourant, semaine)
   );
 
 const fleches = (el: HTMLElement) =>
@@ -797,5 +807,229 @@ describe('carte vue journée — la navigation d’un jour à l’autre', () => 
     expect(entete(el)?.bornes).toBe('');
     await cliquer(el, 1);
     expect(entete(el)?.date).toBe('jeudi 10 septembre');
+  });
+});
+
+/* ---- L'avance automatique au prochain jour de cours ---------------------
+
+   Repères de la fenêtre collectée, tous utiles à la lecture des tests :
+   lundi 7, mardi 8, mercredi 9 (le jour « aujourd'hui » des fixtures),
+   jeudi 10. Pas de vendredi — c'est ce qui rend la borne mesurable.
+
+   Le dernier cours du mercredi finit à 14:30, donc le seuil par défaut
+   (trente minutes) tombe à 15:00. */
+
+/** La semaine sans le mercredi : un jour sans cours au milieu. */
+const SEMAINE_SANS_MERCREDI = [...LUNDI, ...MARDI, ...JEUDI];
+
+describe('carte vue journée — l’avance au prochain jour de cours', () => {
+  it('ne bouge pas sans l’option, même longtemps après la fin des cours', async () => {
+    // Le point de départ, et la raison pour laquelle l'option est inactive par
+    // défaut : une carte qui montre demain là où elle montrait aujourd'hui
+    // change ce qu'elle affirme. Personne ne doit se le voir imposer par une
+    // mise à jour.
+    testClock.now = '2026-09-09T22:00:00+02:00';
+    const el = await monterSemaine();
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    // Assertion positive appariée : c'est bien la journée du mercredi qui est
+    // rendue, pas une carte vide qui porterait la bonne date par hasard.
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Maths', 'Histoire', 'Repas', 'Anglais']);
+  });
+
+  it('avance au jour suivant une fois le dernier cours fini plus le délai', async () => {
+    testClock.now = '2026-09-09T15:30:00+02:00';
+    const el = await monterSemaine({ auto_advance: true });
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Physique']);
+  });
+
+  it('n’avance pas avant l’échéance du délai', async () => {
+    // 14:45, soit un quart d'heure après la fin des cours et un quart d'heure
+    // avant le seuil. Les deux tests encadrent la bascule : un seul des deux
+    // passerait si le délai était ignoré, et un seul si le délai était compté
+    // depuis le début du dernier cours.
+    testClock.now = '2026-09-09T14:45:00+02:00';
+    const el = await monterSemaine({ auto_advance: true });
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Maths', 'Histoire', 'Repas', 'Anglais']);
+  });
+
+  it('respecte un délai configuré, de part et d’autre de son échéance', async () => {
+    // Deux heures : le seuil passe de 15:00 à 16:30. Le même instant change de
+    // verdict selon la configuration, ce qui mesure le délai lui-même et pas
+    // seulement l'existence d'un seuil.
+    testClock.now = '2026-09-09T15:30:00+02:00';
+    const avant = await monterSemaine({ auto_advance: true, auto_advance_after: 120 });
+    expect(entete(avant)?.date).toBe('mercredi 9 septembre');
+
+    testClock.now = '2026-09-09T16:45:00+02:00';
+    const apres = await monterSemaine({ auto_advance: true, auto_advance_after: 120 });
+    expect(entete(apres)?.date).toBe('jeudi 10 septembre');
+  });
+
+  it('avance à la sonnerie quand le délai est zéro', async () => {
+    // Zéro doit être accepté comme une valeur, pas confondu avec « non
+    // renseigné » : un `||` à la place du `??` dans la lecture de l'option
+    // ferait retomber ce cas sur trente minutes, et le test le dirait.
+    testClock.now = '2026-09-09T14:31:00+02:00';
+    const el = await monterSemaine({ auto_advance: true, auto_advance_after: 0 });
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+  });
+
+  it('retombe sur trente minutes quand le délai n’est pas un nombre', async () => {
+    // Le champ vient d'un YAML écrit à la main. Ce test ne vérifie pas
+    // l'absence de plantage — il vérifie que le repli est bien le DÉFAUT et
+    // non zéro : à 14:45 la carte ne bouge pas, à 15:30 elle bouge.
+    testClock.now = '2026-09-09T14:45:00+02:00';
+    const tot = await monterSemaine({ auto_advance: true, auto_advance_after: 'plus tard' });
+    expect(entete(tot)?.date).toBe('mercredi 9 septembre');
+
+    testClock.now = '2026-09-09T15:30:00+02:00';
+    const tard = await monterSemaine({ auto_advance: true, auto_advance_after: 'plus tard' });
+    expect(entete(tard)?.date).toBe('jeudi 10 septembre');
+  });
+
+  it('accepte un délai écrit comme une chaîne de chiffres', async () => {
+    // `ha-form` rend un nombre, un YAML écrit à la main rend ce qu'on y a mis.
+    // Refuser '120' là où 120 passe serait une distinction que personne ne
+    // peut voir dans un éditeur de texte.
+    testClock.now = '2026-09-09T15:30:00+02:00';
+    const el = await monterSemaine({ auto_advance: true, auto_advance_after: '120' });
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+  });
+
+  it('traverse un jour sans cours au lieu d’attendre une fin qui n’existe pas', async () => {
+    // Mercredi matin, mais le mercredi n'a aucun cours. Il n'y a pas de
+    // dernier cours dont attendre la fin : la carte passe au prochain jour de
+    // cours. C'est la conséquence à connaître avant d'activer l'option — au
+    // repos, « aucun cours ce jour-là » ne se verra plus.
+    testClock.now = '2026-09-09T09:00:00+02:00';
+    const el = await monterSemaine({ auto_advance: true }, [], SEMAINE_SANS_MERCREDI);
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Physique']);
+  });
+
+  it('reste sur le dernier jour collecté plutôt que de sauter dans le vide', async () => {
+    // Jeudi soir : le jeudi est le dernier jour de la fenêtre, il n'y a pas de
+    // vendredi. Sauter quand même afficherait « aucun cours ce jour-là » pour
+    // une date dont la carte ne sait RIEN — la seule affirmation fausse que
+    // cette carte puisse produire. Elle reste donc sur le jeudi.
+    testClock.now = '2026-09-10T20:00:00+02:00';
+    const el = await monterSemaine({ auto_advance: true }, JEUDI);
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Physique']);
+  });
+
+  it('ne fait rien sans le capteur de semaine', async () => {
+    // Même raison que les flèches : le prochain jour de cours se lit dans la
+    // semaine déjà collectée, et il n'y a aucune requête à sa disposition pour
+    // aller le chercher.
+    testClock.now = '2026-09-09T22:00:00+02:00';
+    const el = await monter({ auto_advance: true });
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Maths', 'Histoire', 'Repas', 'Anglais']);
+  });
+
+  it('avance tout seul sur un tableau de bord laissé ouvert', async () => {
+    // La demande porte explicitement là-dessus : « avec une mise à jour même
+    // si le dashboard est resté ouvert ». Personne ne touche à rien, aucun
+    // état d'entité ne change — seule l'horloge avance, et c'est la minuterie
+    // déclarative de la carte (tickMs) qui provoque le repeint.
+    vi.useFakeTimers();
+    try {
+      testClock.now = '2026-09-09T14:45:00+02:00';
+      const el = await monterSemaine({ auto_advance: true });
+      expect(entete(el)?.date).toBe('mercredi 9 septembre');
+
+      testClock.now = '2026-09-09T15:30:00+02:00';
+      vi.advanceTimersByTime(60_000);
+      await el.updateComplete;
+
+      expect(entete(el)?.date).toBe('jeudi 10 septembre');
+      expect(lignes(el).map((x) => x.matiere)).toEqual(['Physique']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('laisse les flèches compter depuis le jour de repos', async () => {
+    // Le piège que cette carte a évité de justesse : `cursor` est un décalage
+    // depuis le jour de REPOS, pas depuis aujourd'hui. Avec `todayKey` comme
+    // origine, la flèche « précédent » depuis le jeudi aurait posé un curseur
+    // nul, donc le jour de repos — le jeudi — et le mercredi aurait été
+    // inatteignable.
+    testClock.now = '2026-09-09T15:30:00+02:00';
+    const el = await monterSemaine({ auto_advance: true });
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+    await cliquer(el, 0);
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Maths', 'Histoire', 'Repas', 'Anglais']);
+  });
+
+  it('nomme le bouton de retour d’après le jour où il ramène', async () => {
+    // « Aujourd'hui » au-dessus d'un bouton qui ramène à demain serait une
+    // affirmation fausse de plus. Le libellé suit le jour de repos.
+    testClock.now = '2026-09-09T15:30:00+02:00';
+    const el = await monterSemaine({ auto_advance: true });
+    await cliquer(el, 0);
+    const retour = el.shadowRoot?.querySelector('.jour-retour');
+    expect(retour?.textContent?.trim()).toBe('Prochain jour de cours');
+    await revenir(el);
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+  });
+
+  it('dit « Aujourd’hui » quand le jour de repos est bien aujourd’hui', async () => {
+    // L'autre moitié du test précédent : sans avance, le libellé ne change
+    // pas. Sans lui, un libellé figé sur « Prochain jour de cours » passerait.
+    testClock.now = '2026-09-09T09:30:00+02:00';
+    const el = await monterSemaine({ auto_advance: true });
+    await cliquer(el, 0);
+    const retour = el.shadowRoot?.querySelector('.jour-retour');
+    expect(retour?.textContent?.trim()).toBe("Aujourd'hui");
+  });
+
+  it('affiche la date même quand l’en-tête et les flèches sont coupés', async () => {
+    // Le cas plausible ET faux : des créneaux de demain sans rien au-dessus se
+    // lisent comme ceux d'aujourd'hui. L'avance automatique rend ce cas
+    // atteignable sans que personne ait cliqué — donc sans que personne sache
+    // qu'il faut se méfier. La date redevient obligatoire.
+    testClock.now = '2026-09-09T15:30:00+02:00';
+    const el = await monterSemaine({
+      auto_advance: true,
+      show_header: false,
+      show_nav: false,
+    });
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+    // Les bornes restent coupées : `show_header` garde son sens.
+    expect(entete(el)?.bornes).toBe('');
+  });
+
+  it('ramène un curseur qui a dérivé hors de la fenêtre collectée', async () => {
+    // Le défaut que l'audit a nommé, et il n'a rien à voir avec l'option.
+    // `cursor` est un décalage : à minuit, le jour de repos bouge sous lui.
+    // Poussé au-delà du dernier jour collecté, il faisait afficher « aucun
+    // cours ce jour-là » pour un vendredi dont la carte ne sait rien. La
+    // flèche était bornée par `stepTo`, le curseur ne l'était pas.
+    vi.useFakeTimers();
+    try {
+      testClock.now = '2026-09-09T09:30:00+02:00';
+      const el = await monterSemaine();
+      await cliquer(el, 1);
+      expect(entete(el)?.date).toBe('jeudi 10 septembre');
+
+      // Minuit passe. Le curseur vaut toujours +1, mais il désigne maintenant
+      // le vendredi. L'intégration, elle, a collecté la journée du jeudi comme
+      // elle le fait chaque nuit : le capteur du jour porte le jeudi.
+      testClock.now = '2026-09-10T00:30:00+02:00';
+      el.hass = hassSemaine(JEUDI, SEMAINE);
+      vi.advanceTimersByTime(60_000);
+      await el.updateComplete;
+
+      expect(entete(el)?.date).toBe('jeudi 10 septembre');
+      expect(text(el)).not.toContain('Aucun cours');
+      expect(lignes(el).map((x) => x.matiere)).toEqual(['Physique']);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

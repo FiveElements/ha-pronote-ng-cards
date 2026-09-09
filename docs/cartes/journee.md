@@ -40,15 +40,70 @@ show_nav: true
 | `show_current` | `true` | Met en avant le cours en cours. |
 | `show_header` | `true` | Affiche la date et les bornes de la journée. |
 | `show_nav` | `true` | Affiche les flèches de navigation d'un jour à l'autre. |
+| `auto_advance` | `false` | Passe au prochain jour de cours quand la journée est finie. |
+| `auto_advance_after` | `30` | Délai après le dernier cours, en minutes, avant ce saut. |
 | `subject_colors` | — | Table matière → couleur. **En YAML uniquement**, voir ci-dessous. |
 
 Une plage du midi illisible (`meal_from: midi`) est **ignorée** : la plage
 par défaut reprend, plutôt que de faire disparaître la zone repas sur une
 faute de frappe.
 
-**Les six bascules et les trois champs de texte figurent dans l'éditeur
-graphique** de la carte : aucun YAML n'est nécessaire pour les régler. Seule la
-table de couleurs demande le mode YAML, pour la raison expliquée plus bas.
+**Les sept bascules, les trois champs de texte et le champ numérique
+figurent dans l'éditeur graphique** de la carte : aucun YAML n'est nécessaire
+pour les régler. Seule la table de couleurs demande le mode YAML, pour la
+raison expliquée plus bas.
+
+## Passer au prochain jour de cours tout seul
+
+À 18 h, la journée affichée est finie et la carte montre encore des cours qui
+ont eu lieu. `auto_advance` la fait passer au **prochain jour de cours** une
+fois le dernier cours terminé, plus le délai de `auto_advance_after`.
+
+```yaml
+type: custom:pronote-ng-journee
+device_id: <appareil de l'enfant>
+auto_advance: true
+auto_advance_after: 30
+```
+
+Avec ces valeurs, une journée qui finit à 16 h 30 laisse la carte sur
+aujourd'hui jusqu'à 17 h, puis affiche le jour de cours suivant. Le délai
+existe parce qu'à la sonnerie l'élève est encore dans l'établissement, et que
+le parent qui regarde la carte à ce moment-là cherche justement l'heure de
+sortie. `auto_advance_after: 0` saute à la sonnerie ; c'est une valeur
+acceptée, pas un réglage manquant.
+
+**La carte avance seule, sans qu'on touche à rien.** Un tableau de bord laissé
+ouvert sur le mur de la cuisine bascule tout seul dans la minute qui suit
+l'échéance. Aucune requête n'est envoyée à PRONOTE pour cela : le prochain jour
+de cours est déjà en mémoire du navigateur, dans la semaine collectée.
+
+**Les flèches continuent de fonctionner**, et elles comptent à partir du jour
+affiché. Depuis le jour avancé, la flèche gauche ramène à aujourd'hui. Le
+bouton de retour, lui, ne dit plus « Aujourd'hui » mais « Prochain jour de
+cours » — il ramène là où la carte se repose, et « Aujourd'hui » au-dessus d'un
+bouton qui mène à demain serait faux.
+
+### Trois choses à savoir avant de l'activer
+
+**L'option est inactive par défaut, et le restera.** Une carte qui montre
+demain là où elle montrait aujourd'hui change ce qu'elle affirme. Ça ne
+s'impose pas par une mise à jour.
+
+**Un jour sans cours est traversé.** Le déclencheur est la fin du dernier
+cours ; un mercredi libre n'en a pas, donc il n'y a rien à attendre et la carte
+affiche directement le jour suivant. Conséquence : au repos, vous ne verrez
+plus « aucun cours ce jour-là ». C'est une information vraie et parfois celle
+qu'on venait chercher — les flèches y mènent toujours.
+
+**Elle ne fait rien sans la semaine collectée.** Si le palier hebdomadaire est
+désactivé dans les options de l'intégration, `sensor:timetable_week` n'existe
+pas, la carte n'a aucun autre jour en mémoire et l'option reste sans effet —
+exactement comme les flèches. Et même avec la semaine, la carte **ne saute
+jamais au-delà du dernier jour collecté** : un vendredi soir, il n'y a pas de
+lundi en mémoire, donc elle reste sur le vendredi. Sauter quand même
+afficherait « aucun cours ce jour-là » pour une date dont la carte ne sait
+rien, et c'est la seule affirmation fausse qu'elle pourrait produire.
 
 ## La navigation d'un jour à l'autre
 

@@ -45,19 +45,45 @@ import { subjectAccent } from '../core/subject-color';
  * Le jour consulté vit dans `ctx.cursor`, l'état d'interface du socle, jamais
  * dans le YAML de la carte. Une option `day: -1` afficherait la veille pour
  * tous les habitants de la maison, en permanence, et l'avant-veille le
- * lendemain. Un rechargement de page ramène donc sur aujourd'hui, comme une
- * position de défilement.
+ * lendemain. Un rechargement de page ramène donc sur le jour de repos, comme
+ * une position de défilement.
+ *
+ * ## Le jour de repos, et pourquoi ce n'est pas toujours aujourd'hui
+ *
+ * `ctx.cursor` est un **décalage en jours depuis le jour de repos**, et non
+ * depuis aujourd'hui. Sans `auto_advance` les deux sont le même jour et la
+ * distinction ne se voit pas ; avec, le jour de repos avance au prochain jour
+ * de cours une fois la journée terminée, et `cursor` continue de compter à
+ * partir de lui — c'est ce qui garde les flèches et le bouton de retour
+ * cohérents.
+ *
+ * Deux conséquences à connaître, la seconde étant un défaut corrigé ici.
+ *
+ * **Un décalage dérive.** Le jour de repos est recalculé à chaque repeint :
+ * quelqu'un qui consulte demain à 23 h 59 regarde après minuit le jour
+ * d'après, sans avoir rien touché. C'est inhérent à un curseur relatif, et le
+ * remède serait de retenir une clé de jour plutôt qu'un entier — donc de
+ * demander au socle un état qu'il ne donne pas, délibérément.
+ *
+ * **Mais une dérive ne doit pas sortir de la fenêtre collectée.** C'était le
+ * vrai défaut : poussé au-delà du dernier jour collecté, le curseur faisait
+ * afficher « aucun cours ce jour-là » pour une date dont la carte ne sait
+ * **rien**. C'est la seule affirmation fausse que cette carte puisse produire,
+ * et les commentaires de `stepTo` disaient déjà qu'il fallait l'empêcher — la
+ * flèche était bornée, le curseur ne l'était pas. Un curseur qui pointe hors
+ * fenêtre revient donc au jour de repos.
  */
 
 interface Config extends PronoteCardConfig {
   /**
    * Table matière → couleur, renseignée par l'utilisateur.
    *
-   * C'est le **deuxième** rang de couleur, et aujourd'hui le seul qui produise
-   * quelque chose : l'intégration décode la couleur de matière et ne la publie
-   * pas encore. La table est donc ce qui donne des couleurs maintenant, et
-   * elle restera le repli des matières que le serveur ne colore pas le jour où
-   * il les publiera. Rien à supprimer à ce moment-là.
+   * C'est le **deuxième** rang de couleur. Le premier produit depuis la
+   * version 0.0.13 de l'intégration : sur les créneaux, la couleur du serveur
+   * arrive et **gagne** sur cette table. Une entrée écrite pour compenser son
+   * absence est donc devenue inerte, en restant dans le YAML — voir
+   * `docs/couleurs-de-matiere.md`. La table reste le repli des matières que
+   * l'établissement laisse sans couleur.
    *
    * Les clés sont comparées **sans casse ni espaces de bord** : PRONOTE écrit
    * souvent les matières en capitales, et personne ne devrait avoir à recopier
@@ -85,6 +111,36 @@ interface Config extends PronoteCardConfig {
    * moins que pas de flèche.
    */
   show_nav?: boolean;
+  /**
+   * Avancer au prochain jour de cours quand la journée est finie.
+   *
+   * **Inactive par défaut**, et ce n'est pas de la prudence de façade : une
+   * carte qui montre demain là où elle montrait aujourd'hui change ce qu'elle
+   * affirme. Personne ne doit se le voir imposer par une mise à jour.
+   *
+   * Le déclencheur est la fin du **dernier cours** du jour affiché, plus le
+   * délai de `auto_advance_after`. Un jour **sans** cours n'a pas de dernier
+   * cours : il n'y a alors rien à attendre et la carte passe directement au
+   * prochain jour de cours. C'est la conséquence à connaître avant d'activer
+   * l'option — « aucun cours mercredi » est une information vraie, et au repos
+   * on ne la verra plus. Les flèches y mènent toujours.
+   *
+   * L'option ne fait rien sans `sensor:timetable_week`, pour la même raison
+   * que les flèches : le prochain jour de cours se lit dans la semaine déjà
+   * collectée, et sauter vers un jour dont on n'a pas les données afficherait
+   * une journée vide qui aurait l'air d'une journée sans cours.
+   */
+  auto_advance?: boolean;
+  /**
+   * Le délai, en minutes, entre la fin du dernier cours et le saut.
+   *
+   * Par défaut trente minutes. Zéro est accepté et signifie « à la sonnerie ».
+   * Une valeur qui n'est pas un nombre fini positif retombe sur le défaut : ce
+   * champ vient d'un YAML écrit à la main, et un `NaN` propagé dans une
+   * comparaison de temps rendrait la comparaison toujours fausse — donc
+   * l'option silencieusement inopérante.
+   */
+  auto_advance_after?: number;
 }
 
 /**
@@ -107,6 +163,15 @@ const IN_CLASS: EntityKey = 'binary_sensor:in_class';
  * capteurs ne peuvent pas se contredire sur un même jour.
  */
 const WEEK: EntityKey = 'sensor:timetable_week';
+
+/**
+ * Délai par défaut entre la fin du dernier cours et le saut, en minutes.
+ *
+ * Trente et non zéro : à la sonnerie, l'élève est encore dans l'établissement
+ * et le parent qui regarde la carte cherche l'heure de sortie qu'il vient de
+ * manquer. Une demi-heure laisse la journée se lire jusqu'au bout.
+ */
+const AUTO_ADVANCE_AFTER = 30;
 
 /** Fenêtre méridienne par défaut, en minutes depuis minuit. */
 const MEAL_FROM = 11 * 60;
@@ -274,6 +339,71 @@ const stepTo = (from: string, delta: 1 | -1, days: string[]): string | undefined
   return before[before.length - 1];
 };
 
+/**
+ * Le délai d'avance en millisecondes, à partir de ce que porte la
+ * configuration.
+ *
+ * Tolérante à l'entrée et stricte à la sortie : `ha-form` rend un nombre, mais
+ * un YAML écrit à la main rend ce qu'on y a mis. Une chaîne numérique est
+ * acceptée — refuser `'45'` là où `45` passe serait une distinction que
+ * personne ne peut voir dans un éditeur de texte — et tout le reste retombe
+ * sur le défaut.
+ */
+const autoAdvanceDelay = (value: unknown): number => {
+  const minutes = typeof value === 'string' ? Number(value.trim()) : value;
+  if (typeof minutes !== 'number' || !Number.isFinite(minutes) || minutes < 0) {
+    return AUTO_ADVANCE_AFTER * 60_000;
+  }
+  return minutes * 60_000;
+};
+
+/** L'instant de fin le plus tardif d'un jour donné, ou `undefined`. */
+const lastEndOfDay = (key: string, lessons: Lesson[], timeZone: string): number | undefined => {
+  let last: number | undefined;
+  for (const lesson of lessons) {
+    const start = parseTimestamp(lesson.start);
+    if (start === undefined || dayKeyOf(start, timeZone) !== key) continue;
+    const end = parseTimestamp(lesson.end)?.getTime();
+    if (end !== undefined && (last === undefined || end > last)) last = end;
+  }
+  return last;
+};
+
+/**
+ * Le jour sur lequel la carte se repose : aujourd'hui, ou le prochain jour de
+ * cours quand la journée est finie depuis assez longtemps.
+ *
+ * Avance de jour **collecté** en jour collecté, jamais d'un jour civil : sauter
+ * sur un samedi que personne n'a collecté afficherait « aucun cours ce
+ * jour-là » pour une date dont la carte ne sait rien.
+ *
+ * S'arrête sur le premier jour dont le dernier cours n'est pas encore terminé.
+ * Un jour sans fin connue — donc sans cours — n'a rien à attendre et se
+ * traverse. Et la boucle est bornée par la taille de la fenêtre et non par la
+ * condition d'arrêt : une itération qui avance sur des données doit avoir une
+ * borne qui ne dépend pas de ces données.
+ */
+const restingDay = (
+  todayKey: string,
+  todayEnd: number | undefined,
+  now: number,
+  delay: number,
+  days: string[],
+  lessons: Lesson[],
+  timeZone: string
+): string => {
+  let key = todayKey;
+  let end = todayEnd;
+  for (let guard = 0; guard <= days.length; guard += 1) {
+    if (end !== undefined && now < end + delay) return key;
+    const next = days.find((day) => day > key);
+    if (next === undefined) return key;
+    key = next;
+    end = lastEndOfDay(next, lessons, timeZone);
+  }
+  return key;
+};
+
 interface Bounds {
   first?: string;
   last?: string;
@@ -430,6 +560,11 @@ export const SPEC: CardSpec<Config> = {
     { name: 'show_current', selector: { boolean: {} } },
     { name: 'show_header', selector: { boolean: {} } },
     { name: 'show_nav', selector: { boolean: {} } },
+    { name: 'auto_advance', selector: { boolean: {} } },
+    {
+      name: 'auto_advance_after',
+      selector: { number: { min: 0, max: 720, step: 5, mode: 'box' } },
+    },
   ],
   // La mise en avant du cours en cours se calcule sur `Date.now()` : sans
   // repeint périodique, elle désignerait un cours terminé pendant une heure
@@ -459,27 +594,66 @@ export const SPEC: CardSpec<Config> = {
     // la veille.
     const cursor = navOn ? ctx.cursor : 0;
     const todayKey = dayKeyOf(clock, tz);
-    const dayKey = shiftDayKey(todayKey, cursor);
+
+    // Le jour de repos. `auto_advance` le déplace au prochain jour de cours
+    // quand la journée est finie ; sinon c'est aujourd'hui, et rien ne change
+    // pour qui n'a pas activé l'option.
+    //
+    // La fin d'aujourd'hui se prend d'abord sur l'attribut PUBLIÉ `last_end` :
+    // il porte tous les créneaux du jour, cours annulés compris, et un fait
+    // publié se lit plutôt que se recalcule. Le repli sur la fenêtre couvre le
+    // cas où l'attribut manque alors que des cours existent — sans lui, un
+    // attribut absent ferait sauter une journée entière de cours.
+    const published = parseTimestamp(ctx.attr<string>(LESSONS, 'last_end'))?.getTime();
+    const baseKey =
+      c.auto_advance === true && days.length > 0
+        ? restingDay(
+            todayKey,
+            published ?? lastEndOfDay(todayKey, weekLessons, tz),
+            now,
+            autoAdvanceDelay(c.auto_advance_after),
+            days,
+            weekLessons,
+            tz
+          )
+        : todayKey;
+
+    // Le curseur est un décalage : il dérive quand le jour de repos bouge sous
+    // lui, à minuit comme à l'heure du saut. Hors de la fenêtre collectée, il
+    // ferait afficher « aucun cours ce jour-là » pour une date inconnue de la
+    // carte — alors retour au jour de repos. Au repos (`cursor` nul) on ne
+    // borne rien : un dimanche hors fenêtre est un jour légitime à afficher.
+    const first = days[0];
+    const last = days[days.length - 1];
+    const wanted = shiftDayKey(baseKey, cursor);
+    const drifted =
+      cursor !== 0 &&
+      first !== undefined &&
+      last !== undefined &&
+      (wanted < first || wanted > last);
+    const dayKey = drifted ? baseKey : wanted;
 
     // Aujourd'hui se lit sur SON capteur et non sur la fenêtre : c'est lui le
     // requis, il fonctionne sans le palier hebdomadaire, et il porte des
     // bornes publiées qu'on n'a pas à recalculer. Les deux capteurs sortent de
     // la même liste dédoublonnée côté intégration, ils ne peuvent pas se
     // contredire sur un même jour.
-    const lessons =
-      cursor === 0
-        ? listAttr<Lesson>(ctx.attr(LESSONS, 'lessons'))
-        : weekLessons.filter((lesson) => {
-            const at = parseTimestamp(lesson.start);
-            return at !== undefined && dayKeyOf(at, tz) === dayKey;
-          });
-    const bounds: Bounds =
-      cursor === 0
-        ? {
-            first: ctx.attr<string>(LESSONS, 'first_start'),
-            last: ctx.attr<string>(LESSONS, 'last_end'),
-          }
-        : boundsOf(lessons);
+    //
+    // La condition porte sur le JOUR affiché et non sur `cursor`, qui ne vaut
+    // plus zéro sur aujourd'hui dès que le jour de repos a avancé.
+    const onToday = dayKey === todayKey;
+    const lessons = onToday
+      ? listAttr<Lesson>(ctx.attr(LESSONS, 'lessons'))
+      : weekLessons.filter((lesson) => {
+          const at = parseTimestamp(lesson.start);
+          return at !== undefined && dayKeyOf(at, tz) === dayKey;
+        });
+    const bounds: Bounds = onToday
+      ? {
+          first: ctx.attr<string>(LESSONS, 'first_start'),
+          last: ctx.attr<string>(LESSONS, 'last_end'),
+        }
+      : boundsOf(lessons);
 
     /**
      * L'en-tête : les flèches, la date, et les bornes de la journée de classe.
@@ -502,13 +676,18 @@ export const SPEC: CardSpec<Config> = {
      */
     const header = ((): TemplateResult | '' => {
       const wantBounds = c.show_header !== false;
-      if (!wantBounds && !navOn) return '';
+      // La date n'est plus facultative dès que le jour affiché n'est pas
+      // aujourd'hui : des créneaux de demain sans date au-dessus se lisent
+      // comme ceux d'aujourd'hui. C'est plausible ET faux, et l'avance
+      // automatique rend le cas atteignable sans que personne ait cliqué —
+      // donc sans que personne sache qu'il faut se méfier.
+      if (!wantBounds && !navOn && onToday) return '';
 
       // La date s'ancre sur un cours dès qu'il y en a un — un horodatage réel
       // vaut mieux que n'importe quel calcul. Sinon sur l'horloge pour
       // aujourd'hui, et sur un instant reconstruit pour les autres jours.
       const day = formatDayLabel(
-        bounds.first ?? (cursor === 0 ? clock.toISOString() : anchorFor(dayKey, tz)),
+        bounds.first ?? (onToday ? clock.toISOString() : anchorFor(dayKey, tz)),
         lang,
         tz
       );
@@ -517,12 +696,16 @@ export const SPEC: CardSpec<Config> = {
       // Ni date, ni bornes, ni flèches : un en-tête vide vaut moins que pas
       // d'en-tête.
       if (day === '' && from === '' && to === '' && !navOn) return '';
+      const restLabel = baseKey === todayKey ? ctx.t('journee.today') : ctx.t('journee.rest_day');
       const inferred = dayEndIsInferred(lessons, bounds.last);
 
       const arrow = (delta: 1 | -1, glyph: string, label: string): TemplateResult => {
         const target = stepTo(dayKey, delta, days);
         const targetNumber = target === undefined ? undefined : dayNumber(target);
-        const origin = dayNumber(todayKey);
+        // L'origine est le jour de REPOS, parce que `cursor` compte depuis lui.
+        // Avec `todayKey` ici, une flèche appliquerait le saut automatique une
+        // seconde fois.
+        const origin = dayNumber(baseKey);
         const reachable = targetNumber !== undefined && origin !== undefined;
         return html`<button
           class="jour-fleche"
@@ -552,10 +735,10 @@ export const SPEC: CardSpec<Config> = {
                 ? html`<button
                     class="jour-retour"
                     @click=${() => {
-                    ctx.setCursor(0);
-                  }}
+                      ctx.setCursor(0);
+                    }}
                   >
-                    ${ctx.t('journee.today')}
+                    ${restLabel}
                   </button>`
                 : ''
             }
@@ -581,9 +764,7 @@ export const SPEC: CardSpec<Config> = {
     // au-dessus d'un jeudi serait une affirmation fausse. C'est le défaut que
     // ce dépôt traque, et la navigation venait de le rendre atteignable.
     if (lessons.length === 0) {
-      return html`${header}${emptyState(
-        ctx.t(cursor === 0 ? 'journee.empty' : 'journee.empty_day')
-      )}`;
+      return html`${header}${emptyState(ctx.t(onToday ? 'journee.empty' : 'journee.empty_day'))}`;
     }
 
     // Tri sur l'instant réel : deux créneaux à décalages horaires mixtes ne se
