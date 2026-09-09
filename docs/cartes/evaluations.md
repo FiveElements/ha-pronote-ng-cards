@@ -2,6 +2,10 @@
 
 Les évaluations par compétences, avec leur niveau de maîtrise.
 
+![Aperçu de la carte Évaluations](../assets/cartes/evaluations.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Configuration
 
 Un seul réglage obligatoire : l'appareil de l'enfant.
@@ -17,6 +21,20 @@ device_id: <appareil de l'enfant>
 | --- | --- | --- |
 | `show_acquisitions` | `true` | Détaille chaque compétence sous son évaluation. À `false`, la carte se réduit à la liste des évaluations. |
 | `limit` | `8` | Nombre d'évaluations affichées, la plus récente en tête. |
+
+### Exemple complet
+
+Toutes les options renseignées, copiable tel quel :
+
+```yaml
+type: custom:pronote-ng-evaluations
+device_id: <appareil de l'enfant>
+show_acquisitions: true
+limit: 8
+```
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 

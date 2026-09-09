@@ -89,6 +89,41 @@ l'utilisateur n'est pas prise en charge.
 
 Cette documentation, elle, reste uniquement en français.
 
+## Deux options communes à toutes les cartes
+
+Les dix cartes acceptent deux réglages qui n'apparaissent sur la page
+d'aucune d'entre elles, parce qu'ils ne dépendent pas de la carte.
+
+`title` remplace l'intitulé affiché en tête. Sans lui, la carte n'affiche
+pas de titre du tout : c'est le nom de l'appareil, pris au registre Home
+Assistant, qui identifie l'enfant partout où c'est utile. Mettez-en un
+quand vous empilez plusieurs cartes du même type dans une colonne.
+
+```yaml
+type: custom:pronote-ng-notes
+device_id: <appareil de l'enfant>
+title: Notes du premier trimestre
+```
+
+`entities` force la résolution d'une clé vers un identifiant d'entité
+précis. **Vous ne devriez jamais en avoir besoin** : les cartes retrouvent
+chaque entité à partir de l'appareil et d'une clé technique stable, ce qui
+est précisément ce qui les rend insensibles à un renommage. L'option existe
+pour les cas où la résolution automatique ne peut pas aboutir — une entité
+que vous avez déplacée sur un autre appareil, par exemple.
+
+```yaml
+type: custom:pronote-ng-notes
+device_id: <appareil de l'enfant>
+entities:
+  sensor:overall_average: sensor.un_identifiant_choisi_par_vous
+```
+
+Une clé forcée l'est pour cette carte seulement, et les autres continuent de
+se résoudre normalement. `device_id` peut même être omis si `entities`
+couvre toutes les clés requises — mais la carte perd alors le nom de
+l'appareil, et donc son intitulé par défaut.
+
 ## Si une carte reste vide
 
 Si la carte n'apparaît même pas dans le catalogue de l'éditeur, voyez

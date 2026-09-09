@@ -3,6 +3,10 @@
 En-tête de synthèse pour une vue par enfant : classe, état du jour et
 prochain cours.
 
+![Aperçu de la carte Élève](../assets/cartes/eleve.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Configuration
 
 Un seul réglage obligatoire : l'appareil de l'enfant.
@@ -18,6 +22,20 @@ device_id: <appareil de l'enfant>
 | --- | --- | --- |
 | `show_photo` | `false` | Affiche la photo de l'élève, **si l'établissement en publie une** (voir ci-dessous). L'entité correspondante n'est même pas résolue quand l'option est éteinte. |
 | `show_establishment` | `false` | Ajoute le nom de l'établissement sous la classe. **Faux par défaut à dessein** : une carte est une surface partageable — capture d'écran, écran mural, partage de tableau de bord. |
+
+### Exemple complet
+
+Toutes les options renseignées, copiable tel quel :
+
+```yaml
+type: custom:pronote-ng-eleve
+device_id: <appareil de l'enfant>
+show_photo: true
+show_establishment: false
+```
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 

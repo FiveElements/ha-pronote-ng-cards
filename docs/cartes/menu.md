@@ -2,6 +2,10 @@
 
 Le menu du jour ou du lendemain, service par service.
 
+![Aperçu de la carte Cantine](../assets/cartes/menu.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Configuration
 
 ```yaml
@@ -15,6 +19,22 @@ day: today
 | Option | Défaut | Effet |
 | --- | --- | --- |
 | `day` | `today` | `today` ou `tomorrow`. Change l'entité lue. |
+
+### Exemple complet
+
+L'unique option de cette carte :
+
+```yaml
+type: custom:pronote-ng-menu
+device_id: <appareil de l'enfant>
+day: tomorrow
+```
+
+Pour afficher les deux jours, posez **deux** cartes : il n'y a pas d'option
+qui les combine, chaque carte lit une entité et une seule.
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 

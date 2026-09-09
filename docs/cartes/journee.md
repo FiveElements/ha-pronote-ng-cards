@@ -10,6 +10,10 @@ C'est un portage d'apparence de l'ancienne carte `lovelace-pronote`, sur la
 [Emploi du temps](emploi-du-temps.md) : deux cartes qui répondent à la même
 question de deux façons sont deux cartes qu'on maintient mal.
 
+![Aperçu de la carte Vue journée](../assets/cartes/journee.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Configuration
 
 ```yaml
@@ -144,6 +148,38 @@ c'est pourquoi il est modifiable.
 
 Pour le menu du jour, voyez la carte [Cantine](menu.md), qui lit les
 entités faites pour ça.
+
+### Exemple complet
+
+Toutes les options renseignées, `subject_colors` compris — c'est la seule
+option de la bibliothèque qui ne s'écrit qu'en YAML :
+
+```yaml
+type: custom:pronote-ng-journee
+device_id: <appareil de l'enfant>
+show_header: true
+show_current: true
+show_rooms: true
+show_teachers: true
+show_meal: true
+meal_label: Cantine
+meal_from: "11:00"
+meal_to: "14:30"
+subject_colors:
+  mathematiques: "#2e90fa"
+  francais: "#12b76a"
+  anglais: "#7a5af8"
+```
+
+**Les deux heures se citent entre guillemets.** Dans un tableau de bord en
+mode YAML, `11:00` sans guillemets est lu comme un nombre — 660 — et la carte
+n'accepte qu'une chaîne `HH:MM` : elle écarte alors la valeur et **retombe
+silencieusement sur la fenêtre par défaut**, 11:00 → 14:30. Aucun message ne
+le signale. Les guillemets sont inutiles depuis l'éditeur de Home Assistant,
+et sans inconvénient dans les deux cas.
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 

@@ -3,6 +3,10 @@
 Les devoirs à faire, groupés par échéance ou par matière, avec la case à
 cocher quand l'intégration l'autorise.
 
+![Aperçu de la carte Devoirs](../assets/cartes/devoirs.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Configuration
 
 ```yaml
@@ -19,6 +23,21 @@ group_by: date
 | `filter` | `todo` | `todo` (à faire), `tomorrow` (pour demain) ou `all` (tous). Change l'entité lue. |
 | `group_by` | `date` | `date` ou `subject`. Le tri suit le regroupement. |
 | `limit` | *tout* | Nombre maximum de devoirs. Absent ou négatif : tout. `0` : rien. |
+
+### Exemple complet
+
+Toutes les options renseignées, copiable tel quel :
+
+```yaml
+type: custom:pronote-ng-devoirs
+device_id: <appareil de l'enfant>
+filter: todo
+group_by: date
+limit: 12
+```
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 

@@ -3,6 +3,10 @@
 Les cours du jour, du lendemain ou de la semaine, le créneau en cours
 surligné.
 
+![Aperçu de la carte Emploi du temps](../assets/cartes/emploi-du-temps.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Configuration
 
 ```yaml
@@ -24,6 +28,21 @@ En mode `week`, un intertitre marque chaque jour. La hauteur annoncée à
 Home Assistant suit le mode : une poignée de lignes en mode journée, trois
 fois plus en mode semaine — sans quoi la répartition en colonnes se ferait
 de travers.
+
+### Exemple complet
+
+Toutes les options renseignées, copiable tel quel :
+
+```yaml
+type: custom:pronote-ng-emploi-du-temps
+device_id: <appareil de l'enfant>
+range: week
+show_rooms: true
+show_teachers: true
+```
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 

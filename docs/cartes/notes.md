@@ -2,6 +2,10 @@
 
 Moyenne générale, dernières notes, moyennes par matière et bulletin.
 
+![Aperçu de la carte Notes](../assets/cartes/notes.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Configuration
 
 ```yaml
@@ -23,6 +27,28 @@ sections:
 `report_card` n'est **pas** dans les valeurs par défaut : le bulletin
 n'existe qu'en fin de période, et une section vide la plupart de l'année
 n'aide personne.
+
+### Exemple complet
+
+Toutes les options renseignées, les quatre sections comprises :
+
+```yaml
+type: custom:pronote-ng-notes
+device_id: <appareil de l'enfant>
+sections:
+  - average
+  - latest
+  - subjects
+  - report_card
+limit: 10
+```
+
+L'ordre des sections dans le YAML ne change pas l'ordre d'affichage : la
+carte les rend toujours dans le même ordre, `sections` ne fait que choisir
+lesquelles paraissent.
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 

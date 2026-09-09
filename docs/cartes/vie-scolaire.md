@@ -3,6 +3,10 @@
 Absences, retards et punitions, avec leurs compteurs et la prochaine
 échéance.
 
+![Aperçu de la carte Vie scolaire](../assets/cartes/vie-scolaire.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Configuration
 
 ```yaml
@@ -20,6 +24,27 @@ sections:
 | --- | --- | --- |
 | `sections` | les trois | `absences`, `delays`, `punishments`. Restreint le détail affiché, jamais les compteurs. |
 | `limit` | `8` | Nombre d'éléments par section, les plus récents en tête. |
+
+### Exemple complet
+
+Toutes les options renseignées, les trois sections comprises :
+
+```yaml
+type: custom:pronote-ng-vie-scolaire
+device_id: <appareil de l'enfant>
+sections:
+  - absences
+  - delays
+  - punishments
+limit: 8
+```
+
+`sections` filtre **aussi les compteurs de tête**, pas seulement le détail :
+retirer `delays` retire à la fois la ligne « Retards » et la liste des
+retards.
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 

@@ -2,6 +2,10 @@
 
 Le prochain cours à venir : matière, plage horaire, salle et professeur.
 
+![Aperçu de la carte Prochain cours](../assets/cartes/prochain-cours.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Configuration
 
 ```yaml
@@ -19,6 +23,21 @@ device_id: <appareil de l'enfant>
 
 Les trois entités correspondantes ne sont **résolues que si leur option est
 active** : une option éteinte ne coûte aucun balayage de registre.
+
+### Exemple complet
+
+Toutes les options renseignées, copiable tel quel :
+
+```yaml
+type: custom:pronote-ng-prochain-cours
+device_id: <appareil de l'enfant>
+show_wake_up: true
+show_end_of_day: true
+show_next_test: true
+```
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 

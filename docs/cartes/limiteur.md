@@ -3,6 +3,10 @@
 Le budget d'appels, l'état du limiteur, la prochaine collecte et un bouton
 pour relever une priorité.
 
+![Aperçu de la carte Limiteur](../assets/cartes/limiteur.svg)
+
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
 ## Pourquoi cette carte existe
 
 Le serveur PRONOTE sanctionne l'**adresse IP**, pas le compte. Tout le
@@ -31,6 +35,24 @@ plus déroutant de l'intégration.
 | --- | --- | --- |
 | `show_refresh` | `false` | Affiche le bouton de rafraîchissement. |
 | `refresh_tier` | *aucun* | Palier à prioriser (`marks`, `timetable`, `homework`…). Vide : la priorité s'applique à l'ensemble. |
+
+### Exemple complet
+
+Toutes les options renseignées, copiable tel quel :
+
+```yaml
+type: custom:pronote-ng-limiteur
+device_id: <appareil de l'enfant>
+show_refresh: true
+refresh_tier: timetable
+```
+
+`device_id` reste **l'appareil de l'enfant**, comme sur les neuf autres
+cartes : la carte remonte toute seule jusqu'à l'appareil du compte, où
+vivent les entités de diagnostic.
+
+`title` et `entities` fonctionnent en plus sur toutes les cartes : voir
+[Deux options communes](../installation.md#deux-options-communes-a-toutes-les-cartes).
 
 ## Entités consommées
 
