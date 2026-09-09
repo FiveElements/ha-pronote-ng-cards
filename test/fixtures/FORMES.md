@@ -138,6 +138,13 @@ créneaux et les devoirs, `couleur` — en minuscules — sur les moyennes par
 matière) et le capteur ne l'expose sur aucune entité. Une demande de
 publication est déposée côté intégration.
 
+La couleur est par ailleurs **exclue de la détection de changement**, et c'est
+voulu : `Lesson.change_signature` (`models.py:101-107`) écarte `memo`,
+`background_color` et le contenu du cours, parce qu'« une correction de coquille
+ne doit pas réveiller la maison ». Une couleur modifiée en cours d'année
+apparaîtra donc à la collecte suivante **sans émettre d'évènement**. N'attendez
+pas d'`event` sur ce champ.
+
 C'est donc le seul champ de ce fichier dont la forme vient d'une **demande** et
 non d'un relevé. Les fixtures l'écrivent en hexadécimal (`#1e88e5`) parce que
 c'est ce que le contrat demandé prévoit ; quand une installation le recevra
@@ -196,6 +203,41 @@ l'intégration — la bonne provenance, mais pas une observation :
 
 Quand vous vérifiez une de ces formes sur une instance où elle est renseignée,
 mettez la ligne à jour ici.
+
+## La cantine — trois pièges, tous mesurés dans la source
+
+Relevés dans `sensor.py` et `gateway.py` de l'intégration, avec les lignes,
+parce que ce sont trois cas où le nom de l'attribut ne dit pas ce qu'il fait.
+
+**1. Le capteur du jour ne sert pas forcément le déjeuner.** `_menu_for`
+(`sensor.py:816-820`) :
+
+> *« The lunch menu for one day, falling back to any meal that day. »*
+> `return lunch or (same_day[0] if same_day else None)`
+
+Un établissement qui publie un dîner et pas de déjeuner alimente donc
+`sensor:menu_today` avec le **dîner**. Une carte qui titre « le midi » sur ce
+capteur peut affirmer quelque chose de faux, et `is_lunch` est le seul champ
+publié qui le dirait.
+
+**2. `is_lunch` a trois valeurs, et le troisième est délibéré.** La source dit
+qu'il « reste `None` plutôt que de deviner un service ». Donc `true`, `false`,
+et le silence du producteur — trois phrases, pas deux. Et `false` permet de
+**nier** qu'un service soit le déjeuner sans permettre de **nommer** ce qu'il
+est : `is_dinner` existe dans l'objet de transfert et n'est pas publié, pas
+plus que `name` (l'intitulé du repas).
+
+**3. Un plat est une chaîne, et il ne l'était pas en amont.** `_food_names`
+(`gateway.py:1716-1720`) ne retient que `food.name` : le tableau `labels` de
+chaque plat — où vivent les libellés de régime et d'allergène — est jeté à la
+frontière entre la bibliothèque et la passerelle. Ce n'est donc pas une donnée
+que PRONOTE n'envoie pas ; c'est une donnée aplatie avant d'atteindre le
+moindre objet de transfert. Aucune carte ne peut la récupérer, et l'exposer
+demanderait de changer le type des six champs de repas.
+
+Ne concluez pas de l'absence d'un champ dans la forme publiée qu'il n'existe
+pas côté serveur. C'est l'erreur que ce dépôt a commise sur ce point précis :
+lire l'objet de transfert, puis affirmer quelque chose sur toute la chaîne.
 
 ## Et `sensor:teaching_staff`
 
