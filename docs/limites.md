@@ -27,12 +27,18 @@ appels de service — tenter d'en passer un autre ne compile pas :
 Les six services à réponse qui exposent ces trois données restent donc
 hors d'atteinte par le type : une carte ne peut ni les appeler
 directement, ni s'en approcher en passant un couple domaine/service
-arbitraire à la place des deux ci-dessus. À côté de cette garantie de
-type, un test de garde vérifie en plus qu'aucun couple domaine/service
-en dehors de cette liste n'apparaît dans le code source — une
-vérification de texte, complémentaire à celle du type, pas un
-substitut. Un second test échoue si le nom de l'un de ces services
-réapparaît dans le code ou la documentation.
+arbitraire à la place des deux ci-dessus.
+
+À côté de cette garantie de type, un test de garde relève **tous les
+sites d'appel de service présents dans le code** et exige que chacun
+tire son couple domaine/service de la liste ci-dessus ; il vérifie en
+outre que le point d'entrée non restreint de Home Assistant ne
+s'atteint que depuis l'unique pont du socle. C'est une vérification de
+texte, complémentaire à celle du type et non un substitut : elle porte
+sur les sites d'appel, pas sur toute mention possible d'un nom de
+service ailleurs dans un fichier. Un second test échoue si le nom de
+l'un des six services réapparaît dans le code ou la documentation
+publiée, pages de la racine comprises.
 
 **Cette page est la réponse aux demandes de carte « emploi du temps
 PDF » ou « fiche élève complète ». La réponse est non, et elle ne
