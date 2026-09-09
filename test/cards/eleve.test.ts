@@ -189,11 +189,14 @@ describe('carte eleve', () => {
   });
 
   it("n'affiche aucune photo en partant de la config par défaut telle que Home Assistant la consomme (getStubConfig)", async () => {
+    // La forme du constructeur est extraite dans un alias exprès : l'assertion
+    // tient ainsi sur une seule ligne courte, que le formateur n'a aucune
+    // raison de replier. Une suppression `next-line` ne couvre que la ligne
+    // suivante — un repli la décale et la rend muette, ce qui est déjà arrivé.
+    type CardConstructor = { getStubConfig(): Record<string, unknown> };
     const ctor = customElements.get('pronote-ng-eleve');
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- getStubConfig est un statique propre aux cartes Pronote NG, absent de l'interface DOM générique CustomElementConstructor.
-    const stubConfig = (
-      ctor as unknown as { getStubConfig(): Record<string, unknown> }
-    ).getStubConfig();
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- getStubConfig est un statique propre aux cartes Pronote NG, absent de l'interface DOM générique CustomElementConstructor ; la suppression est posée sous une forme que le formateur ne peut pas décaler.
+    const stubConfig = (ctor as unknown as CardConstructor).getStubConfig();
     const el = await mountCard(
       'pronote-ng-eleve',
       // Comme le ferait Home Assistant : la config du sélecteur, seulement
