@@ -220,6 +220,80 @@ Pronote NG
 
 ---
 
+ ## 🧱 Avec les composants natifs de Home Assistant
+
+ **Ces cartes ne sont pas obligatoires.** L'intégration publie des entités
+ordinaires — `calendar`, `todo`, `sensor`, `binary_sensor` — donc plusieurs
+cartes livrées avec Home Assistant fonctionnent directement, sans rien
+installer de plus. C'est souvent le chemin le plus court, et pour l'emploi du
+temps de la semaine c'est même le meilleur.
+
+ ### La carte Agenda, pour l'emploi du temps
+
+ Trois entités `calendar` sont publiées — emploi du temps, devoirs, punitions —
+et la carte **Agenda** les affiche telles quelles :
+
+```yaml
+type: calendar
+entities:
+  - calendar.enfant_un_emploi_du_temps
+initial_view: listWeek
+title: Agenda de la semaine
+grid_options:
+  columns: full
+  rows: 9
+```
+
+ `initial_view: listWeek` donne la semaine en liste, ce qui se lit mieux qu'une
+grille sur un téléphone ; `dayGridMonth` et `dayGridDay` sont les deux autres
+vues. `grid_options` appartient à la disposition en sections : `columns: full`
+occupe toute la largeur, ce dont un agenda a besoin.
+
+ Ajoutez `calendar.enfant_un_devoirs` et `calendar.enfant_un_punitions` à la
+même carte pour tout voir au même endroit — les couleurs distinguent les
+agendas.
+
+ Remplacez `enfant_un` par le prénom tel qu'il apparaît dans **vos**
+identifiants d'entité : ils sont dérivés du nom de l'appareil, donc propres à
+votre installation.
+
+ ### La carte Liste de tâches, pour les devoirs
+
+```yaml
+type: todo-list
+entity: todo.enfant_un_devoirs
+title: Devoirs à faire
+```
+
+ Les devoirs y sont **cochables**, et cocher renvoie l'information à PRONOTE —
+à condition d'avoir activé les écritures dans les options de l'intégration, qui
+sont coupées par défaut.
+
+ ### La carte Tuile, pour un fait unique
+
+```yaml
+type: tile
+entity: sensor.enfant_un_prochain_cours
+```
+
+ Chaque fait a son entité et son état porte une valeur — un horodatage, un
+nombre, un booléen — jamais un texte à découper. Une tuile, une jauge ou un
+graphique d'historique marchent donc sans modèle Jinja.
+
+ ### Ce que les cartes de ce dépôt ajoutent
+
+ Les cartes natives ignorent ce qu'elles affichent : elles ne savent pas qu'une
+heure de fin a été **déduite** plutôt que fournie, qu'une note est un **bonus**
+qui ne compte pas, ou qu'une absence est justifiée malgré son motif. C'est ce
+que les cartes de ce dépôt savent, et c'est la seule raison de les installer.
+
+ 👉 Le tour complet des deux chemins — quelle carte native pour quelle
+donnée, et les trois choses qu'aucune carte ne montrera — est dans
+[Afficher les données](https://fiveelements.github.io/ha-pronote-ng/AFFICHER-LES-DONNEES/)
+côté intégration.
+
+---
+
  ## 📖 Documentation
 
  La documentation complète est disponible ici :
