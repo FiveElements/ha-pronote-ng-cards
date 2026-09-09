@@ -164,3 +164,86 @@ describe('createResolveCache', () => {
     expect(r2.size).toBe(0);
   });
 });
+
+/**
+ * La correspondance est une EGALITE STRICTE, et c'est une contrainte.
+ *
+ * L'integration publie un second jeu de capteurs pour chaque periode close,
+ * sous des cles suffixees : `grades_period`, `report_card_period`,
+ * `evaluations_period`... Une carte de la periode courante demande `grades`,
+ * et ne doit jamais tomber sur `grades_period`.
+ *
+ * Ce n'etait pas garanti a priori. Une correspondance par prefixe -- ou un
+ * `startsWith`, ou un `includes` poses pour faire passer autre chose --
+ * suffirait a casser la propriete, et le SUFFIXE la casserait en silence : la
+ * carte notes afficherait les notes du premier trimestre, sans erreur, sans
+ * vide, sans le moindre signe. Des donnees plausibles et perimees, ce qui est
+ * le pire mode de defaillance de ce depot.
+ *
+ * Les formes divergent en plus d'un onglet a l'autre : sur une periode close,
+ * la moyenne generale perd son bareme, le bulletin perd trois cles et les
+ * evaluations perdent `date` ET `acquisitions` -- donc tout leur contenu. Une
+ * carte liee par accident a une periode close ne se contenterait pas d'etre
+ * perimee, elle serait aussi partiellement vide.
+ *
+ * Aucune periode n'etait close sur l'instance de reference au moment d'ecrire
+ * ceci -- l'annee venait de commencer -- donc ces entites n'existaient pas
+ * encore. Ce test est la pour le jour ou elles apparaitront, quand plus
+ * personne ne se souviendra que la question s'est posee.
+ */
+describe('garde : une carte ne se lie jamais a une periode close', () => {
+  /**
+   * Les huit cles de periode close, relevees dans `_HISTORY_EXTRACTORS`
+   * (`sensor.py`), avec la cle de periode courante qu'elles ne doivent pas
+   * capturer. Les cinq premieres partagent la forme de la periode courante ;
+   * les trois dernieres ont une forme differente, ce qui rend la confusion
+   * plus grave encore.
+   */
+  const PAIRES: readonly (readonly [string, string])[] = [
+    ['grades', 'grades_period'],
+    ['averages', 'averages_period'],
+    ['absences', 'absences_period'],
+    ['delays', 'delays_period'],
+    ['punishments', 'punishments_period'],
+    ['overall_average', 'overall_average_period'],
+    ['report_card', 'report_card_period'],
+    ['evaluations', 'evaluations_period'],
+  ];
+
+  it.each(PAIRES)(
+    'sensor:%s ne capture pas %s, meme quand la periode close est inscrite en premier',
+    (courante, close) => {
+      // La periode close EN PREMIER dans le registre : `resolveEntities` rend
+      // la premiere correspondance, donc une correspondance laxiste
+      // attraperait celle-ci. Inscrire la courante d'abord ferait passer le
+      // test sans rien prouver.
+      const hass = makeHass([
+        enfant(`sensor:${close}`, `sensor.abc_${close}_t1`),
+        enfant(`sensor:${courante}`, `sensor.abc_${courante}`),
+      ]);
+
+      const out = resolveEntities(hass, 'dev_enfant', 'child', [`sensor:${courante}`]);
+
+      // Assertion positive : la cle se resout bel et bien. Sans elle, le test
+      // passerait aussi si la resolution etait entierement cassee.
+      expect(out.get(`sensor:${courante}`)).toBe(`sensor.abc_${courante}`);
+      expect(out.get(`sensor:${courante}`)).not.toBe(`sensor.abc_${close}_t1`);
+    }
+  );
+
+  it('ne resout pas une cle de periode courante quand SEULE la periode close existe', () => {
+    // Le cas qui distingue une egalite d'une correspondance laxiste : sans
+    // entite de periode courante, une carte doit tomber en « entite absente »
+    // et le dire, jamais se rabattre sur un trimestre ferme.
+    const hass = makeHass([enfant('sensor:grades_period', 'sensor.abc_notes_t1')]);
+
+    const out = resolveEntities(hass, 'dev_enfant', 'child', ['sensor:grades']);
+
+    expect(out.has('sensor:grades')).toBe(false);
+    // Et la preuve que l'entite etait bien la, donc que l'absence vient de la
+    // comparaison et non d'un registre vide.
+    expect(
+      resolveEntities(hass, 'dev_enfant', 'child', ['sensor:grades_period']).get('sensor:grades_period')
+    ).toBe('sensor.abc_notes_t1');
+  });
+});
