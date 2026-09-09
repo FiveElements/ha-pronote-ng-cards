@@ -139,8 +139,9 @@ deux éléments, jamais zéro quand l'état est exploitable.
 ### Les listes imbriquées
 
 ```
-lessons[]   id, subject, teachers, classroom, start, end, canceled, status,
-            test, outing, detention, exempted, memo, end_inferred
+lessons[]   id, subject, subject_id, background_color, teachers, classroom,
+            start, end, canceled, status, test, outing, detention, exempted,
+            memo, end_inferred
 
 items[] de sensor:homework*
             id, subject, description, description_text, due, done, attachments
@@ -249,6 +250,29 @@ comme du texte opaque : les libellés observés sont ceux qu'un établissement a
 et `reasons` un tableau de chaînes. Ni l'un ni l'autre ne se reformule : un
 motif d'absence peut contredire le drapeau `justified` sans que ce soit une
 erreur à corriger.
+
+### `classroom` — du texte libre, mesuré
+
+37 créneaux relevés sur une instance le 9 septembre 2026 : **32 portent une
+salle, 5 non** — le champ manque, il n'est pas vide. Les 32 valeurs ont toutes
+la même forme : trois ou quatre caractères, commençant par un chiffre, en
+capitales, une seule salle par créneau, et **aucune ne contient le mot
+« salle »**.
+
+Ce relevé sert une décision de carte. La vue journée écrit « Salle 2.14 »
+plutôt que « 2.14 », parce qu'un nombre seul, posé à côté d'horaires et d'un
+nom de professeur, se lit aussi bien comme une note. Le mot n'est **pas**
+ajouté quand la valeur le porte déjà, et c'est là que le relevé compte : sur
+cette instance, ce cas ne se produit jamais. La garde existe pour un
+établissement qui écrirait « SALLE 204 » ou « Salle polyvalente » — le champ
+est du texte libre côté serveur, donc il faut s'y attendre sans pouvoir le
+mesurer ici.
+
+**Ce que ce relevé ne dit pas** : rien sur les créneaux à plusieurs salles.
+Aucune valeur observée ne contenait de séparateur, mais 32 valeurs d'un seul
+établissement ne suffisent pas à conclure qu'un dédoublement de salle est
+impossible. Si le cas apparaît, il arrivera probablement comme une chaîne à
+séparer, pas comme un tableau — c'est ainsi que `teachers` a évolué.
 
 ## Compte — les clés de la carte limiteur
 

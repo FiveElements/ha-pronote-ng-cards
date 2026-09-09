@@ -511,7 +511,7 @@ describe('carte vue journée — le cours en cours', () => {
 
 describe('carte vue journée — le reste', () => {
   it('affiche la salle et sait la taire', async () => {
-    expect(lignes(await monter({}))[0]?.detail).toBe('2.14');
+    expect(lignes(await monter({}))[0]?.detail).toBe('Salle 2.14');
     expect(lignes(await monter({ show_rooms: false }))[0]?.detail).toBe('');
   });
 
@@ -547,21 +547,21 @@ describe('carte vue journée — la salle et le professeur', () => {
   it('affiche la salle puis le professeur, séparés d’un point médian', async () => {
     const el = await monter({}, [{ ...JOURNEE[0], teachers: ['MARTIN P.'] }]);
     // La salle d'abord : c'est ce qu'on cherche en marchant dans le couloir.
-    expect(lignes(el)[0]?.detail).toBe('2.14 · MARTIN P.');
+    expect(lignes(el)[0]?.detail).toBe('Salle 2.14 · MARTIN P.');
   });
 
   it('accepte `teachers` en chaîne autant qu’en tableau', async () => {
     // Les deux formes ont ete publiees selon les versions de l'integration.
     const tableau = await monter({}, [{ ...JOURNEE[0], teachers: ['A', 'B'] }]);
-    expect(lignes(tableau)[0]?.detail).toBe('2.14 · A, B');
+    expect(lignes(tableau)[0]?.detail).toBe('Salle 2.14 · A, B');
     const chaine = await monter({}, [{ ...JOURNEE[0], teachers: 'A. UNIQUE' }]);
-    expect(lignes(chaine)[0]?.detail).toBe('2.14 · A. UNIQUE');
+    expect(lignes(chaine)[0]?.detail).toBe('Salle 2.14 · A. UNIQUE');
   });
 
   it('n’écrit pas de séparateur quand un seul des deux existe', async () => {
     // Le point median doit relier deux choses, pas pendre au bout d'une.
     const sansProf = await monter({}, [JOURNEE[0]]);
-    expect(sansProf && lignes(sansProf)[0]?.detail).toBe('2.14');
+    expect(sansProf && lignes(sansProf)[0]?.detail).toBe('Salle 2.14');
     const sansSalle = await monter({}, [
       { subject: 'Maths', start: JOURNEE[0]?.start, end: JOURNEE[0]?.end, teachers: ['SEUL P.'] },
     ]);
@@ -570,7 +570,53 @@ describe('carte vue journée — la salle et le professeur', () => {
 
   it('sait taire le professeur sans taire la salle', async () => {
     const el = await monter({ show_teachers: false }, [{ ...JOURNEE[0], teachers: ['MARTIN P.'] }]);
-    expect(lignes(el)[0]?.detail).toBe('2.14');
+    expect(lignes(el)[0]?.detail).toBe('Salle 2.14');
+  });
+
+  it('précède la salle de son mot, parce qu’un nombre seul ne dit pas ce qu’il est', async () => {
+    // « 2.14 » voisine avec des horaires et un nom de professeur : il se lit
+    // aussi bien comme une note. Ces tests ont attendu la valeur nue pendant
+    // plusieurs versions et ont été renversés, pas supprimés — c'est une
+    // décision du propriétaire, pas la correction d'un défaut.
+    const el = await monter({}, [JOURNEE[0]]);
+    expect(lignes(el)[0]?.detail).toBe('Salle 2.14');
+  });
+
+  it('n’ajoute pas le mot une seconde fois quand l’établissement l’écrit', async () => {
+    // Le champ est du texte libre côté serveur. « Salle SALLE 204 » serait
+    // plausible et faux. La troisième forme est accentuée : elle mesure la
+    // décomposition `NFD`, qui place les lettres de base avant leur accent et
+    // rend donc « Sallé 3 » reconnaissable. Ce commentaire a d'abord annoncé
+    // qu'elle mesurait le retrait des marques combinantes — une mutation a
+    // montré que non, et la ligne inutile a été retirée du code plutôt que le
+    // commentaire laissé faux.
+    const salles = ['SALLE 204', 'salle polyvalente', 'Sallé 3'];
+    const rendus = await Promise.all(
+      salles.map((salle) => monter({}, [{ ...JOURNEE[0], classroom: salle }]))
+    );
+    expect(rendus.map((el) => lignes(el)[0]?.detail)).toEqual(salles);
+    // Appariement positif : une salle qui ne porte pas le mot le reçoit bien.
+    const autre = await monter({}, [{ ...JOURNEE[0], classroom: 'B12' }]);
+    expect(lignes(autre)[0]?.detail).toBe('Salle B12');
+  });
+
+  it('ne rend pas un mot tout seul quand la salle est vide', async () => {
+    // Une salle vide ou faite d'espaces ne doit pas produire « Salle » sec.
+    const vide = await monter({}, [{ ...JOURNEE[0], classroom: '   ' }]);
+    expect(vide && lignes(vide)[0]?.detail).toBe('');
+    // Appariement positif : la matiere reste rendue.
+    expect(lignes(vide)[0]?.matiere).toBe('Maths');
+  });
+
+  it('traduit le mot au lieu de l’écrire en français partout', async () => {
+    // Le mot vient du catalogue. Un `Salle` code en dur passerait les tests
+    // francais et resterait francais pour tout le monde.
+    const el = await mountCard(
+      'pronote-ng-journee',
+      { device_id: 'dev_enfant' },
+      jour([JOURNEE[0]], 'it')
+    );
+    expect(lignes(el)[0]?.detail).toBe('Aula 2.14');
   });
 
   it('ne rend aucune ligne de détail quand les deux sont tus', async () => {

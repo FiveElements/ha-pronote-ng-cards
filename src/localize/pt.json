@@ -183,6 +183,7 @@
     "auto_advance_helper": "Sem efeito se a semana não estiver recolhida: o próximo dia de aulas lê-se aí. Um dia sem aulas é atravessado, portanto em repouso o cartão já não mostrará « nenhuma aula nesse dia » — as setas continuam a levar lá.",
     "auto_advance_after": "Atraso após a última aula, em minutos",
     "auto_advance_after_helper": "Trinta minutos por omissão. Zero avança ao toque.",
-    "rest_day": "Próximo dia de aulas"
+    "rest_day": "Próximo dia de aulas",
+    "room": "Sala {room}"
   }
 }

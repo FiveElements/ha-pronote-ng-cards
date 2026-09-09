@@ -35,7 +35,7 @@ show_nav: true
 | `meal_label` | « Repas » | Le mot affiché sur cette zone. |
 | `meal_from` | `11:00` | Début de la plage du midi, en `HH:MM`. |
 | `meal_to` | `14:30` | Fin de la plage du midi, en `HH:MM`. |
-| `show_rooms` | `true` | Affiche la salle sous la matière. |
+| `show_rooms` | `true` | Affiche la salle sous la matière, sous la forme « Salle 2.14 ». |
 | `show_teachers` | `true` | Affiche le ou les professeurs. |
 | `show_current` | `true` | Met en avant le cours en cours. |
 | `show_header` | `true` | Affiche la date et les bornes de la journée. |
@@ -169,7 +169,17 @@ bouton « Aujourd'hui » apparaît dès qu'on n'y est plus.
 ## La salle et le professeur
 
 Ils s'affichent sur une **deuxième ligne**, sous la matière, séparés d'un
-point médian : « 2.14 · MARTIN P. ».
+point médian : « Salle 2.14 · MARTIN P. ».
+
+**La salle est précédée de son mot**, et ce n'est pas décoratif : un nombre
+seul ne dit pas ce qu'il est. Sur une ligne où il voisine avec des horaires et
+un nom de professeur, « 2.14 » se lit aussi bien comme une note — et la carte
+notes, elle, écrit vraiment des nombres à cet endroit. Le mot est traduit
+(« Aula », « Sala »), il ne vient pas du code.
+
+Si votre établissement écrit déjà le mot dans le champ — « SALLE 204 »,
+« Salle polyvalente » — il n'est **pas ajouté une seconde fois**. La
+comparaison ignore la casse et les accents.
 
 Cette deuxième ligne n'est pas cosmétique. Un nom de professeur fait
 facilement trente caractères ; mis à la suite de la matière, il repoussait

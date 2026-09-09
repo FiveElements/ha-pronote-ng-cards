@@ -183,6 +183,7 @@
     "auto_advance_helper": "Sin efecto si la semana no está recogida: el próximo día de clase se lee allí. Un día sin clases se atraviesa, así que en reposo la tarjeta ya no mostrará « ninguna clase ese día » — las flechas siguen llevando allí.",
     "auto_advance_after": "Retardo tras la última clase, en minutos",
     "auto_advance_after_helper": "Treinta minutos por defecto. Cero avanza al timbre.",
-    "rest_day": "Próximo día de clase"
+    "rest_day": "Próximo día de clase",
+    "room": "Aula {room}"
   }
 }

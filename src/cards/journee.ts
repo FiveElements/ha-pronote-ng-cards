@@ -1,5 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
+import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } from '../core/types';
 import { formatDayLabel, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
@@ -340,6 +340,51 @@ const stepTo = (from: string, delta: 1 | -1, days: string[]): string | undefined
 };
 
 /**
+ * La salle, précédée de son mot : « Salle 2.14 » plutôt que « 2.14 ».
+ *
+ * Le nombre seul ne dit pas ce qu'il est. Sur une ligne où il voisine avec des
+ * horaires et un nom de professeur, « 2.14 » se lit aussi bien comme une note
+ * que comme une salle — et la carte notes, elle, écrit vraiment des nombres à
+ * cet endroit-là. Le mot coûte cinq caractères et retire l'ambiguïté.
+ *
+ * Le mot vient du catalogue, jamais du code : « Aula » en italien et en
+ * espagnol, « Sala » en portugais.
+ *
+ * **Le mot n'est pas ajouté deux fois.** Mesuré sur une instance, aucune des
+ * 32 salles renseignées ne porte le mot — elles font trois ou quatre
+ * caractères, chiffres et capitales. Mais le champ est du texte libre côté
+ * serveur : un établissement qui écrit « SALLE 204 » ou « Salle polyvalente »
+ * obtiendrait « Salle SALLE 204 », qui est plausible et faux.
+ *
+ * Le préfixe est déduit du catalogue en rendant le gabarit avec une salle
+ * vide. Sa limite est assumée : une traduction qui placerait le mot APRÈS la
+ * valeur (« 204 (aula) ») rendrait la détection inopérante, sans autre
+ * conséquence que de ne plus dédoublonner.
+ *
+ * La comparaison passe par `fold`, en portee de module : elle ne capture rien
+ * de son appelant, et la garder a l'interieur la recreait a chaque creneau
+ * rendu.
+ *
+ * `NFD` et rien de plus, et c'est une correction : la comparaison des matières
+ * retire en plus les marques combinantes (`\p{M}`), et cette fonction l'avait
+ * recopié. Une mutation a montré que la ligne ne servait à rien ici — la
+ * décomposition place les lettres de base AVANT leur accent, donc « Sallé 3 »
+ * décomposé commence déjà par « salle ». Retirer les marques ne changerait le
+ * verdict que pour un accent situé À L'INTÉRIEUR du mot, et aucun des quatre
+ * catalogues n'en a un : Salle, Aula, Sala, Aula. Le test qui prétendait
+ * couvrir ce repli mesurait donc `NFD`, pas le repli.
+ */
+const fold = (value: string): string => value.normalize('NFD').trim().toLowerCase();
+
+const roomLabel = (value: string, t: Translate): string => {
+  const room = value.trim();
+  if (room === '') return '';
+  const word = fold(t('journee.room', { room: '' }));
+  if (word !== '' && fold(room).startsWith(word)) return room;
+  return t('journee.room', { room });
+};
+
+/**
  * Le délai d'avance en millisecondes, à partir de ce que porte la
  * configuration.
  *
@@ -575,6 +620,11 @@ export const SPEC: CardSpec<Config> = {
     const c = ctx.config;
     const lang = ctx.language;
     const tz = ctx.timeZone;
+    // `ctx.t` enveloppee plutot que passee telle quelle : une methode detachee
+    // de son objet est un vrai piege en JavaScript, et la regle de lint ne peut
+    // pas savoir que `RenderCtx` est un objet simple sans `this`. La fleche
+    // coute une ligne et ferme la question.
+    const traduire: Translate = (path, vars) => ctx.t(path, vars);
     const clock = parseTimestamp(testClock.now) ?? new Date();
     const now = clock.getTime();
 
@@ -824,7 +874,7 @@ export const SPEC: CardSpec<Config> = {
       // l'intégration a publiées selon ses versions — un tableau ou une
       // chaîne unique.
       const details = [
-        c.show_rooms === false ? '' : (l.classroom ?? ''),
+        c.show_rooms === false ? '' : roomLabel(l.classroom ?? '', traduire),
         c.show_teachers === false ? '' : teachersOf(l.teachers),
       ]
         .filter((part) => part !== '')

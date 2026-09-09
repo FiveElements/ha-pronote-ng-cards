@@ -183,6 +183,7 @@
     "auto_advance_helper": "Sans effet si la semaine n'est pas collectée : le prochain jour de cours se lit dedans. Un jour sans cours est traversé, donc au repos la carte n'affichera plus « aucun cours ce jour-là » — les flèches y mènent toujours.",
     "auto_advance_after": "Délai après le dernier cours, en minutes",
     "auto_advance_after_helper": "Trente minutes par défaut. Zéro avance à la sonnerie.",
-    "rest_day": "Prochain jour de cours"
+    "rest_day": "Prochain jour de cours",
+    "room": "Salle {room}"
   }
 }
