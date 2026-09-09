@@ -85,9 +85,33 @@ const lignes = (el: HTMLElement) =>
           : null,
       neutre: filet?.classList.contains('jour-filet-neutre') ?? false,
       pastilles: [...l.querySelectorAll('.chip')].map((c) => c.textContent?.trim() ?? ''),
-      salle: l.querySelector('.jour-salle')?.textContent?.trim() ?? '',
+      detail: l.querySelector('.jour-detail')?.textContent?.trim() ?? '',
     };
   });
+
+/** L'en-tete : la date et les bornes de la journee. */
+const entete = (el: HTMLElement) => {
+  const e = el.shadowRoot?.querySelector('.jour-entete');
+  return e
+    ? {
+        date: e.querySelector('.jour-date')?.textContent?.trim() ?? '',
+        bornes: e.querySelector('.jour-bornes')?.textContent?.trim() ?? '',
+        infobulle: e.querySelector('.jour-bornes')?.getAttribute('title') ?? '',
+      }
+    : undefined;
+};
+
+/** Un `hass` avec les bornes de journee publiees, comme l'integration le fait. */
+const jourAvecBornes = (lessons: unknown[], first?: string, last?: string) =>
+  makeHass([
+    {
+      key: 'sensor:lessons_today',
+      entity_id: 'sensor.abc_cours_du_jour',
+      device: 'dev_enfant',
+      state: String(lessons.length),
+      attributes: { lessons, first_start: first, last_end: last },
+    },
+  ]);
 
 describe('carte vue journée — les cinq éléments requis', () => {
   it('affiche l’heure de début ET de fin, en colonne à deux lignes', async () => {
@@ -325,8 +349,8 @@ describe('carte vue journée — le cours en cours', () => {
 
 describe('carte vue journée — le reste', () => {
   it('affiche la salle et sait la taire', async () => {
-    expect(lignes(await monter({}))[0]?.salle).toBe('2.14');
-    expect(lignes(await monter({ show_rooms: false }))[0]?.salle).toBe('');
+    expect(lignes(await monter({}))[0]?.detail).toBe('2.14');
+    expect(lignes(await monter({ show_rooms: false }))[0]?.detail).toBe('');
   });
 
   it('dit « aucun cours » sur une journée vide, et non « indisponible »', async () => {
@@ -354,5 +378,126 @@ describe('carte vue journée — le reste', () => {
   it('trie les créneaux même reçus dans le désordre', async () => {
     const el = await monter({}, [JOURNEE[2], JOURNEE[0], JOURNEE[1]]);
     expect(lignes(el).map((x) => x.matiere)).toEqual(['Maths', 'Histoire', 'Repas', 'Anglais']);
+  });
+});
+
+describe('carte vue journée — la salle et le professeur', () => {
+  it('affiche la salle puis le professeur, séparés d’un point médian', async () => {
+    const el = await monter({}, [
+      { ...JOURNEE[0], teachers: ['MARTIN P.'] },
+    ]);
+    // La salle d'abord : c'est ce qu'on cherche en marchant dans le couloir.
+    expect(lignes(el)[0]?.detail).toBe('2.14 · MARTIN P.');
+  });
+
+  it('accepte `teachers` en chaîne autant qu’en tableau', async () => {
+    // Les deux formes ont ete publiees selon les versions de l'integration.
+    const tableau = await monter({}, [{ ...JOURNEE[0], teachers: ['A', 'B'] }]);
+    expect(lignes(tableau)[0]?.detail).toBe('2.14 · A, B');
+    const chaine = await monter({}, [{ ...JOURNEE[0], teachers: 'A. UNIQUE' }]);
+    expect(lignes(chaine)[0]?.detail).toBe('2.14 · A. UNIQUE');
+  });
+
+  it('n’écrit pas de séparateur quand un seul des deux existe', async () => {
+    // Le point median doit relier deux choses, pas pendre au bout d'une.
+    const sansProf = await monter({}, [JOURNEE[0]]);
+    expect(sansProf && lignes(sansProf)[0]?.detail).toBe('2.14');
+    const sansSalle = await monter({}, [
+      { subject: 'Maths', start: JOURNEE[0]?.start, end: JOURNEE[0]?.end, teachers: ['SEUL P.'] },
+    ]);
+    expect(lignes(sansSalle)[0]?.detail).toBe('SEUL P.');
+  });
+
+  it('sait taire le professeur sans taire la salle', async () => {
+    const el = await monter({ show_teachers: false }, [
+      { ...JOURNEE[0], teachers: ['MARTIN P.'] },
+    ]);
+    expect(lignes(el)[0]?.detail).toBe('2.14');
+  });
+
+  it('ne rend aucune ligne de détail quand les deux sont tus', async () => {
+    const el = await monter({ show_rooms: false, show_teachers: false }, [
+      { ...JOURNEE[0], teachers: ['MARTIN P.'] },
+    ]);
+    expect(lignes(el)[0]?.detail).toBe('');
+    // Appariement positif : la matiere reste, seul le detail disparait.
+    expect(lignes(el)[0]?.matiere).toBe('Maths');
+  });
+});
+
+describe('carte vue journée — l’en-tête de journée', () => {
+  it('affiche la date et les bornes publiées par l’intégration', async () => {
+    const el = await mountCard(
+      'pronote-ng-journee',
+      { device_id: 'dev_enfant' },
+      jourAvecBornes(JOURNEE, '2026-09-09T08:00:00+02:00', '2026-09-09T14:30:00+02:00')
+    );
+    const e = entete(el);
+    expect(e?.date).toBe('mercredi 9 septembre');
+    expect(e?.bornes).toBe('08:00 – 14:30');
+  });
+
+  it('marque d’un « ≈ » une fin de journée qui vient d’un calcul', async () => {
+    // `last_end` est le `max` des fins de cours, et une fin de cours peut
+    // etre deduite — sans que l'attribut le dise. La carte va chercher le
+    // drapeau sur le creneau qui porte cette fin.
+    const el = await mountCard(
+      'pronote-ng-journee',
+      { device_id: 'dev_enfant' },
+      jourAvecBornes(
+        [{ ...JOURNEE[0], end: '2026-09-09T09:00:00+02:00', end_inferred: true }],
+        '2026-09-09T08:00:00+02:00',
+        '2026-09-09T09:00:00+02:00'
+      )
+    );
+    const e = entete(el);
+    expect(e?.bornes).toBe('08:00 – ≈09:00');
+    expect(e?.infobulle).not.toBe('');
+  });
+
+  it('ne marque pas la fin de journée quand le créneau qui la porte est ferme', async () => {
+    // Un creneau deduit AILLEURS dans la journee ne doit pas contaminer la
+    // borne : seul celui qui porte `last_end` compte.
+    const el = await mountCard(
+      'pronote-ng-journee',
+      { device_id: 'dev_enfant' },
+      jourAvecBornes(
+        [
+          { ...JOURNEE[0], end_inferred: true },
+          { ...JOURNEE[1], end: '2026-09-09T10:00:00+02:00', end_inferred: false },
+        ],
+        '2026-09-09T08:00:00+02:00',
+        '2026-09-09T10:00:00+02:00'
+      )
+    );
+    expect(entete(el)?.bornes).toBe('08:00 – 10:00');
+    expect(entete(el)?.infobulle).toBe('');
+  });
+
+  it('garde la date sur une journée vide', async () => {
+    // C'est le moment ou l'en-tete sert le plus : « aucun cours » seul laisse
+    // le doute sur le jour dont on parle.
+    testClock.now = '2026-09-09T08:00:00+02:00';
+    const el = await monter({}, []);
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    expect(text(el)).toContain("Aucun cours aujourd'hui");
+  });
+
+  it('ne rend pas de bornes quand l’intégration n’en publie pas', async () => {
+    // Une integration plus ancienne peut ne pas porter ces attributs : la
+    // date reste, les bornes disparaissent, et rien n'est invente.
+    const el = await monter({});
+    expect(entete(el)?.bornes).toBe('');
+    expect(entete(el)?.date).not.toBe('');
+  });
+
+  it('se désactive entièrement sur demande', async () => {
+    const el = await mountCard(
+      'pronote-ng-journee',
+      { device_id: 'dev_enfant', show_header: false },
+      jourAvecBornes(JOURNEE, '2026-09-09T08:00:00+02:00', '2026-09-09T14:30:00+02:00')
+    );
+    expect(entete(el)).toBeUndefined();
+    expect(lignes(el).length).toBeGreaterThan(0);
   });
 });

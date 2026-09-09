@@ -1,9 +1,9 @@
 import { html, type TemplateResult } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
-import { formatTime, parseTimestamp } from '../core/format';
+import { formatDayLabel, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
-import { isCanceled, statusLabel, type Lesson } from '../core/lesson';
+import { isCanceled, statusLabel, teachersOf, type Lesson } from '../core/lesson';
 import { subjectColor } from '../core/subject-color';
 
 /**
@@ -18,9 +18,12 @@ import { subjectColor } from '../core/subject-color';
  *
  * Cinq éléments constituent le seuil d'acceptation, nommés par l'utilisateur :
  * l'heure de début **et** de fin, le filet de couleur, l'intitulé de matière,
- * le barré avec sa pastille sur un cours annulé, et la zone repas. Le reste
- * (la salle, la mise en avant du cours en cours) est du confort et se
- * configure.
+ * le barré avec sa pastille sur un cours annulé, et la zone repas.
+ *
+ * S'y ajoutent, demandés ensuite : la **salle** et le **professeur** sur
+ * chaque créneau, et un **en-tête** portant la date et les bornes de la
+ * journée de classe. Tous se désactivent, aucun n'est requis pour que la
+ * carte ait un sens.
  */
 
 interface Config extends PronoteCardConfig {
@@ -47,7 +50,10 @@ interface Config extends PronoteCardConfig {
   /** Fin de la fenêtre méridienne, `HH:MM`. Par défaut 14:30. */
   meal_to?: string;
   show_rooms?: boolean;
+  show_teachers?: boolean;
   show_current?: boolean;
+  /** L'en-tête : la date, et les bornes de la journée de classe. */
+  show_header?: boolean;
 }
 
 /**
@@ -126,6 +132,31 @@ const accentFor = (l: Lesson, table: Record<string, string> | undefined): string
   return undefined;
 };
 
+/**
+ * La fin de journée publiée est-elle une heure **déduite** ?
+ *
+ * L'intégration calcule `last_end` comme le `max` des fins de cours — relevé
+ * dans son module de capteurs — et une fin de cours peut être déduite faute que le serveur
+ * l'envoie. **L'attribut n'emporte aucun drapeau** : rien, dans `last_end`
+ * seul, ne dit qu'il vient d'un calcul.
+ *
+ * On lit donc le fait publié comme borne — c'est lui la source — et on va
+ * chercher dans la liste la réponse à une question qu'il ne porte pas. C'est
+ * la limite de la règle « un fait publié se lit, ne se recalcule pas » : elle
+ * suppose que le fait publié réponde à la question posée.
+ *
+ * La comparaison porte sur l'**instant**, pas sur la chaîne : deux
+ * horodatages au même instant peuvent s'écrire différemment (`Z` contre
+ * `+02:00`).
+ */
+const dayEndIsInferred = (lessons: Lesson[], lastEnd: string | undefined): boolean => {
+  const target = parseTimestamp(lastEnd)?.getTime();
+  if (target === undefined) return false;
+  return lessons.some(
+    (l) => l.end_inferred === true && parseTimestamp(l.end)?.getTime() === target
+  );
+};
+
 interface Slot {
   kind: 'lesson' | 'meal';
   start?: string;
@@ -192,7 +223,7 @@ export const SPEC: CardSpec<Config> = {
   key: 'journee',
   scope: 'child',
   size: 10,
-  stub: { show_meal: true, show_rooms: true, show_current: true },
+  stub: { show_meal: true, show_rooms: true, show_teachers: true, show_current: true, show_header: true },
   requires: () => [LESSONS],
   optional: () => [IN_CLASS],
   // Aucun libellé posé ici : l'éditeur générique les résout sous la racine de
@@ -212,7 +243,9 @@ export const SPEC: CardSpec<Config> = {
     { name: 'meal_from', selector: { text: {} } },
     { name: 'meal_to', selector: { text: {} } },
     { name: 'show_rooms', selector: { boolean: {} } },
+    { name: 'show_teachers', selector: { boolean: {} } },
     { name: 'show_current', selector: { boolean: {} } },
+    { name: 'show_header', selector: { boolean: {} } },
   ],
   // La mise en avant du cours en cours se calcule sur `Date.now()` : sans
   // repeint périodique, elle désignerait un cours terminé pendant une heure
@@ -223,7 +256,57 @@ export const SPEC: CardSpec<Config> = {
     const c = ctx.config;
     const lessons = listAttr<Lesson>(ctx.attr(LESSONS, 'lessons'));
 
-    if (lessons.length === 0) return emptyState(ctx.t('journee.empty'));
+    /**
+     * L'en-tête : la date, et les bornes de la journée de classe.
+     *
+     * Les bornes viennent des attributs `first_start` et `last_end` de
+     * l'intégration, pas d'un calcul de la carte. Deux précisions relevées
+     * dans son module de capteurs :
+     *
+     * - elles portent sur **tous** les créneaux du jour, cours annulés
+     *   compris. Un premier cours annulé fixe donc quand même le début de la
+     *   journée, ce qui est le bon sens de « journée de classe » : l'élève est
+     *   attendu à cette heure-là tant qu'on ne lui a pas dit le contraire ;
+     * - `last_end` peut être une heure **déduite**, sans que l'attribut le
+     *   dise. D'où le `≈`, dont l'origine est cherchée dans la liste.
+     *
+     * La date se prend sur `first_start` quand la journée a des cours, et sur
+     * l'horloge sinon — le capteur est celui d'aujourd'hui, il n'y a pas
+     * d'ambiguïté à lever, et une journée vide mérite quand même sa date.
+     */
+    const header = ((): TemplateResult | '' => {
+      if (c.show_header === false) return '';
+      const firstStart = ctx.attr<string>(LESSONS, 'first_start');
+      const lastEnd = ctx.attr<string>(LESSONS, 'last_end');
+      const day = formatDayLabel(
+        firstStart ?? (parseTimestamp(testClock.now) ?? new Date()).toISOString(),
+        ctx.language,
+        ctx.timeZone
+      );
+      const from = formatTime(firstStart, ctx.language, ctx.timeZone);
+      const to = formatTime(lastEnd, ctx.language, ctx.timeZone);
+      // Ni date ni bornes : rien à mettre dans un en-tête, et un en-tête vide
+      // vaut moins que pas d'en-tête.
+      if (day === '' && from === '' && to === '') return '';
+      const inferred = dayEndIsInferred(lessons, lastEnd);
+      return html`
+        <div class="jour-entete">
+          <span class="jour-date">${day}</span>
+          ${from === '' || to === ''
+            ? ''
+            : html`<span
+                class="jour-bornes"
+                title=${inferred ? ctx.t('common.inferred_time') : ''}
+                >${from} – ${inferred ? '≈' : ''}${to}</span
+              >`}
+        </div>
+      `;
+    })();
+
+    // L'en-tête survit à la journée vide, et c'est le moment où il sert :
+    // « mercredi 9 septembre — aucun cours » se lit mieux que « aucun cours »
+    // seul, qui laisse le doute sur le jour dont on parle.
+    if (lessons.length === 0) return html`${header}${emptyState(ctx.t('journee.empty'))}`;
 
     // Tri sur l'instant réel : deux créneaux à décalages horaires mixtes ne se
     // comparent pas correctement chaîne à chaîne.
@@ -281,6 +364,18 @@ export const SPEC: CardSpec<Config> = {
         now >= start &&
         now < end;
 
+      // Salle et professeurs, dans cet ordre : la salle est ce qu'on cherche
+      // en marchant dans le couloir, le nom du professeur ce qu'on cherche en
+      // relisant la journée. `teachersOf` absorbe les deux formes que
+      // l'intégration a publiées selon ses versions — un tableau ou une
+      // chaîne unique.
+      const details = [
+        c.show_rooms === false ? '' : (l.classroom ?? ''),
+        c.show_teachers === false ? '' : teachersOf(l.teachers),
+      ]
+        .filter((part) => part !== '')
+        .join(' · ');
+
       const badges: TemplateResult[] = [];
       if (canceled) badges.push(chip(ctx.t('journee.canceled'), 'problem'));
       const reason = statusLabel(l);
@@ -307,18 +402,23 @@ export const SPEC: CardSpec<Config> = {
             aria-hidden="true"
           ></div>
           <div class="jour-corps">
-            <span class="jour-matiere ${canceled ? 'canceled' : ''}"
-              >${l.subject ?? '—'}</span
-            >
-            ${c.show_rooms !== false && l.classroom
-              ? html`<span class="jour-salle">${l.classroom}</span>`
-              : ''}
-            ${badges.length > 0 ? html`<span class="jour-pastilles">${badges}</span>` : ''}
+            <div class="jour-tete">
+              <span class="jour-matiere ${canceled ? 'canceled' : ''}"
+                >${l.subject ?? '—'}</span
+              >
+              ${badges.length > 0 ? html`<span class="jour-pastilles">${badges}</span>` : ''}
+            </div>
+            <!-- Salle et professeur sur leur propre ligne, et non à la suite
+                 de la matière : un nom de professeur fait facilement trente
+                 caractères, et sur la largeur d'une colonne de section il
+                 repoussait les pastilles hors du champ visible. Le point
+                 médian ne s'affiche que si les deux éléments sont là. -->
+            ${details === '' ? '' : html`<div class="jour-detail">${details}</div>`}
           </div>
         </div>
       `;
     });
 
-    return html`<div class="jour">${rows}</div>`;
+    return html`${header}<div class="jour">${rows}</div>`;
   },
 };

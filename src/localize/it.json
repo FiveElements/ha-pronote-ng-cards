@@ -171,6 +171,8 @@
     "meal_from": "Inizio della fascia di mezzogiorno (HH:MM)",
     "meal_to": "Fine della fascia di mezzogiorno (HH:MM)",
     "show_rooms": "Mostrare le aule",
-    "show_current": "Evidenziare la lezione in corso"
+    "show_current": "Evidenziare la lezione in corso",
+    "show_teachers": "Mostrare gli insegnanti",
+    "show_header": "Mostrare la data e gli estremi della giornata"
   }
 }

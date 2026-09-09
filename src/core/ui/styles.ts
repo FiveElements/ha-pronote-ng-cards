@@ -150,6 +150,43 @@ export const sharedStyles = css`
     display: flex;
     flex-direction: column;
   }
+  /* L'en-tete : la date a gauche, les bornes de la journee a droite. Les
+     bornes sont en chiffres tabulaires pour qu'elles ne dansent pas quand
+     l'heure change. */
+  .jour-entete {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--divider-color);
+  }
+  .jour-date {
+    font-weight: 500;
+    color: var(--primary-text-color);
+    text-transform: capitalize;
+  }
+  .jour-bornes {
+    color: var(--secondary-text-color);
+    font-variant-numeric: tabular-nums;
+  }
+  /* La matiere et ses pastilles sur une ligne, le detail dessous. Un nom de
+     professeur fait facilement trente caracteres : sur la largeur d'une
+     colonne de section, mis a la suite de la matiere, il repoussait les
+     pastilles hors du champ visible. */
+  .jour-tete {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+  }
+  .jour-detail {
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+    width: 100%;
+  }
   .jour-ligne {
     display: grid;
     /* Deux chiffres, deux points, deux chiffres, plus le marqueur de fin

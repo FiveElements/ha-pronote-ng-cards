@@ -171,6 +171,8 @@
     "meal_from": "Início do período do almoço (HH:MM)",
     "meal_to": "Fim do período do almoço (HH:MM)",
     "show_rooms": "Mostrar as salas",
-    "show_current": "Destacar a aula em curso"
+    "show_current": "Destacar a aula em curso",
+    "show_teachers": "Mostrar os professores",
+    "show_header": "Mostrar a data e os limites do dia"
   }
 }

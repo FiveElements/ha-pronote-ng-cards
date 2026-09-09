@@ -1,7 +1,9 @@
 # Vue journée
 
-La journée d'aujourd'hui en grille : une colonne d'horaires, un filet de
-couleur par matière, l'intitulé, et les créneaux sans cours du midi.
+La journée d'aujourd'hui en grille : la date et les bornes de la journée de
+classe en en-tête, puis une colonne d'horaires, un filet de couleur par
+matière, l'intitulé, la salle, le professeur, et les créneaux sans cours du
+midi.
 
 C'est un portage d'apparence de l'ancienne carte `lovelace-pronote`, sur la
 **journée courante uniquement**. Pour le lendemain ou la semaine, voyez
@@ -15,6 +17,7 @@ type: custom:pronote-ng-journee
 device_id: <appareil de l'enfant>
 show_meal: true
 show_rooms: true
+show_teachers: true
 ```
 
 ## Options
@@ -25,13 +28,60 @@ show_rooms: true
 | `meal_label` | « Repas » | Le mot affiché sur cette zone. |
 | `meal_from` | `11:00` | Début de la plage du midi, en `HH:MM`. |
 | `meal_to` | `14:30` | Fin de la plage du midi, en `HH:MM`. |
-| `show_rooms` | `true` | Affiche la salle à côté de la matière. |
+| `show_rooms` | `true` | Affiche la salle sous la matière. |
+| `show_teachers` | `true` | Affiche le ou les professeurs. |
 | `show_current` | `true` | Met en avant le cours en cours. |
+| `show_header` | `true` | Affiche la date et les bornes de la journée. |
 | `subject_colors` | — | Table matière → couleur. **En YAML uniquement**, voir ci-dessous. |
 
 Une plage du midi illisible (`meal_from: midi`) est **ignorée** : la plage
 par défaut reprend, plutôt que de faire disparaître la zone repas sur une
 faute de frappe.
+
+**Les six options à bascule figurent dans l'éditeur graphique** de la carte :
+aucun YAML n'est nécessaire pour les régler. Seule la table de couleurs
+demande le mode YAML, pour la raison expliquée plus bas.
+
+## La salle et le professeur
+
+Ils s'affichent sur une **deuxième ligne**, sous la matière, séparés d'un
+point médian : « 2.14 · MARTIN P. ».
+
+Cette deuxième ligne n'est pas cosmétique. Un nom de professeur fait
+facilement trente caractères ; mis à la suite de la matière, il repoussait
+les pastilles d'annulation hors du champ visible dès que la carte partageait
+sa largeur avec une autre. Le point médian ne s'affiche que si les deux
+éléments sont présents.
+
+Chacun se coupe indépendamment (`show_rooms`, `show_teachers`). Les deux
+coupés, la deuxième ligne disparaît entièrement plutôt que de laisser un
+espace vide.
+
+## L'en-tête : la date et les bornes de la journée
+
+```
+mercredi 9 septembre                    08:00 – 14:30
+```
+
+Les bornes viennent des attributs que l'intégration publie
+(`first_start`, `last_end`) : la carte ne les recalcule pas. Deux précisions
+qui viennent de la source de l'intégration :
+
+- **elles comptent les cours annulés.** Un premier cours annulé fixe donc
+  quand même le début de la journée — ce qui est le bon sens de « journée de
+  classe » : l'élève est attendu à cette heure-là tant qu'on ne lui a pas dit
+  le contraire.
+- **la fin peut être une heure déduite**, parce qu'elle est la plus tardive
+  des fins de cours et qu'une fin de cours peut l'être. L'attribut, lui, ne le
+  dit pas : la carte va chercher le drapeau sur le créneau qui porte cette
+  fin, et affiche `08:00 – ≈14:30` le cas échéant.
+
+Sur une **journée vide**, l'en-tête reste et porte la date. C'est le moment où
+il sert le plus : « aucun cours » tout seul laisse le doute sur le jour dont
+on parle.
+
+Si votre version de l'intégration ne publie pas ces attributs, la date
+s'affiche et les bornes disparaissent — rien n'est inventé.
 
 ## Les couleurs de matière
 

@@ -268,3 +268,90 @@ describe('garde : aucune donnée réelle', () => {
     }
   });
 });
+
+/**
+ * Une propriété d'une valeur de forme inconnue.
+ *
+ * `JSON.parse` rend `any`, et le lint du projet refuse — à juste titre — de
+ * convertir ce `any` en une forme affirmée : on ne connaît pas le contenu
+ * d'un fichier lu à l'exécution. On le TRAVERSE donc, sans jamais prétendre
+ * savoir ce qu'il est. `Object.entries` fait la vérification que l'assertion
+ * aurait sautée.
+ */
+const prop = (value: unknown, key: string): unknown => {
+  if (typeof value !== 'object' || value === null) return undefined;
+  for (const [k, v] of Object.entries(value)) {
+    if (k === key) return v as unknown;
+  }
+  return undefined;
+};
+
+/** Le catalogue d'une langue, tel quel. */
+const cataloguesCache = new Map<string, unknown>();
+const catalogueOf = (lang: string): unknown => {
+  const seen = cataloguesCache.get(lang);
+  if (seen !== undefined) return seen;
+  const parsed: unknown = JSON.parse(readFileSync(join('src', 'localize', `${lang}.json`), 'utf8'));
+  cataloguesCache.set(lang, parsed);
+  return parsed;
+};
+
+/**
+ * Chaque option d'éditeur doit avoir son libellé, dans les quatre langues.
+ *
+ * L'éditeur générique résout les libellés sous la racine de catalogue de la
+ * carte : une option `show_teachers` sur la carte `journee` cherche
+ * `journee.show_teachers`. Une clé absente rend **le chemin lui-même**, par
+ * choix du projet — donc le défaut est visible et non silencieux. Mais visible
+ * veut dire visible par l'utilisateur, dans son formulaire de configuration,
+ * après publication.
+ *
+ * Cette garde n'existait pas, et la carte vue journée a ajouté huit options
+ * d'un coup. Elle couvre les dix cartes, pas seulement la dernière : le coût
+ * est le même et le filet est bien plus large.
+ */
+describe('garde : les libellés d’options de l’éditeur', () => {
+  const CATALOGUES = ['fr', 'it', 'pt', 'es'] as const;
+
+  /**
+   * Les couples (racine de catalogue, nom d'option) déclarés par les cartes,
+   * relevés dans le source plutôt qu'en important les `SPEC` : `schema()` est
+   * une fonction de la configuration, et l'appeler ici demanderait d'inventer
+   * une configuration par carte — donc de deviner laquelle révèle toutes les
+   * options. Le source, lui, les porte toutes.
+   */
+  const declared = (): { key: string; option: string; file: string }[] => {
+    const out: { key: string; option: string; file: string }[] = [];
+    for (const [file, body] of read(walk(join('src', 'cards'), ['.ts']))) {
+      const keyMatch = /^\s*key: '([a-z_]+)',$/m.exec(body);
+      if (!keyMatch?.[1]) continue;
+      const key = keyMatch[1];
+      // Les entrées de schéma s'écrivent toutes `{ name: '<option>', selector: …`.
+      for (const m of body.matchAll(/\{\s*name: '([a-z_]+)',\s*selector:/g)) {
+        const option = m[1];
+        if (option !== undefined) out.push({ key, option, file });
+      }
+    }
+    return out;
+  };
+
+  it('relève bien des options à vérifier — sinon la garde ne garde rien', () => {
+    // Une garde dont l'extraction rend zéro élément passe toujours. Le seuil
+    // est délibérément bas : il dit « le relevé fonctionne », pas « il y a
+    // tant d'options ».
+    expect(declared().length).toBeGreaterThan(15);
+  });
+
+  for (const lang of CATALOGUES) {
+    it(`chaque option a son libellé en ${lang}`, () => {
+      for (const { key, option, file } of declared()) {
+        const racine = prop(catalogueOf(lang), key);
+        expect(racine, `${file} : le catalogue ${lang} n'a pas de racine « ${key} »`).toBeDefined();
+        expect(
+          typeof prop(racine, option),
+          `${file} : ${lang} n'a pas de libellé pour « ${key}.${option} »`
+        ).toBe('string');
+      }
+    });
+  }
+});

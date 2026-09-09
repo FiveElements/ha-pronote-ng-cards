@@ -171,6 +171,8 @@
     "meal_from": "Début de la plage du midi (HH:MM)",
     "meal_to": "Fin de la plage du midi (HH:MM)",
     "show_rooms": "Afficher les salles",
-    "show_current": "Mettre en avant le cours en cours"
+    "show_current": "Mettre en avant le cours en cours",
+    "show_teachers": "Afficher les professeurs",
+    "show_header": "Afficher la date et les bornes de la journée"
   }
 }
