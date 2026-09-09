@@ -46,7 +46,7 @@ URL.
 ## Ajouter une carte
 
 Dans l'éditeur de tableau de bord, ajoutez une carte, cherchez
-« Pronote NG » : les huit cartes de cette bibliothèque apparaissent.
+« Pronote NG » : les cartes de cette bibliothèque apparaissent.
 Choisissez-en une, puis choisissez l'enfant dans le sélecteur
 d'appareil qui apparaît.
 

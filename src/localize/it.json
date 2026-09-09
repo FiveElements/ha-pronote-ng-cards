@@ -147,5 +147,11 @@
     "session_lifetime": "Durata della sessione",
     "logins_today": "Accessi da mezzanotte",
     "throttled": "Raccolte limitate"
+  },
+  "evaluations": {
+    "name": "Valutazioni",
+    "empty": "Nessuna valutazione per questo periodo.",
+    "limit": "Numero di valutazioni mostrate",
+    "show_acquisitions": "Dettagliare le competenze"
   }
 }

@@ -147,5 +147,11 @@
     "session_lifetime": "Durée de vie de la session",
     "logins_today": "Connexions depuis minuit",
     "throttled": "Collectes bridées"
+  },
+  "evaluations": {
+    "name": "Évaluations",
+    "empty": "Aucune évaluation pour cette période.",
+    "limit": "Nombre d'évaluations affichées",
+    "show_acquisitions": "Détailler les compétences"
   }
 }

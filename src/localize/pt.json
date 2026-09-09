@@ -147,5 +147,11 @@
     "session_lifetime": "Tempo de vida da sessão",
     "logins_today": "Ligações desde a meia-noite",
     "throttled": "Recolhas limitadas"
+  },
+  "evaluations": {
+    "name": "Avaliações",
+    "empty": "Nenhuma avaliação para este período.",
+    "limit": "Número de avaliações mostradas",
+    "show_acquisitions": "Detalhar as competências"
   }
 }

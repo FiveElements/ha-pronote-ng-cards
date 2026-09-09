@@ -48,7 +48,7 @@ Elle rend la **première** correspondance, sans détection de conflit. C'est pou
 
 ### Les appareils et le `scope`
 
-L'intégration crée un appareil par enfant, rattaché à un appareil de compte par `via_device_id`. **Les huit cartes se configurent avec l'appareil de l'enfant**, y compris celle du limiteur qui lit des entités de diagnostic vivant sur le compte : `scope: 'account'` fait remonter le socle par `via_device_id`. C'est le point le plus déroutant de l'intégration — ne demandez jamais à l'utilisateur de choisir un autre appareil.
+L'intégration crée un appareil par enfant, rattaché à un appareil de compte par `via_device_id`. **Toutes les cartes se configurent avec l'appareil de l'enfant**, y compris celle du limiteur qui lit des entités de diagnostic vivant sur le compte : `scope: 'account'` fait remonter le socle par `via_device_id`. C'est le point le plus déroutant de l'intégration — ne demandez jamais à l'utilisateur de choisir un autre appareil.
 
 ### Les trois états
 
@@ -66,7 +66,7 @@ Une carte ne réimplémente jamais les deux premiers : quand `render()` est appe
 
 Une carte est un objet déclaratif exporté sous le nom `SPEC` depuis `src/cards/<nom>.ts` : son `type`, sa `key` (racine de catalogue, pour les libellés d'éditeur), son `scope`, les clés qu'elle `requires` / `requiresAny` / `optional`, son `schema(config, t)` et son `render(ctx)`.
 
-`src/core/base-card.ts` en fabrique l'élément Lit ; `src/core/registry.ts` l'enregistre, définit l'éditeur générique une seule fois et pousse l'entrée `window.customCards`. `src/index.ts` importe les huit `SPEC` et appelle `defineCard` sur chacune — c'est le seul endroit qui les connaît toutes.
+`src/core/base-card.ts` en fabrique l'élément Lit ; `src/core/registry.ts` l'enregistre, définit l'éditeur générique une seule fois et pousse l'entrée `window.customCards`. `src/index.ts` importe chaque `SPEC` et appelle `defineCard` dessus — c'est le seul endroit qui les connaît toutes.
 
 Ajouter une carte : un fichier dans `src/cards/`, un fichier dans `test/cards/`, une ligne dans `src/index.ts`. Les chaînes vivent déjà dans les catalogues.
 
@@ -78,7 +78,7 @@ Une carte ne touche jamais `hass` directement pour lire une entité. Elle passe 
 
 ### Rendu piloté par le temps
 
-`shouldUpdate` ne repeint que sur changement de configuration, de registre, ou d'état d'une entité résolue — un objet `hass` neuf à chaque évènement de la maison déclencherait sinon un balayage complet du registre, multiplié par huit cartes.
+`shouldUpdate` ne repeint que sur changement de configuration, de registre, ou d'état d'une entité résolue — un objet `hass` neuf à chaque évènement de la maison déclencherait sinon un balayage complet du registre, multiplié par le nombre de cartes de la vue.
 
 Conséquence : une carte dont l'affichage dépend de `Date.now()` (compte à rebours, créneau en cours, bouton en garde) doit déclarer `tickMs` dans son `CardSpec`. Le socle pose et retire la minuterie. **Ne mettez pas de `setInterval` dans une carte.**
 

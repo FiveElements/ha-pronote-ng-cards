@@ -46,7 +46,7 @@ const paths = (d: unknown, prefix = ''): string[] =>
 /**
  * Une clé présente en français et absente d'une autre langue ne se manifeste
  * qu'à l'exécution, chez un utilisateur dont personne ici ne lit la langue.
- * Ce test est ce qui rend la contrainte tenable quand huit cartes ajoutent
+ * Ce test est ce qui rend la contrainte tenable quand chaque carte ajoute
  * leurs chaînes.
  */
 describe('parité des catalogues', () => {

@@ -13,6 +13,7 @@ import { SPEC as VIE_SCOLAIRE } from './cards/vie-scolaire';
 import { SPEC as MENU } from './cards/menu';
 import { SPEC as ELEVE } from './cards/eleve';
 import { SPEC as LIMITEUR } from './cards/limiteur';
+import { SPEC as EVALUATIONS } from './cards/evaluations';
 
 defineCard(PROCHAIN_COURS);
 defineCard(EMPLOI_DU_TEMPS);
@@ -22,6 +23,7 @@ defineCard(VIE_SCOLAIRE);
 defineCard(MENU);
 defineCard(ELEVE);
 defineCard(LIMITEUR);
+defineCard(EVALUATIONS);
 
 export { defineCard };
 export type { CardSpec, RenderCtx, PronoteCardConfig, EntityKey } from './core/types';
