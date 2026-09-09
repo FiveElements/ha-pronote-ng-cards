@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 228" width="372" height="228" role="img" aria-label="Aperçu de la carte Cantine : le menu du jour, plat par plat.">
+  <title>Carte Cantine</title>
+  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les noms, la classe et les horaires sont inventés pour cette image.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .h { font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .s { font: 400 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .t { font: 400 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .sect { font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #475467; letter-spacing: .04em; }
+    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .rule { stroke: #eaecf0; stroke-width: 1; }
+    .strike { text-decoration: line-through; }
+  </style>
+
+  <rect class="bg" width="372" height="228"/>
+  <g transform="translate(16 16)">
+    <rect class="shadow" x="1" y="3" width="340" height="196" rx="12"/>
+    <rect class="card" width="340" height="196" rx="12"/>
+    <text class="h" x="18" y="26">Aujourd&#x27;hui</text>
+    <text class="p" x="18" y="48">Entrée</text>
+    <text class="t" x="322" y="48" text-anchor="end">Carottes râpées</text>
+    <line class="rule" x1="18" y1="58" x2="322" y2="58"/>
+    <text class="p" x="18" y="80">Plat</text>
+    <text class="t" x="322" y="80" text-anchor="end">Poisson pané</text>
+    <line class="rule" x1="18" y1="90" x2="322" y2="90"/>
+    <text class="p" x="18" y="112">Accompagnement</text>
+    <text class="t" x="322" y="112" text-anchor="end">Riz · Haricots verts</text>
+    <line class="rule" x1="18" y1="122" x2="322" y2="122"/>
+    <text class="p" x="18" y="144">Fromage</text>
+    <text class="t" x="322" y="144" text-anchor="end">Yaourt nature</text>
+    <line class="rule" x1="18" y1="154" x2="322" y2="154"/>
+    <text class="p" x="18" y="176">Dessert</text>
+    <text class="t" x="322" y="176" text-anchor="end">Compote de pommes</text>
+  </g>
+</svg>

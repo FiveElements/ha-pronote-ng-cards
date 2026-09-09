@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 396" width="372" height="396" role="img" aria-label="Aperçu de la carte Limiteur : état du limiteur, budget d&#x27;appels, prochaine collecte et bouton de rafraîchissement.">
+  <title>Carte Limiteur</title>
+  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les noms, la classe et les horaires sont inventés pour cette image.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .h { font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .s { font: 400 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .t { font: 400 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .sect { font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #475467; letter-spacing: .04em; }
+    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .rule { stroke: #eaecf0; stroke-width: 1; }
+    .strike { text-decoration: line-through; }
+  </style>
+
+  <rect class="bg" width="372" height="396"/>
+  <g transform="translate(16 16)">
+    <rect class="shadow" x="1" y="3" width="340" height="364" rx="12"/>
+    <rect class="card" width="340" height="364" rx="12"/>
+    <text class="sect" x="18" y="26">LIMITEUR</text>
+    <line class="rule" x1="18" y1="38" x2="322" y2="38"/>
+    <text class="p" x="18" y="60">État</text>
+    <rect x="273" y="47" width="49" height="19" rx="9.5" fill="#ecfdf3"/>
+    <text class="chip" x="280" y="60" fill="#027a48">normal</text>
+    <line class="rule" x1="18" y1="70" x2="322" y2="70"/>
+    <text class="p" x="18" y="92">Budget restant</text>
+    <text class="t" x="322" y="92" text-anchor="end">1 802 / 2 000</text>
+    <line class="rule" x1="18" y1="102" x2="322" y2="102"/>
+    <text class="p" x="18" y="124">Appels aujourd&#x27;hui</text>
+    <text class="t" x="322" y="124" text-anchor="end">198</text>
+    <line class="rule" x1="18" y1="134" x2="322" y2="134"/>
+    <text class="p" x="18" y="156">Connexions aujourd&#x27;hui</text>
+    <text class="t" x="322" y="156" text-anchor="end">2 / 24</text>
+    <line class="rule" x1="18" y1="166" x2="322" y2="166"/>
+    <text class="p" x="18" y="188">Prochaine collecte</text>
+    <text class="s" x="18" y="204">dans 7 min</text>
+    <line class="rule" x1="18" y1="214" x2="322" y2="214"/>
+    <text class="p" x="18" y="236">Dernière collecte</text>
+    <text class="s" x="18" y="252">il y a 8 min</text>
+    <line class="rule" x1="18" y1="262" x2="322" y2="262"/>
+    <text class="p" x="18" y="284">Âge de la session</text>
+    <text class="s" x="18" y="300">12 min sur 30 min</text>
+    <line class="rule" x1="18" y1="310" x2="322" y2="310"/>
+    <rect x="18" y="320" width="154" height="28" rx="8" fill="#eaf3ff" stroke="#eaecf0"/>
+    <text class="chip" x="30" y="338" fill="#175cd3">Rafraîchir maintenant</text>
+  </g>
+</svg>

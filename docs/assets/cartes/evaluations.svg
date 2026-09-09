@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 254" width="372" height="254" role="img" aria-label="Aperçu de la carte Évaluations : les évaluations par compétences et leur niveau de maîtrise.">
+  <title>Carte Évaluations</title>
+  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les noms, la classe et les horaires sont inventés pour cette image.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .h { font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .s { font: 400 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .t { font: 400 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .sect { font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #475467; letter-spacing: .04em; }
+    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .rule { stroke: #eaecf0; stroke-width: 1; }
+    .strike { text-decoration: line-through; }
+  </style>
+
+  <rect class="bg" width="372" height="254"/>
+  <g transform="translate(16 16)">
+    <rect class="shadow" x="1" y="3" width="340" height="222" rx="12"/>
+    <rect class="card" width="340" height="222" rx="12"/>
+    <text class="p" x="18" y="22">Mathématiques</text>
+    <text class="t" x="322" y="22" text-anchor="end">jeudi 10 sept.</text>
+    <text class="s" x="18" y="38">Proportionnalité</text>
+    <line class="rule" x1="18" y1="48" x2="322" y2="48"/>
+    <text class="p" x="18" y="70">     Résoudre un problème</text>
+    <text class="t" x="322" y="70" text-anchor="end">Très bonne maîtrise</text>
+    <line class="rule" x1="18" y1="80" x2="322" y2="80"/>
+    <text class="p" x="18" y="102">     Modéliser une situation</text>
+    <text class="t" x="322" y="102" text-anchor="end">Maîtrise fragile</text>
+    <line class="rule" x1="18" y1="112" x2="322" y2="112"/>
+    <text class="p" x="18" y="134">SVT</text>
+    <text class="t" x="322" y="134" text-anchor="end">mardi 8 sept.</text>
+    <text class="s" x="18" y="150">Le vivant et son évolution</text>
+    <line class="rule" x1="18" y1="160" x2="322" y2="160"/>
+    <text class="p" x="18" y="182">     Formuler une hypothèse</text>
+    <text class="t" x="322" y="182" text-anchor="end">Maîtrise satisfaisante</text>
+    <text class="s" x="18" y="202">Les libellés de maîtrise sont ceux de l&#x27;établissement, jamais traduits.</text>
+  </g>
+</svg>

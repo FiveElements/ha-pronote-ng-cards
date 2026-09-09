@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 412" width="372" height="412" role="img" aria-label="Aperçu de la carte Notes : moyennes générales, dernières notes et moyennes par matière.">
+  <title>Carte Notes</title>
+  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les noms, la classe et les horaires sont inventés pour cette image.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .h { font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .s { font: 400 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .t { font: 400 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .sect { font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #475467; letter-spacing: .04em; }
+    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .rule { stroke: #eaecf0; stroke-width: 1; }
+    .strike { text-decoration: line-through; }
+  </style>
+
+  <rect class="bg" width="372" height="412"/>
+  <g transform="translate(16 16)">
+    <rect class="shadow" x="1" y="3" width="340" height="380" rx="12"/>
+    <rect class="card" width="340" height="380" rx="12"/>
+    <text class="sect" x="18" y="26">MOYENNES</text>
+    <line class="rule" x1="18" y1="38" x2="322" y2="38"/>
+    <text class="p" x="18" y="60">Moyenne générale</text>
+    <text class="t" x="322" y="60" text-anchor="end">13,4</text>
+    <line class="rule" x1="18" y1="70" x2="322" y2="70"/>
+    <text class="p" x="18" y="92">Moyenne de la classe</text>
+    <text class="t" x="322" y="92" text-anchor="end">12,1</text>
+    <line class="rule" x1="18" y1="102" x2="322" y2="102"/>
+    <text class="sect" x="18" y="128">DERNIÈRES NOTES</text>
+    <line class="rule" x1="18" y1="140" x2="322" y2="140"/>
+    <text class="p" x="18" y="162">Mathématiques</text>
+    <text class="t" x="322" y="162" text-anchor="end">15,5 / 20</text>
+    <text class="s" x="18" y="178">jeudi 10 septembre</text>
+    <line class="rule" x1="18" y1="188" x2="322" y2="188"/>
+    <text class="p" x="18" y="210">Français</text>
+    <text class="t" x="322" y="210" text-anchor="end">Absent</text>
+    <text class="s" x="18" y="226">mardi 8 septembre</text>
+    <line class="rule" x1="18" y1="236" x2="322" y2="236"/>
+    <text class="sect" x="18" y="262">PAR MATIÈRE</text>
+    <line class="rule" x1="18" y1="274" x2="322" y2="274"/>
+    <text class="p" x="18" y="296">Mathématiques</text>
+    <text class="t" x="322" y="296" text-anchor="end">14,2</text>
+    <text class="s" x="18" y="312">classe 11,8</text>
+    <line class="rule" x1="18" y1="322" x2="322" y2="322"/>
+    <text class="p" x="18" y="344">Histoire-géographie</text>
+    <text class="t" x="322" y="344" text-anchor="end">12,9</text>
+    <text class="s" x="18" y="360">classe 12,4</text>
+  </g>
+</svg>

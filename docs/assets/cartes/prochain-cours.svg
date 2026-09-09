@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 348" width="372" height="348" role="img" aria-label="Aperçu de la carte Prochain cours : matière, horaire, salle, professeur, réveil et fin de journée.">
+  <title>Carte Prochain cours</title>
+  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les noms, la classe et les horaires sont inventés pour cette image.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .h { font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .s { font: 400 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .t { font: 400 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .sect { font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #475467; letter-spacing: .04em; }
+    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .rule { stroke: #eaecf0; stroke-width: 1; }
+    .strike { text-decoration: line-through; }
+  </style>
+
+  <rect class="bg" width="372" height="348"/>
+  <g transform="translate(16 16)">
+    <rect class="shadow" x="1" y="3" width="340" height="316" rx="12"/>
+    <rect class="card" width="340" height="316" rx="12"/>
+    <rect x="18" y="11" width="120" height="19" rx="9.5" fill="#eaf3ff"/>
+    <text class="chip" x="25" y="24" fill="#175cd3">Cours en ce moment</text>
+    <rect x="146" y="11" width="90" height="19" rx="9.5" fill="#fffaeb"/>
+    <text class="chip" x="153" y="24" fill="#b54708">Cours annulés</text>
+    <text class="sect" x="18" y="50">PROCHAIN COURS</text>
+    <line class="rule" x1="18" y1="62" x2="322" y2="62"/>
+    <text class="p" x="18" y="84">Français</text>
+    <text class="s" x="18" y="100">10:30 – ≈11:30 · dans 22 min</text>
+    <line class="rule" x1="18" y1="110" x2="322" y2="110"/>
+    <text class="p" x="18" y="132">Salle 2.9</text>
+    <line class="rule" x1="18" y1="142" x2="322" y2="142"/>
+    <text class="p" x="18" y="164">Mme A.</text>
+    <line class="rule" x1="18" y1="174" x2="322" y2="174"/>
+    <text class="p" x="18" y="196">Réveil à 08:00</text>
+    <line class="rule" x1="18" y1="206" x2="322" y2="206"/>
+    <text class="p" x="18" y="228">Fin des cours à 12:30 ≈</text>
+    <line class="rule" x1="18" y1="238" x2="322" y2="238"/>
+    <text class="p" x="18" y="260">Prochain contrôle</text>
+    <text class="s" x="18" y="276">jeudi 17 septembre · 09:00</text>
+    <text class="s" x="18" y="296">≈ heure déduite, non fournie par le serveur</text>
+  </g>
+</svg>

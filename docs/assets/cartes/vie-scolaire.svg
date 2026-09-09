@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 422" width="372" height="422" role="img" aria-label="Aperçu de la carte Vie scolaire : compteurs, bandeau d&#x27;absence en cours, absences et retards détaillés.">
+  <title>Carte Vie scolaire</title>
+  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les noms, la classe et les horaires sont inventés pour cette image.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .h { font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .s { font: 400 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .t { font: 400 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .sect { font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #475467; letter-spacing: .04em; }
+    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .rule { stroke: #eaecf0; stroke-width: 1; }
+    .strike { text-decoration: line-through; }
+  </style>
+
+  <rect class="bg" width="372" height="422"/>
+  <g transform="translate(16 16)">
+    <rect class="shadow" x="1" y="3" width="340" height="390" rx="12"/>
+    <rect class="card" width="340" height="390" rx="12"/>
+    <text class="p" x="18" y="22">Absences</text>
+    <text class="t" x="322" y="22" text-anchor="end">2</text>
+    <line class="rule" x1="18" y1="32" x2="322" y2="32"/>
+    <text class="p" x="18" y="54">Absences injustifiées</text>
+    <rect x="303" y="41" width="19" height="19" rx="9.5" fill="#fffaeb"/>
+    <text class="chip" x="310" y="54" fill="#b54708">1</text>
+    <line class="rule" x1="18" y1="64" x2="322" y2="64"/>
+    <text class="p" x="18" y="86">Retards</text>
+    <text class="t" x="322" y="86" text-anchor="end">1</text>
+    <line class="rule" x1="18" y1="96" x2="322" y2="96"/>
+    <text class="p" x="18" y="118">Punitions</text>
+    <text class="t" x="322" y="118" text-anchor="end">1</text>
+    <line class="rule" x1="18" y1="128" x2="322" y2="128"/>
+    <rect x="18" y="139" width="304" height="26" rx="6" fill="#fef3f2"/>
+    <text class="chip" x="28" y="156" fill="#b42318">Absence en cours</text>
+    <text class="sect" x="18" y="186">ABSENCES</text>
+    <line class="rule" x1="18" y1="198" x2="322" y2="198"/>
+    <text class="p" x="18" y="220">lundi 7 septembre · 08:30 → 10:30</text>
+    <rect x="255" y="207" width="67" height="19" rx="9.5" fill="#f2f4f7"/>
+    <text class="chip" x="262" y="220" fill="#475467">justifiée</text>
+    <text class="s" x="18" y="236">2 h · MALADIE SANS CERTIFICAT</text>
+    <line class="rule" x1="18" y1="246" x2="322" y2="246"/>
+    <text class="p" x="18" y="268">jeudi 3 septembre · 14:00 → 16:00</text>
+    <rect x="244" y="255" width="78" height="19" rx="9.5" fill="#fffaeb"/>
+    <text class="chip" x="251" y="268" fill="#b54708">injustifiée</text>
+    <text class="s" x="18" y="284">2 h</text>
+    <line class="rule" x1="18" y1="294" x2="322" y2="294"/>
+    <text class="sect" x="18" y="320">RETARDS</text>
+    <line class="rule" x1="18" y1="332" x2="322" y2="332"/>
+    <text class="p" x="18" y="354">mardi 8 septembre · 08:35</text>
+    <rect x="249" y="341" width="73" height="19" rx="9.5" fill="#fffaeb"/>
+    <text class="chip" x="256" y="354" fill="#b54708">injustifié</text>
+    <text class="s" x="18" y="370">10 min</text>
+  </g>
+</svg>

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 320" width="372" height="320" role="img" aria-label="Aperçu de la carte Emploi du temps : les cours du jour, heure de début, matière et salle.">
+  <title>Carte Emploi du temps</title>
+  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les noms, la classe et les horaires sont inventés pour cette image.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .h { font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .s { font: 400 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .t { font: 400 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .sect { font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #475467; letter-spacing: .04em; }
+    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .rule { stroke: #eaecf0; stroke-width: 1; }
+    .strike { text-decoration: line-through; }
+  </style>
+
+  <rect class="bg" width="372" height="320"/>
+  <g transform="translate(16 16)">
+    <rect class="shadow" x="1" y="3" width="340" height="288" rx="12"/>
+    <rect class="card" width="340" height="288" rx="12"/>
+    <text class="sect" x="18" y="26">AUJOURD&#x27;HUI</text>
+    <line class="rule" x1="18" y1="38" x2="322" y2="38"/>
+    <rect x="18" y="47" width="3" height="28" rx="1.5" fill="#2e90fa"/>
+    <text class="p" x="28" y="60">08:30</text>
+    <text class="s" x="28" y="76">Mathématiques · Salle 1.4</text>
+    <line class="rule" x1="18" y1="86" x2="322" y2="86"/>
+    <rect x="18" y="95" width="3" height="28" rx="1.5" fill="#f79009"/>
+    <text class="p" x="28" y="108">09:30</text>
+    <text class="s" x="28" y="124">Histoire-géographie · Salle 1.4</text>
+    <line class="rule" x1="18" y1="134" x2="322" y2="134"/>
+    <rect x="18" y="143" width="3" height="28" rx="1.5" fill="#12b76a"/>
+    <text class="p" x="28" y="156">10:30</text>
+    <rect x="261" y="143" width="61" height="19" rx="9.5" fill="#eaf3ff"/>
+    <text class="chip" x="268" y="156" fill="#175cd3">en cours</text>
+    <text class="s" x="28" y="172">Français · Salle 2.9</text>
+    <line class="rule" x1="18" y1="182" x2="322" y2="182"/>
+    <rect x="18" y="191" width="3" height="28" rx="1.5" fill="#7a5af8"/>
+    <text class="p strike" x="28" y="204">13:30</text>
+    <rect x="273" y="191" width="49" height="19" rx="9.5" fill="#fef3f2"/>
+    <text class="chip" x="280" y="204" fill="#b42318">annulé</text>
+    <text class="s" x="28" y="220">Anglais · Salle 3.1</text>
+    <line class="rule" x1="18" y1="230" x2="322" y2="230"/>
+    <rect x="18" y="239" width="3" height="28" rx="1.5" fill="#ee46bc"/>
+    <text class="p" x="28" y="252">14:30</text>
+    <text class="s" x="28" y="268">SVT · Salle 0.2</text>
+  </g>
+</svg>

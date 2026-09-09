@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 334" width="372" height="334" role="img" aria-label="Aperçu de la carte Devoirs : les devoirs groupés par échéance, avec leur case à cocher.">
+  <title>Carte Devoirs</title>
+  <desc>Illustration synthétique. Aucune donnée réelle : les matières, les noms, la classe et les horaires sont inventés pour cette image.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .h { font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .s { font: 400 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .t { font: 400 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .sect { font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #475467; letter-spacing: .04em; }
+    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .rule { stroke: #eaecf0; stroke-width: 1; }
+    .strike { text-decoration: line-through; }
+  </style>
+
+  <rect class="bg" width="372" height="334"/>
+  <g transform="translate(16 16)">
+    <rect class="shadow" x="1" y="3" width="340" height="302" rx="12"/>
+    <rect class="card" width="340" height="302" rx="12"/>
+    <rect x="18" y="11" width="78" height="19" rx="9.5" fill="#fef3f2"/>
+    <text class="chip" x="25" y="24" fill="#b42318">2 en retard</text>
+    <text class="sect" x="18" y="50">JEUDI 10 SEPTEMBRE</text>
+    <line class="rule" x1="18" y1="62" x2="322" y2="62"/>
+    <text class="p" x="18" y="84">☐  Mathématiques</text>
+    <text class="s" x="18" y="100">Exercices 12 à 15</text>
+    <line class="rule" x1="18" y1="110" x2="322" y2="110"/>
+    <text class="p" x="18" y="132">☑  Anglais</text>
+    <text class="s" x="18" y="148">Lire le chapitre 3</text>
+    <line class="rule" x1="18" y1="158" x2="322" y2="158"/>
+    <text class="sect" x="18" y="184">VENDREDI 11 SEPTEMBRE</text>
+    <line class="rule" x1="18" y1="196" x2="322" y2="196"/>
+    <text class="p" x="18" y="218">☐  Français</text>
+    <rect x="285" y="205" width="37" height="19" rx="9.5" fill="#fffaeb"/>
+    <text class="chip" x="292" y="218" fill="#b54708">noté</text>
+    <text class="s" x="18" y="234">Rédaction, une page</text>
+    <line class="rule" x1="18" y1="244" x2="322" y2="244"/>
+    <text class="p" x="18" y="266">☐  SVT</text>
+    <text class="s" x="18" y="282">Schéma à compléter</text>
+  </g>
+</svg>
