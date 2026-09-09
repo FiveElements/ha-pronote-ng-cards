@@ -4465,6 +4465,102 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 ---
 
+## Demandé le 10 septembre 2026 — une carte pour changer de mode de récupération
+
+**La demande, telle qu'elle a été formulée** : une carte permettant de basculer
+le mode de récupération — « Heures Calmes », « normal »… — parce que « ce
+forçage manuel est utile comme en ce moment ».
+
+Le « comme en ce moment » est la partie qui compte, et il faut la garder :
+cette nuit-là, activer les heures calmes a demandé d'ouvrir le flux d'options
+de l'intégration, de trouver dans quelle des trois étapes du menu vivait le
+réglage, et de le sauvegarder — ce qui **recharge l'entrée**. Une bascule qui
+prend trente secondes et vide l'écran est exactement ce qu'une carte devrait
+supprimer.
+
+### Ce n'est pas implémentable aujourd'hui, et le blocage n'est pas côté carte
+
+Trois faits vérifiés, à ne pas redécouvrir :
+
+1. **Le réglage n'est pas une entité.** `quiet_hours_enabled` est une option de
+   l'entrée de configuration, dans l'étape `rate_limit` du flux d'options
+   (`config_flow.py`, `async_step_rate_limit`). Rien ne l'expose en lecture ni
+   en écriture à une carte ;
+2. **L'intégration n'a aucune plateforme inscriptible pour ça.** Elle publie
+   `sensor`, `binary_sensor`, `button`, `calendar`, `todo`, `event`, `image` —
+   **ni `switch`, ni `select`, ni `number`**. Il n'y a donc même pas d'entité à
+   basculer ;
+3. **`AllowedCall` n'admet que deux appels** (`src/core/types.ts`) :
+   `pronote_ng.refresh` et `todo.update_item`. C'est une garantie de **type**,
+   pas une convention — la carte ne peut pas appeler autre chose, même par
+   erreur.
+
+La conséquence est nette : **la première moitié du travail est côté
+intégration, pas côté cartes.** Une carte écrite avant que l'intégration
+n'expose quelque chose n'aurait rien à appeler.
+
+### La question à poser avant d'écrire une ligne : est-ce que ça casse
+l'invariant ?
+
+Non, et il faut savoir pourquoi, parce que la réponse naïve est « oui ».
+
+L'invariant du projet est qu'**une carte ne déclenche jamais de collecte à
+l'affichage** — le serveur PRONOTE sanctionne l'adresse IP. Il n'a jamais été
+« une carte ne peut rien déclencher » : `pronote_ng.refresh` est déjà dans la
+liste blanche, et c'est bien un geste délibéré de l'utilisateur qui relève une
+priorité auprès de l'ordonnanceur.
+
+Une bascule de mode est **la même forme** : un clic explicite, jamais un
+rendu. Ce qui doit rester vrai, et ce qu'il faudra vérifier plutôt que
+supposer : que le rendu de la carte ne touche à rien, et que la bascule ne
+puisse pas partir d'un `render()`.
+
+En revanche elle élargit la surface d'action délibérée, donc `AllowedCall`
+gagnerait une troisième entrée. C'est une décision de propriétaire, pas un
+détail d'implémentation : ce type est ce qui rend vraie une phrase de
+`docs/limites.md`.
+
+### Le piège de conception, mesuré cette nuit-là
+
+**Ne pas construire la bascule sur l'écriture d'une option.** Sauvegarder les
+options recharge l'entrée (`__init__.py`, `add_update_listener(async_reload_entry)`),
+et un rechargement perd les instantanés : `scheduler.py` fait traverser
+`last_collected` par `export_state`/`import_state`, mais il n'y a **aucun
+`Store`** dans le composant, donc les données ne vivent qu'en mémoire.
+
+Mesuré le 9 septembre 2026 à 23 h 55, sur la 0.0.13 : après l'écriture de
+l'option, **12 entités sur 16 en `unavailable`**, et les trois capteurs
+d'emploi du temps sans `lessons`, sans `fetched_at`, sans `stale`. Avec les
+heures calmes actives, rien n'aurait été recollecté avant 6 h.
+
+Une carte qui produirait cet effet à chaque clic serait pire que le formulaire
+qu'elle remplace. **Il faut donc un forçage d'exécution, pas une écriture de
+configuration** — quelque chose que l'intégration porte en mémoire et qui ne
+provoque aucun rechargement. C'est le point à trancher avec le dépôt du cœur
+avant toute maquette.
+
+### Ce qu'il reste à décider, et par qui
+
+- **le propriétaire** : la troisième entrée dans `AllowedCall`, et si le mode
+  est une bascule à deux états (calme / normal) ou un choix à trois ou plus.
+  « Heures Calmes », « normal »… — le « … » de la demande n'est pas tranché, et
+  les modes n'existent pas encore : ils sont à inventer, donc à nommer ;
+- **le dépôt du cœur** : la forme exposée. Un `switch` par enfant, un `select`
+  de modes, ou un service `pronote_ng.set_mode` ? Et surtout, un forçage
+  d'exécution qui ne recharge pas l'entrée ;
+- **ce dépôt** : rien avant les deux précédents. Ensuite, une carte au patron
+  commun des tâches 9 à 16 — et sa page de documentation devra dire ce que le
+  mode fait **au budget de requêtes**, pas seulement à l'affichage.
+
+### Un cas d'usage à ne pas perdre
+
+Cette nuit-là, les heures calmes ont été activées **pour tester un correctif**,
+pas pour économiser des requêtes. C'est un usage de mise au point, et il
+suggère que la carte a sa place sur un tableau de bord de **diagnostic** aux
+côtés de celle du limiteur, plutôt que sur la vue quotidienne d'un parent.
+
+---
+
 ## Après la tâche 18
 
 - Faire relire l'ensemble avec `superpowers:requesting-code-review`.
