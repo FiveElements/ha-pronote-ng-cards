@@ -210,4 +210,149 @@ describe('carte prochain-cours', () => {
     expect(t).toContain('09:00');
     expect(t).toContain('mardi');
   });
+
+  it("n'affiche aucune pastille « en cours » quand binary_sensor:in_class est absent", async () => {
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant' },
+      lesson('2026-09-08T08:30:00+02:00', { subject: 'Mathématiques' })
+    );
+    const t = text(el);
+    expect(t).not.toContain('Cours en ce moment');
+    // Assertion positive : le rendu du cours suivant reste intact.
+    expect(t).toContain('Mathématiques');
+  });
+
+  it("n'affiche aucune pastille « en cours » quand binary_sensor:in_class est à 'off'", async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:next_lesson',
+        entity_id: 'sensor.abc_prochain_cours',
+        device: 'dev_enfant',
+        state: '2026-09-08T08:30:00+02:00',
+        attributes: { subject: 'Mathématiques' },
+      },
+      {
+        key: 'binary_sensor:in_class',
+        entity_id: 'binary_sensor.abc_en_cours',
+        device: 'dev_enfant',
+        state: 'off',
+      },
+    ]);
+    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).not.toContain('Cours en ce moment');
+    expect(t).toContain('Mathématiques');
+  });
+
+  it("affiche une pastille « en cours » à 'on', sans changer le cours affiché", async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:next_lesson',
+        entity_id: 'sensor.abc_prochain_cours',
+        device: 'dev_enfant',
+        state: '2026-09-08T08:30:00+02:00',
+        attributes: { subject: 'Mathématiques' },
+      },
+      {
+        key: 'binary_sensor:in_class',
+        entity_id: 'binary_sensor.abc_en_cours',
+        device: 'dev_enfant',
+        state: 'on',
+      },
+    ]);
+    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Cours en ce moment');
+    // Le cours affiché reste celui d'après : la pastille ajoute un repère,
+    // elle ne se substitue jamais au contenu de la carte.
+    expect(t).toContain('Mathématiques');
+  });
+
+  it("n'affiche aucune notice de journée quand binary_sensor:lessons_canceled est absent", async () => {
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant' },
+      lesson('2026-09-08T08:30:00+02:00', { subject: 'Anglais' })
+    );
+    const t = text(el);
+    expect(t).not.toContain('Des cours sont annulés aujourd’hui');
+    expect(t).toContain('Anglais');
+  });
+
+  it("n'affiche aucune notice de journée quand binary_sensor:lessons_canceled est à 'off'", async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:next_lesson',
+        entity_id: 'sensor.abc_prochain_cours',
+        device: 'dev_enfant',
+        state: '2026-09-08T08:30:00+02:00',
+        attributes: { subject: 'Anglais' },
+      },
+      {
+        key: 'binary_sensor:lessons_canceled',
+        entity_id: 'binary_sensor.abc_cours_annules',
+        device: 'dev_enfant',
+        state: 'off',
+      },
+    ]);
+    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).not.toContain('Des cours sont annulés aujourd’hui');
+    expect(t).toContain('Anglais');
+  });
+
+  it("affiche une notice de journée quand binary_sensor:lessons_canceled est à 'on'", async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:next_lesson',
+        entity_id: 'sensor.abc_prochain_cours',
+        device: 'dev_enfant',
+        state: '2026-09-08T08:30:00+02:00',
+        attributes: { subject: 'Anglais' },
+      },
+      {
+        key: 'binary_sensor:lessons_canceled',
+        entity_id: 'binary_sensor.abc_cours_annules',
+        device: 'dev_enfant',
+        state: 'on',
+      },
+    ]);
+    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Des cours sont annulés aujourd’hui');
+    expect(t).toContain('Anglais');
+  });
+
+  it(
+    'la notice de journée ne marque jamais le cours affiché comme annulé (pas de doublon avec ' +
+      "l'attribut `canceled` du prochain cours)",
+    async () => {
+      const hass = makeHass([
+        {
+          key: 'sensor:next_lesson',
+          entity_id: 'sensor.abc_prochain_cours',
+          device: 'dev_enfant',
+          state: '2026-09-08T08:30:00+02:00',
+          attributes: { subject: 'Anglais', canceled: false },
+        },
+        {
+          key: 'binary_sensor:lessons_canceled',
+          entity_id: 'binary_sensor.abc_cours_annules',
+          device: 'dev_enfant',
+          state: 'on',
+        },
+      ]);
+      const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+      const t = text(el);
+      // La notice de journée apparaît bien...
+      expect(t).toContain('Des cours sont annulés aujourd’hui');
+      // ... mais le cours affiché, lui, n'est ni barré ni marqué annulé :
+      // seul l'attribut `canceled` du prochain cours peut poser ces marques,
+      // et il vaut `false` ici.
+      expect(el.shadowRoot?.querySelector('.row.canceled')).toBeNull();
+      expect(el.shadowRoot?.querySelector('.chip.problem')).toBeNull();
+      expect(t).toContain('Anglais');
+    }
+  );
 });

@@ -20,6 +20,45 @@ export const REFRESH_COOLDOWN_MS = 15 * 60 * 1000;
 
 const ABSENT_STATES = new Set(['unknown', 'unavailable']);
 
+/**
+ * La garde de rafraîchissement survit au rechargement de la page.
+ *
+ * Elle vivait en mémoire d'instance : recharger l'onglet réarmait le bouton
+ * alors que le serveur, lui, refusait toujours le boost. L'utilisateur
+ * appuyait, rien ne se passait, et il recommençait — exactement le
+ * comportement que le plafond existe pour éviter, sur un serveur qui
+ * sanctionne l'adresse IP.
+ *
+ * La clé porte l'appareil : deux enfants ont chacun leur garde. Le stockage
+ * peut être refusé (navigation privée, réglages du navigateur) ; dans ce cas
+ * on retombe silencieusement sur le comportement d'avant, dégradé mais jamais
+ * bloquant.
+ *
+ * Ce que cela ne corrige PAS : la garde reste globale par appareil, alors que
+ * le plafond serveur est par palier. Deux paliers différents partagent donc
+ * une garde qu'ils ne devraient pas partager. Le remède complet est une
+ * entité de diagnostic côté intégration, qui n'existe pas.
+ */
+const GUARD_PREFIX = 'pronote-ng-cards:refreshed-at:';
+
+const readGuard = (deviceId: string | undefined): number => {
+  if (!deviceId) return 0;
+  try {
+    return Number(globalThis.localStorage?.getItem(GUARD_PREFIX + deviceId)) || 0;
+  } catch {
+    return 0;
+  }
+};
+
+const writeGuard = (deviceId: string | undefined, at: number): void => {
+  if (!deviceId) return;
+  try {
+    globalThis.localStorage?.setItem(GUARD_PREFIX + deviceId, String(at));
+  } catch {
+    // Stockage indisponible : la garde reste celle de l'instance.
+  }
+};
+
 export function makeCardClass(spec: CardSpec): CustomElementConstructor {
   class PronoteCardBase extends LitElement {
     static styles = sharedStyles;
@@ -76,6 +115,12 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
     }
 
     getCardSize(): number {
+      if (typeof spec.size === 'function') {
+        // Home Assistant peut interroger la taille avant `setConfig` : dans ce
+        // cas la carte n'a rien à mesurer, et le repli vaut mieux qu'un appel
+        // sur une configuration absente.
+        return this.config ? spec.size(this.config) : 3;
+      }
       return spec.size ?? 3;
     }
 
@@ -259,6 +304,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
           // retomber sous le refroidissement, pas en envoyer un second — la
           // seule carte qui touche au budget de requêtes en dépend.
           this.refreshedAt = Date.now();
+          writeGuard(config.device_id, this.refreshedAt);
           this.refreshFailed = false;
           try {
             await callService(
@@ -272,7 +318,12 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
             this.refreshFailed = true;
           }
         },
-        refreshCoolingDown: Date.now() - this.refreshedAt < REFRESH_COOLDOWN_MS,
+        // La garde retenue est la plus récente des deux : celle de l'instance
+        // et celle relue du stockage. Un rechargement de page ne réarme donc
+        // plus le bouton avant l'heure.
+        refreshCoolingDown:
+          Date.now() - Math.max(this.refreshedAt, readGuard(config.device_id)) <
+          REFRESH_COOLDOWN_MS,
         refreshFailed: this.refreshFailed,
       };
     }

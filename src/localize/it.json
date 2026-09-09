@@ -29,7 +29,9 @@
     "show_wake_up": "Mostra l'orario della sveglia",
     "show_end_of_day": "Mostra la fine delle lezioni",
     "next_test": "Prossima verifica",
-    "show_next_test": "Mostra la prossima verifica"
+    "show_next_test": "Mostra la prossima verifica",
+    "in_class": "Lezione in corso",
+    "lessons_canceled": "Alcune lezioni sono annullate oggi"
   },
   "menu": {
     "name": "Mensa",
@@ -101,7 +103,11 @@
     "in_progress": "Assenza in corso",
     "upcoming": "Sanzione in arrivo",
     "sections": "Blocchi visualizzati",
-    "limit": "Numero massimo per blocco"
+    "limit": "Numero massimo per blocco",
+    "unjustified_absences": "Assenze non giustificate",
+    "next_punishment": "Prossima punizione",
+    "justified_m": "giustificato",
+    "unjustified_m": "non giustificato"
   },
   "eleve": {
     "name": "Alunno",
@@ -135,6 +141,10 @@
     "show_refresh": "Mostra il pulsante di aggiornamento",
     "refresh_tier": "Livello da privilegiare",
     "refresh_note": "Non genera alcuna chiamata: segnala una priorità, nei limiti del budget.",
-    "refresh_failed": "La richiesta non è andata a buon fine. Riprova tra poco."
+    "refresh_failed": "La richiesta non è andata a buon fine. Riprova tra poco.",
+    "session_age": "Età della sessione",
+    "session_lifetime": "Durata della sessione",
+    "logins_today": "Accessi da mezzanotte",
+    "throttled": "Raccolte limitate"
   }
 }

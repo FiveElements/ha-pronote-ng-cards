@@ -1,6 +1,6 @@
 import { html, type TemplateResult } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } from '../core/types';
-import { formatDuration, parseTimestamp } from '../core/format';
+import { formatDayLabel, formatDuration, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { latestFirst, listAttr, sortedBy } from '../core/list';
 
@@ -31,8 +31,13 @@ interface Punishment {
 const ABSENCES: EntityKey = 'sensor:absences';
 const DELAYS: EntityKey = 'sensor:delays';
 const PUNISHMENTS: EntityKey = 'sensor:punishments';
+// Un parent dont l'intégration ne publie que ce capteur (palier différent des
+// trois autres) doit quand même obtenir une carte utile : voir requiresAny
+// ci-dessous, et le rapport de correctifs (dette2).
+const UNJUSTIFIED_ABSENCES: EntityKey = 'sensor:unjustified_absences';
 const IN_PROGRESS: EntityKey = 'binary_sensor:absence_in_progress';
 const UPCOMING: EntityKey = 'binary_sensor:punishment_upcoming';
+const NEXT_PUNISHMENT: EntityKey = 'sensor:next_punishment';
 
 const sectionsOf = (c: Config): Section[] =>
   c.sections && c.sections.length > 0 ? c.sections : ['absences', 'delays', 'punishments'];
@@ -66,8 +71,8 @@ export const SPEC: CardSpec<Config> = {
   size: 6,
   stub: { sections: ['absences', 'delays', 'punishments'] },
   requires: () => [],
-  requiresAny: () => [ABSENCES, DELAYS, PUNISHMENTS],
-  optional: () => [IN_PROGRESS, UPCOMING],
+  requiresAny: () => [ABSENCES, DELAYS, PUNISHMENTS, UNJUSTIFIED_ABSENCES],
+  optional: () => [IN_PROGRESS, UPCOMING, NEXT_PUNISHMENT],
   schema: (_config: Config, t?: Translate) => {
     const tr = t ?? ((path: string) => path);
     return [
@@ -93,18 +98,64 @@ export const SPEC: CardSpec<Config> = {
     const limit = c.limit ?? 8;
     const out: TemplateResult[] = [];
 
+    // Compteurs en tête (spec §5.7), avant le détail par section. Chacun ne
+    // paraît que si son capteur est résolu et exploitable : `ctx.status`
+    // distingue déjà « absent » et « pas encore collecté », inutile de le
+    // refaire ici. `unjustified_absences` n'a pas de section qui lui soit
+    // propre — c'est une sous-mesure des absences, on le rattache donc au
+    // même filtre qu'« absences ».
+    if (wanted.includes('absences') && ctx.status(ABSENCES) === 'ok') {
+      out.push(
+        listRow({ primary: ctx.t('vie_scolaire.absences'), trailing: ctx.entity(ABSENCES)!.state })
+      );
+    }
+    if (wanted.includes('absences') && ctx.status(UNJUSTIFIED_ABSENCES) === 'ok') {
+      out.push(
+        listRow({
+          primary: ctx.t('vie_scolaire.unjustified_absences'),
+          trailing: chip(ctx.entity(UNJUSTIFIED_ABSENCES)!.state, 'warn'),
+        })
+      );
+    }
+    if (wanted.includes('delays') && ctx.status(DELAYS) === 'ok') {
+      out.push(
+        listRow({ primary: ctx.t('vie_scolaire.delays'), trailing: ctx.entity(DELAYS)!.state })
+      );
+    }
+    if (wanted.includes('punishments') && ctx.status(PUNISHMENTS) === 'ok') {
+      out.push(
+        listRow({
+          primary: ctx.t('vie_scolaire.punishments'),
+          trailing: ctx.entity(PUNISHMENTS)!.state,
+        })
+      );
+    }
+
     // Les bandeaux sont du contenu à part entière : une absence en cours ou
     // une punition à venir, souvent pas encore consignées dans les listes
     // détaillées (`items`), ne doivent jamais être écrasées par l'état vide.
-    let banners = 0;
-
     if (ctx.entity(IN_PROGRESS)?.state === 'on') {
       out.push(html`<div class="notice problem">${ctx.t('vie_scolaire.in_progress')}</div>`);
-      banners++;
     }
     if (ctx.entity(UPCOMING)?.state === 'on') {
       out.push(html`<div class="notice problem">${ctx.t('vie_scolaire.upcoming')}</div>`);
-      banners++;
+      // `sensor:next_punishment` est optionnelle : non résolue, le bandeau
+      // reste tel quel, sans échéance et sans message d'erreur. Résolue, on
+      // rend l'échéance avec les formateurs de format.ts (jamais l'horodatage
+      // brut), toujours avec ctx.language et ctx.timeZone — même paire que
+      // `next_test` sur la carte prochain-cours : jour ET heure comptent,
+      // rien ne dit qu'une punition tombe le jour même.
+      if (ctx.status(NEXT_PUNISHMENT) === 'ok') {
+        const when = [
+          formatDayLabel(ctx.entity(NEXT_PUNISHMENT)?.state, ctx.language, ctx.timeZone),
+          formatTime(ctx.entity(NEXT_PUNISHMENT)?.state, ctx.language, ctx.timeZone),
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        if (when) {
+          out.push(listRow({ primary: ctx.t('vie_scolaire.next_punishment'), secondary: when }));
+        }
+      }
     }
 
     let rows = 0;
@@ -125,9 +176,8 @@ export const SPEC: CardSpec<Config> = {
               secondary:
                 a.hours !== undefined ? formatDuration(a.hours * 60, ctx.language) : undefined,
               trailing: chip(
-                // « justifiée » est féminin (une absence) : accord correct
-                // ici. La même clé, réutilisée plus bas pour un retard
-                // (masculin), ne l'est pas — voir le rapport de correctifs.
+                // « justifiée » est féminin : correct pour une absence. Le
+                // retard, plus bas, prend les clés masculines dédiées.
                 a.justified ? ctx.t('vie_scolaire.justified') : ctx.t('vie_scolaire.unjustified'),
                 a.justified ? 'neutral' : 'warn'
               ),
@@ -150,10 +200,12 @@ export const SPEC: CardSpec<Config> = {
               secondary:
                 d.minutes !== undefined ? formatDuration(d.minutes, ctx.language) : undefined,
               trailing: chip(
-                // Un retard est masculin ; ces clés sont accordées au
-                // féminin dans les quatre catalogues. Aucune clé masculine
-                // n'existe pour l'instant — voir le rapport de correctifs.
-                d.justified ? ctx.t('vie_scolaire.justified') : ctx.t('vie_scolaire.unjustified'),
+                // Un retard est masculin : `justified_m` / `unjustified_m`.
+                // Les clés `justified` / `unjustified` (féminin) restent
+                // réservées à une absence, juste au-dessus.
+                d.justified
+                  ? ctx.t('vie_scolaire.justified_m')
+                  : ctx.t('vie_scolaire.unjustified_m'),
                 d.justified ? 'neutral' : 'warn'
               ),
             })
@@ -182,8 +234,11 @@ export const SPEC: CardSpec<Config> = {
       }
     }
 
+    // Le vide ne porte que sur le détail par section (`rows`) : les compteurs
+    // et le bandeau d'échéance, poussés plus haut dans `out`, restent affichés
+    // même quand aucune section détaillée n'a de ligne — sans quoi un simple
+    // `return emptyState(...)` les effacerait tous les deux.
     if (rows === 0) {
-      if (banners === 0) return emptyState(ctx.t('vie_scolaire.empty'));
       out.push(emptyState(ctx.t('vie_scolaire.empty')));
     }
     return html`${out}`;

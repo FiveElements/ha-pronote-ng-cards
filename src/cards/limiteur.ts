@@ -1,6 +1,6 @@
 import { html, type TemplateResult } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
-import { formatRelative, formatTime } from '../core/format';
+import { formatDuration, formatRelative, formatTime } from '../core/format';
 import { chip, listRow } from '../core/ui/parts';
 import { listAttr } from '../core/list';
 
@@ -14,6 +14,10 @@ const BUDGET: EntityKey = 'sensor:remaining_budget';
 const CALLS: EntityKey = 'sensor:calls_today';
 const NEXT: EntityKey = 'sensor:next_collection';
 const LAST: EntityKey = 'sensor:last_collection';
+const SESSION_AGE: EntityKey = 'sensor:session_age';
+const SESSION_LIFETIME: EntityKey = 'sensor:session_lifetime';
+const LOGINS: EntityKey = 'sensor:logins_today';
+const THROTTLED: EntityKey = 'binary_sensor:throttled';
 
 const TONES: Record<string, 'ok' | 'warn' | 'problem'> = {
   nominal: 'ok',
@@ -41,7 +45,7 @@ export const SPEC: CardSpec<Config> = {
   // socle pose et retire l'intervalle ; on ne met jamais de `setInterval` ici.
   tickMs: 30_000,
   requires: () => [STATE],
-  optional: () => [BUDGET, CALLS, NEXT, LAST],
+  optional: () => [BUDGET, CALLS, NEXT, LAST, SESSION_AGE, SESSION_LIFETIME, LOGINS, THROTTLED],
   schema: () => [
     { name: 'show_refresh', selector: { boolean: {} } },
     { name: 'refresh_tier', selector: { text: {} } },
@@ -122,6 +126,50 @@ export const SPEC: CardSpec<Config> = {
           trailing: formatRelative(ctx.entity(NEXT)?.state, lang),
         })
       );
+    }
+
+    if (ctx.status(LOGINS) === 'ok') {
+      out.push(
+        listRow({ primary: ctx.t('limiteur.logins_today'), trailing: ctx.entity(LOGINS)?.state })
+      );
+    }
+
+    // `sensor:session_age` et `sensor:session_lifetime` publient leur état en
+    // minutes, comme toutes les durées consommées par `formatDuration` dans ce
+    // projet (voir vie-scolaire.ts) : jamais un nombre nu suivi d'une unité
+    // codée en dur.
+    if (ctx.status(SESSION_AGE) === 'ok') {
+      out.push(
+        listRow({
+          primary: ctx.t('limiteur.session_age'),
+          trailing: formatDuration(Number(ctx.entity(SESSION_AGE)?.state), lang),
+        })
+      );
+    }
+
+    if (ctx.status(SESSION_LIFETIME) === 'ok') {
+      out.push(
+        listRow({
+          primary: ctx.t('limiteur.session_lifetime'),
+          trailing: formatDuration(Number(ctx.entity(SESSION_LIFETIME)?.state), lang),
+        })
+      );
+    }
+
+    // `binary_sensor:throttled` recoupe la pastille d'état : quand
+    // `sensor:limiter_state` vaut déjà `throttled`, la pastille l'affirme et
+    // ce capteur binaire n'apporterait rien de plus — l'afficher quand même
+    // dupliquerait la même affirmation sur deux surfaces, avec le risque
+    // qu'elles se désaccordent un jour (l'un `on`, l'autre pas encore
+    // remonté à `throttled`) sans qu'on sache laquelle croire. Il n'est donc
+    // rendu que quand il porte une information que la pastille ne porte pas
+    // déjà : bridé alors que l'état affiché n'est pas `throttled`.
+    if (
+      state !== 'throttled' &&
+      ctx.status(THROTTLED) === 'ok' &&
+      ctx.entity(THROTTLED)?.state === 'on'
+    ) {
+      out.push(html`<div class="notice">${ctx.t('limiteur.throttled')}</div>`);
     }
 
     if (ctx.config.show_refresh) {

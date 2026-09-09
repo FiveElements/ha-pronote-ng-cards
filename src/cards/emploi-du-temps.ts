@@ -76,13 +76,11 @@ export const SPEC: CardSpec<Config> = {
   description: 'Les cours du jour, du lendemain ou de la semaine.',
   key: 'emploi_du_temps',
   scope: 'child',
-  // `size` reste un nombre statique (voir CardSpec.size dans src/core/types.ts) :
-  // il ne peut pas dépendre de `range`, puisque `getCardSize()` (src/core/base-card.ts)
-  // ne lit que cette valeur, sans jamais consulter la config — changer cela
-  // demanderait de toucher au socle, hors périmètre de ce correctif. On
-  // retient donc la hauteur d'une journée normale ; en mode semaine (trente à
-  // quarante lignes), l'annonce à Home Assistant reste sous-estimée.
-  size: 8,
+  // La hauteur dépend du mode : une journée tient en une poignée de lignes,
+  // une semaine en trente à quarante, plus un intertitre par jour. Annoncer 8
+  // dans tous les cas faisait empiler les colonnes de travers dès qu'on
+  // passait en semaine.
+  size: (c) => (c.range === 'week' ? 24 : 8),
   stub: { range: 'today', show_rooms: true },
   requires: (c) => [keyFor(c)],
   optional: () => [IN_CLASS, TEST_TODAY, OUTING_TODAY],

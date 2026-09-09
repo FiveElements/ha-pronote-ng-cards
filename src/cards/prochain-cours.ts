@@ -14,6 +14,28 @@ const WAKE: EntityKey = 'sensor:next_wake_up';
 const END: EntityKey = 'sensor:end_of_lessons';
 const TEST: EntityKey = 'sensor:next_test';
 
+/**
+ * Deux capteurs binaires optionnels qui parlent de la JOURNÉE, là où le reste
+ * de la carte parle du PROCHAIN cours : question différente, donc jamais de
+ * doublon possible avec `NEXT`.
+ *
+ * `in_class` répond à « un cours a-t-il lieu maintenant ? ». Il n'influence
+ * jamais quel cours est affiché — la carte continue de montrer le *suivant*
+ * — il ajoute seulement un repère de contexte, pour que le lecteur ne prenne
+ * pas la ligne affichée pour le cours en cours (même esprit que la variable
+ * `IN_CLASS` de emploi-du-temps.ts, rôle différent : ici un simple repère,
+ * là-bas un droit de veto sur le surlignage).
+ *
+ * `lessons_canceled` répond à « des cours sont-ils annulés aujourd'hui ? ».
+ * L'attribut `canceled` du prochain cours reste seul maître du cours
+ * affiché — strictement plus précis pour CE cours-là — mais ne peut rien
+ * dire des autres créneaux de la journée. Cette notice ne marque donc
+ * jamais le cours affiché comme annulé ; elle informe seulement qu'un
+ * cours de la journée l'est, quelque part.
+ */
+const IN_CLASS: EntityKey = 'binary_sensor:in_class';
+const LESSONS_CANCELED: EntityKey = 'binary_sensor:lessons_canceled';
+
 /** `teachers` arrive tantôt en tableau, tantôt en chaîne selon la version de l'intégration. */
 const teachersOf = (value: unknown): string => {
   if (Array.isArray(value)) return value.filter(Boolean).join(', ');
@@ -32,6 +54,8 @@ export const SPEC: CardSpec<Config> = {
     ...(c.show_wake_up ? [WAKE] : []),
     ...(c.show_end_of_day ? [END] : []),
     ...(c.show_next_test ? [TEST] : []),
+    IN_CLASS,
+    LESSONS_CANCELED,
   ],
   schema: () => [
     { name: 'show_wake_up', selector: { boolean: {} } },
@@ -75,7 +99,22 @@ export const SPEC: CardSpec<Config> = {
     const startTime = start ? formatTime(e.state, lang, tz) : '';
     const timeRange = endTime ? `${startTime} – ${endTime}` : startTime;
 
+    // Deux entités optionnelles muettes tant qu'elles ne sont pas résolues à
+    // 'on' : absentes, non résolues ou à 'off', elles ne produisent aucune
+    // pastille — l'absence d'information n'est pas une information (spec
+    // « les trois états », qui appartient ici entièrement à la carte
+    // puisque ces deux clés sont optionnelles).
+    const inClass = ctx.status(IN_CLASS) === 'ok' && ctx.entity(IN_CLASS)?.state === 'on';
+    const lessonsCanceledToday =
+      ctx.status(LESSONS_CANCELED) === 'ok' && ctx.entity(LESSONS_CANCELED)?.state === 'on';
+
     return html`
+      ${inClass || lessonsCanceledToday
+        ? html`<div class="row">
+            ${inClass ? chip(ctx.t('prochain_cours.in_class')) : ''}
+            ${lessonsCanceledToday ? chip(ctx.t('prochain_cours.lessons_canceled'), 'warn') : ''}
+          </div>`
+        : ''}
       ${listRow({
         primary: subject || ctx.t('prochain_cours.name'),
         secondary: start

@@ -5,6 +5,7 @@ import type { CardSpec, RenderCtx } from '../src/core/types';
 import { makeHass } from './fixtures/hass';
 import { mountCard, text } from './fixtures/mount';
 
+
 const SPEC: CardSpec = {
   type: 'pronote-ng-test',
   name: 'Test',
@@ -33,6 +34,8 @@ const SPEC_ANY: CardSpec = {
   render: (ctx) =>
     html`<p class="ok">${ctx.entity('sensor:a')?.state ?? ctx.entity('sensor:b')?.state}</p>`,
 };
+
+const btnOf = (el: Element) => el.shadowRoot?.querySelector('button.refresh-btn');
 
 const mountRefreshCard = (hass: ReturnType<typeof makeHass>) =>
   mountCard(
@@ -359,6 +362,26 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
     await el.updateComplete;
 
     expect(text(el)).toContain('échoué');
+  });
+
+  it('garde le bouton grisé après un remontage : un rechargement de page ne réarme pas avant l’heure', async () => {
+    // La garde vivait en mémoire d'instance : recharger l'onglet réarmait le
+    // bouton alors que le serveur refusait toujours le boost. L'utilisateur
+    // appuyait, rien ne se passait, il recommençait — sur un serveur qui
+    // sanctionne l'adresse IP.
+    const hass = makeHass([]);
+    probeRefresh(hass);
+    hass.callService = () => Promise.resolve(undefined);
+
+    const first = await mountRefreshCard(hass);
+    btnOf(first)?.dispatchEvent(new MouseEvent('click'));
+    await first.updateComplete;
+    expect(btnOf(first)?.hasAttribute('disabled')).toBe(true);
+
+    // Nouveau montage : l'instance précédente et son refreshedAt sont perdus,
+    // exactement comme après un rechargement de page.
+    const second = await mountRefreshCard(hass);
+    expect(btnOf(second)?.hasAttribute('disabled')).toBe(true);
   });
 });
 

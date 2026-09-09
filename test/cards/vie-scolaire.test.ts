@@ -296,6 +296,117 @@ describe('carte vie-scolaire', () => {
     expect(t).toContain('Rien à signaler');
   });
 
+  it('affiche son compteur quand `sensor:unjustified_absences` est le seul capteur résolu', async () => {
+    // Cas exact du correctif : avant l'ajout à `requiresAny`, un parent dont
+    // l'intégration ne publie que ce capteur voyait « entité introuvable »
+    // alors que la donnée était bien là.
+    const hass = makeHass([
+      {
+        key: 'sensor:unjustified_absences',
+        entity_id: 'sensor.abc_absences_non_justifiees',
+        device: 'dev_enfant',
+        state: '2',
+      },
+    ]);
+    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).not.toContain('introuvable');
+    expect(t).toContain('Absences non justifiées');
+    expect(t).toContain('2');
+  });
+
+  it('signale une punition à venir sans échéance quand `sensor:next_punishment` est absent', async () => {
+    const hass = full();
+    hass.entities['binary_sensor.abc_punition_a_venir'] = {
+      entity_id: 'binary_sensor.abc_punition_a_venir',
+      device_id: 'dev_enfant',
+      labels: [],
+      platform: 'pronote_ng',
+      translation_key: 'punishment_upcoming',
+    };
+    hass.states['binary_sensor.abc_punition_a_venir'] = {
+      entity_id: 'binary_sensor.abc_punition_a_venir',
+      state: 'on',
+      attributes: {},
+      last_changed: '2026-09-08T07:00:00+00:00',
+      last_updated: '2026-09-08T07:00:00+00:00',
+    };
+    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Punition à venir');
+    expect(t).not.toContain('Prochaine punition');
+  });
+
+  it('affiche l’échéance formatée quand `sensor:next_punishment` est résolu', async () => {
+    const hass = full();
+    hass.entities['binary_sensor.abc_punition_a_venir'] = {
+      entity_id: 'binary_sensor.abc_punition_a_venir',
+      device_id: 'dev_enfant',
+      labels: [],
+      platform: 'pronote_ng',
+      translation_key: 'punishment_upcoming',
+    };
+    hass.states['binary_sensor.abc_punition_a_venir'] = {
+      entity_id: 'binary_sensor.abc_punition_a_venir',
+      state: 'on',
+      attributes: {},
+      last_changed: '2026-09-08T07:00:00+00:00',
+      last_updated: '2026-09-08T07:00:00+00:00',
+    };
+    hass.entities['sensor.abc_prochaine_punition'] = {
+      entity_id: 'sensor.abc_prochaine_punition',
+      device_id: 'dev_enfant',
+      labels: [],
+      platform: 'pronote_ng',
+      translation_key: 'next_punishment',
+    };
+    hass.states['sensor.abc_prochaine_punition'] = {
+      entity_id: 'sensor.abc_prochaine_punition',
+      state: '2026-09-15T14:00:00+00:00',
+      attributes: {},
+      last_changed: '2026-09-08T07:00:00+00:00',
+      last_updated: '2026-09-08T07:00:00+00:00',
+    };
+    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Prochaine punition');
+    expect(t).toContain('septembre');
+    expect(t).not.toContain('2026-09-15T14:00:00+00:00');
+  });
+
+  it('accorde « justifié » au féminin pour une absence, au masculin pour un retard', async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:absences',
+        entity_id: 'sensor.abc_absences',
+        device: 'dev_enfant',
+        state: '1',
+        attributes: {
+          items: [{ from_date: '2026-09-01', to_date: '2026-09-01', hours: 2, justified: false }],
+        },
+      },
+      {
+        key: 'sensor:delays',
+        entity_id: 'sensor.abc_retards',
+        device: 'dev_enfant',
+        state: '1',
+        attributes: { items: [{ date: '2026-09-02', minutes: 10, justified: false }] },
+      },
+    ]);
+    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('non justifiée');
+    expect(t).toContain('non justifié');
+    // Comptage plutôt qu'inclusion de sous-chaîne : « non justifié » est un
+    // préfixe de « non justifiée », une simple assertion `toContain` ne
+    // distinguerait donc pas un accord correct d'un accord resté féminin
+    // partout.
+    const feminineCount = (t.match(/non justifiée/g) ?? []).length;
+    const allCount = (t.match(/non justifié/g) ?? []).length;
+    expect(feminineCount).toBe(1);
+    expect(allCount - feminineCount).toBe(1);
+  });
+
   it('demande au catalogue les libellés des options du sélecteur sections', () => {
     const paths: string[] = [];
     const monT = (path: string): string => {

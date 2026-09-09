@@ -305,6 +305,17 @@ describe('carte emploi-du-temps', () => {
     expect(text(el)).toContain('sensor:lessons_today');
   });
 
+  it('annonce une hauteur plus grande en mode semaine qu’en mode journée', () => {
+    // `size` est une fonction depuis que le socle l'accepte : une semaine rend
+    // trente à quarante lignes là où une journée en rend une poignée, et un
+    // nombre figé faisait empiler les colonnes de travers.
+    const size = SPEC.size;
+    expect(typeof size).toBe('function');
+    if (typeof size !== 'function') return;
+    expect(size({ type: 'x', range: 'week' })).toBeGreaterThan(size({ type: 'x' }));
+    expect(size({ type: 'x', range: 'today' })).toBe(size({ type: 'x' }));
+  });
+
   it('marque « en cours » le créneau qui contient l’instant donné', async () => {
     testClock.now = '2026-09-08T08:30:00+02:00';
     const el = await mountCard(

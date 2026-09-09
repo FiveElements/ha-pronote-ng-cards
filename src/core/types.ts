@@ -103,7 +103,15 @@ export interface CardSpec<C extends PronoteCardConfig = PronoteCardConfig> {
   schema(config: C, t?: Translate): HaFormSchema[];
   /** Config par défaut proposée par l'éditeur de tableau de bord. */
   stub?: Partial<C>;
-  size?: number;
+  /**
+   * Hauteur annoncée à Home Assistant, qui s'en sert pour répartir les cartes
+   * en colonnes. Une fonction plutôt qu'un nombre, parce qu'une même carte
+   * n'a pas la même hauteur selon sa configuration : l'emploi du temps rend
+   * une poignée de lignes en mode journée et trente à quarante en mode
+   * semaine. Un nombre figé faisait mentir toutes les configurations sauf
+   * une, et Home Assistant empilait alors les colonnes de travers.
+   */
+  size?: number | ((config: C) => number);
   /**
    * Déclare que la carte a besoin d'être repeinte périodiquement même sans
    * qu'aucune propriété réactive ne change — compte à rebours, créneau en

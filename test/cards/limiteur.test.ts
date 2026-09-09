@@ -18,6 +18,7 @@ beforeAll(() => {
   defineCard(SPEC);
 });
 
+
 const compte = (key: string, entity_id: string, state: string, attributes = {}) =>
   ({ key, entity_id, device: 'dev_compte' as const, state, attributes });
 
@@ -46,6 +47,89 @@ describe('carte limiteur', () => {
     expect(t).toContain('400');
     expect(t).toContain('timetable');
     expect(t).toContain('marks');
+  });
+
+  it("n'affiche pas les connexions du jour quand l'entité est absente", async () => {
+    const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    expect(text(el)).not.toContain('Connexions depuis minuit');
+  });
+
+  it('affiche les connexions du jour quand `sensor:logins_today` est résolue', async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:logins_today', 'sensor.cpt_connexions', '3'),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Connexions depuis minuit');
+    expect(t).toContain('3');
+  });
+
+  it("n'affiche pas l'âge de la session quand l'entité est absente", async () => {
+    const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    expect(text(el)).not.toContain('Âge de la session');
+  });
+
+  it("affiche l'âge de la session mis en forme (minutes) quand `sensor:session_age` est résolue", async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:session_age', 'sensor.cpt_age', '45'),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Âge de la session');
+    // La mise en forme, pas la valeur brute : « 45 min », jamais « 45 » nu.
+    expect(t).toContain('45 min');
+  });
+
+  it("n'affiche pas la durée de vie de la session quand l'entité est absente", async () => {
+    const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    expect(text(el)).not.toContain('Durée de vie de la session');
+  });
+
+  it("affiche la durée de vie de la session mise en forme (heures) quand `sensor:session_lifetime` est résolue", async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:session_lifetime', 'sensor.cpt_duree', '135'),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Durée de vie de la session');
+    // La mise en forme, pas la valeur brute : « 2 h 15 », jamais « 135 » nu.
+    expect(t).toContain('2 h 15');
+  });
+
+  it("n'affiche pas de mention de bridage quand `binary_sensor:throttled` est absente", async () => {
+    const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    expect(text(el)).not.toContain('Collectes bridées');
+  });
+
+  it('affiche la mention de bridage quand `binary_sensor:throttled` est à `on` et que la pastille ne dit pas déjà `throttled`', async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('binary_sensor:throttled', 'binary_sensor.cpt_bride', 'on'),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).toContain('Nominal');
+    expect(t).toContain('Collectes bridées');
+  });
+
+  it("n'ajoute pas la mention de bridage quand la pastille dit déjà `throttled` (pas de doublon)", async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'throttled'),
+      compte('binary_sensor:throttled', 'binary_sensor.cpt_bride', 'on'),
+    ]);
+    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    // La pastille porte déjà l'information : positif sur elle...
+    expect(t).toContain('Bridé');
+    // ...et aucune mention supplémentaire redondante.
+    expect(t).not.toContain('Collectes bridées');
   });
 
   it("n'affiche jamais l'empreinte de session", async () => {

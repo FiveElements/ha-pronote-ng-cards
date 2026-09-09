@@ -29,7 +29,9 @@
     "show_wake_up": "Mostrar a hora de despertar",
     "show_end_of_day": "Mostrar o fim das aulas",
     "next_test": "Próxima avaliação",
-    "show_next_test": "Mostrar a próxima avaliação"
+    "show_next_test": "Mostrar a próxima avaliação",
+    "in_class": "Aula em curso",
+    "lessons_canceled": "Há aulas canceladas hoje"
   },
   "menu": {
     "name": "Cantina",
@@ -101,7 +103,11 @@
     "in_progress": "Falta em curso",
     "upcoming": "Sanção prevista",
     "sections": "Blocos apresentados",
-    "limit": "Número máximo por bloco"
+    "limit": "Número máximo por bloco",
+    "unjustified_absences": "Faltas não justificadas",
+    "next_punishment": "Próxima punição",
+    "justified_m": "justificado",
+    "unjustified_m": "não justificado"
   },
   "eleve": {
     "name": "Aluno",
@@ -135,6 +141,10 @@
     "show_refresh": "Mostrar o botão de atualização",
     "refresh_tier": "Nível a priorizar",
     "refresh_note": "Não desencadeia nenhuma chamada: assinala uma prioridade, dentro do limite do orçamento.",
-    "refresh_failed": "O pedido não foi concluído. Tente novamente dentro de instantes."
+    "refresh_failed": "O pedido não foi concluído. Tente novamente dentro de instantes.",
+    "session_age": "Idade da sessão",
+    "session_lifetime": "Tempo de vida da sessão",
+    "logins_today": "Ligações desde a meia-noite",
+    "throttled": "Recolhas limitadas"
   }
 }
