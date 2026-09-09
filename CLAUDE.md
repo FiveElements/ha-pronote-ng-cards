@@ -50,6 +50,17 @@ Elle rend la **première** correspondance, sans détection de conflit. C'est pou
 
 L'intégration crée un appareil par enfant, rattaché à un appareil de compte par `via_device_id`. **Toutes les cartes se configurent avec l'appareil de l'enfant**, y compris celle du limiteur qui lit des entités de diagnostic vivant sur le compte : `scope: 'account'` fait remonter le socle par `via_device_id`. C'est le point le plus déroutant de l'intégration — ne demandez jamais à l'utilisateur de choisir un autre appareil.
 
+### Ce que `hass` ne dit pas ce qu'on croit
+
+**`hass.locale.time_zone` n'est pas un identifiant IANA.** C'est une préférence d'affichage : `'local'` (le fuseau du navigateur) ou `'server'` (celui de l'instance, publié dans `hass.config.time_zone`). Le passer tel quel à `Intl.DateTimeFormat` lève une `RangeError` sur `'local'`, qui est la valeur par défaut. `resolveTimeZone` (dans `base-card.ts`) traduit la préférence **puis vérifie** le fuseau obtenu — une valeur qu'`Intl` refuse ne peut pas sortir du socle.
+
+Le socle passait la valeur brute. Sur une instance réelle, les deux cartes qui mettent en forme une date n'affichaient **rien du tout** — racine d'ombre vide, pas même un message — en jetant une exception à chaque évènement de la maison (1802 relevées en une session). Les cartes sans date s'affichaient, ce qui rendait la panne partielle et donc illisible.
+
+Deux leçons qui valent au-delà de ce champ :
+
+1. **`render()` est enveloppé dans un `try`/`catch`.** Lit laisse la racine d'ombre VIDE quand `render` lève, et Home Assistant rappelle le rendu à chaque évènement : une carte fautive disparaît de la page sans un mot. Le filet affiche un message et laisse la trace en console. Ne le retirez pas.
+2. **La fixture de test mentait.** Elle écrivait `time_zone: 'Europe/Paris'`, ce qu'aucune instance n'envoie. Une fixture qui invente une forme que le producteur ne produit pas ne protège de rien — elle garantit seulement que le test et le code partagent la même erreur. Vérifiez les formes d'attributs contre la source de l'intégration, pas contre votre souvenir : c'est ainsi qu'on a découvert que la carte notes lisait `grade` là où l'intégration publie `value`, et affichait donc **toutes** les notes en « — ».
+
 ### Les trois états
 
 C'est la raison d'être du projet : les cartes `markdown` qu'il remplace confondent ces trois cas.
@@ -61,6 +72,8 @@ C'est la raison d'être du projet : les cartes `markdown` qu'il remplace confond
 | vide | l'état est là, la liste est simplement vide | **la carte** |
 
 Une carte ne réimplémente jamais les deux premiers : quand `render()` est appelé, ses entités requises sont résolues et ont un état exploitable. Le vide lui appartient, parce qu'elle seule sait qu'une liste de zéro devoir se dit « rien à rendre demain » et non « donnée indisponible ».
+
+**L'exception, `CardSpec.attributeDriven`** : la cantine, et elle seule. L'intégration laisse délibérément l'état de ces capteurs à `unknown` même quand la collecte a réussi, parce qu'un nombre de plats à zéro affirmerait qu'un menu existe — toute l'information vit alors dans les attributs, et le socle écartait la carte avant même de l'appeler. Le drapeau lui rend la main, et elle assume les **deux** phrases : « pas de menu publié » (`published: false`) et « pas encore collectée » (aucun attribut). Ne l'activez que si la carte sait vraiment les distinguer — sinon le socle le fait mieux.
 
 ### `CardSpec` — les cartes sont des objets, pas des classes
 
@@ -111,6 +124,10 @@ Un test qui n'assère qu'une **absence** passe aussi quand le rendu est entière
 ## Documentation
 
 `docs/limites.md` est la page la plus sensible du dépôt : elle explique ce que le projet ne fera jamais, et pourquoi. **N'y écrivez jamais qu'une propriété est « impossible par construction » si elle ne repose que sur une recherche de texte.** Distinguez toujours ce que le type garantit de ce qu'un test vérifie — cette page a déjà publié une affirmation fausse sur ce point exact.
+
+Elle en a publié une seconde depuis, du même genre : « il n'y a pas d'identifiant à proposer, même en configuration avancée » à propos des périodes closes. C'était faux — la surcharge `entities` d'une carte épingle bel et bien un identifiant précis, `resolve.ts` la prend en compte. **Une limite écrite parce qu'elle est souhaitable n'est pas une limite ;** décrivez l'échappatoire et son coût plutôt que de nier qu'elle existe.
+
+Les pages de `docs/cartes/` ont porté pendant des semaines la phrase « cette page sera complétée quand la carte sera implémentée » sous des titres vides, alors que les neuf cartes tournaient sur une instance réelle. Tirez leur contenu des `CardSpec` et des catalogues, jamais de mémoire : les noms d'options et les clés d'entités s'inventent trop facilement.
 
 ## Import d'une configuration Codex
 

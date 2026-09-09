@@ -82,13 +82,52 @@ distinguer un trimestre 1 d'un trimestre 2 : elle rendrait l'une des
 deux entités au hasard de l'ordre dans lequel le registre de Home
 Assistant les liste.
 
-L'échappatoire de surcharge d'entité (l'option `entities` d'une carte)
-ne comble pas ce trou non plus : elle attend un identifiant d'entité
-complet, et cet identifiant dérive du nom affiché de l'enfant dans
-Home Assistant (voir [Installation](installation.md)) — une
-information que la carte ignore par conception. Il n'y a donc pas
-d'identifiant à proposer, même en configuration avancée.
+Il reste une échappatoire, et il faut la décrire honnêtement : l'option
+`entities` d'une carte permet de **désigner un identifiant d'entité
+précis** pour une clé donnée, en contournant entièrement la résolution.
+Écrite à la main dans le YAML de la carte, elle épingle donc une
+période close :
 
-Si vous avez besoin d'une période close précise, consultez-la
-directement dans PRONOTE ou dans l'historique de l'intégration : pas
-depuis une carte de cette bibliothèque.
+```yaml
+type: custom:pronote-ng-notes
+device_id: <appareil de l'enfant>
+entities:
+  sensor:grades: sensor.<enfant>_notes_2
+```
+
+Ce n'est pas recommandé, et aucune interface ne le propose, pour une
+raison qui vaut d'être dite plutôt que cachée : cet identifiant dérive
+du nom affiché de l'enfant dans Home Assistant (voir
+[Installation](installation.md)). Renommer l'appareil, ou installer la
+carte sur une autre instance, casse la configuration en silence — la
+carte affichera « entité introuvable ». C'est le seul endroit du projet
+où un identifiant d'entité est écrit en dur, et c'est vous qui en
+portez la conséquence.
+
+La surcharge subit la même vérification de domaine que le chemin
+normal : une clé `sensor:...` ne peut se résoudre qu'à un `sensor.`.
+Un identifiant d'un autre domaine est ignoré, pas accepté sans un mot.
+
+Si vous n'avez pas besoin de l'épingler dans un tableau de bord,
+consultez la période close directement dans PRONOTE ou dans
+l'historique de l'intégration.
+
+## Traduire ce que l'établissement a écrit
+
+Plusieurs textes viennent du serveur, tels que l'établissement les a
+saisis : les libellés de maîtrise d'une évaluation (« Très bonne
+maîtrise »), les motifs d'absence, la durée d'une absence (« 2h00 »),
+les appréciations du bulletin, les énoncés de devoirs.
+
+Aucun n'est traduit, ni reformulé, ni normalisé. Traduire une échelle de
+maîtrise inventerait une échelle qui n'est pas celle de l'établissement ;
+recomposer une durée écrite à la main lui ferait dire autre chose. Les
+quatre catalogues de langue ne portent que les mots de l'interface.
+
+## Injecter le HTML du serveur
+
+PRONOTE écrit les énoncés de devoirs en HTML. Aucune carte ne les
+insère dans la page comme du balisage — ni pour l'afficher, ni pour
+s'en débarrasser. Le texte lisible est obtenu par un retrait purement
+textuel, ou mieux, lu depuis la variante en texte simple que
+l'intégration publie.
