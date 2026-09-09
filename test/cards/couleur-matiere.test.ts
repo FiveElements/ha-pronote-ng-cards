@@ -245,6 +245,22 @@ describe('code couleur des matières — devoirs', () => {
     expect(filet).toBeLessThan(enonce);
   });
 
+  it('groupe les lignes d’un même jour pour aligner leurs colonnes', async () => {
+    const el = await monter();
+
+    // Deux échéances distinctes dans la fixture, donc deux groupes.
+    const groupes = [...(el.shadowRoot?.querySelectorAll('.devoirs-groupe') ?? [])];
+    expect(groupes).toHaveLength(2);
+    // Et chaque ligne appartient à un groupe : une ligne restée en dehors ne
+    // partagerait les colonnes de personne, ce que le comptage seul ne dirait
+    // pas.
+    const lignes = [...(el.shadowRoot?.querySelectorAll('.row') ?? [])];
+    expect(lignes).toHaveLength(2);
+    for (const ligne of lignes) {
+      expect(ligne.parentElement?.classList.contains('devoirs-groupe')).toBe(true);
+    }
+  });
+
   it('ne réserve aucune gouttière à gauche', async () => {
     const el = await monter();
 
@@ -270,7 +286,7 @@ describe('code couleur des matières — moyennes par matière', () => {
         },
         {
           key: 'sensor:averages',
-          entity_id: 'sensor.abc_moyennes',
+          entity_id: 'sensor.abc_moyennes_par_matiere',
           device: 'dev_enfant',
           state: '2',
           attributes: {
@@ -424,7 +440,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
       makeHass([
         {
           key: 'sensor:averages',
-          entity_id: 'sensor.abc_moyennes',
+          entity_id: 'sensor.abc_moyennes_par_matiere',
           device: 'dev_enfant',
           state: '2',
           attributes: {

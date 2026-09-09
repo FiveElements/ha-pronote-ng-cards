@@ -278,7 +278,13 @@ export const SPEC: CardSpec<Config> = {
     const out: (TemplateResult | string)[] = [overdueBanner, nextDue];
     for (const g of groups) {
       out.push(html`<div class="title">${g.label}</div>`);
-      for (const h of g.items) out.push(rowFor(h));
+      // Les lignes d'un groupe sont enveloppées pour qu'elles partagent leurs
+      // colonnes : la matière la plus longue du jour fixe la largeur, et les
+      // filets d'un même jour s'alignent. Un groupe et non la carte entière,
+      // parce que c'est ce qui a été demandé et que c'est aussi le bon
+      // découpage — une colonne dimensionnée sur toute la carte serait tenue
+      // en otage par la matière la plus longue d'un jour qu'on ne regarde pas.
+      out.push(html`<div class="devoirs-groupe">${g.items.map((h) => rowFor(h))}</div>`);
     }
 
     return html`${out}`;

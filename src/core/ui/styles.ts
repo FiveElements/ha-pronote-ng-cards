@@ -131,6 +131,56 @@ export const sharedStyles = css`
     background: var(--pronote-subject-color);
   }
 
+  /* Les devoirs d'un même jour alignent leurs colonnes : intitulé de matière,
+     filet, énoncé, échéance. Sans ça la largeur de l'intitulé suit la
+     longueur de chaque nom de matière, et les filets d'un même jour se
+     décalent les uns par rapport aux autres.
+
+     Pourquoi une sous-grille, et pourquoi elle est sous condition. La ligne
+     doit garder sa propre boîte, parce que c'est elle qui porte le trait de
+     séparation et la marge intérieure entre deux devoirs. Un display de
+     valeur contents sur la ligne alignerait aussi les colonnes, mais en
+     supprimant sa boîte : les traits entre devoirs disparaîtraient. La
+     sous-grille aligne sans détruire.
+
+     La condition n'est pas de la prudence rituelle. Sans elle, un navigateur
+     qui ignore la sous-grille garderait le display grid en jetant la seule
+     déclaration qui décrit les colonnes — chaque ligne deviendrait une
+     colonne unique et le contenu s'empilerait verticalement. Le repli serait
+     donc PIRE que l'absence de la fonctionnalité. Sous condition, il est
+     exactement le rendu d'avant : le flux flex de la ligne.
+
+     Les colonnes sont posées explicitement sur chaque enfant, et non
+     laissées au placement automatique. Une ligne sans couleur n'a pas de
+     filet et une ligne sans échéance n'a pas de partie finale : en placement
+     automatique, l'énoncé remonterait dans la colonne du filet et l'alignement
+     se perdrait sur les lignes mêmes qu'il devait aligner. */
+  @supports (grid-template-columns: subgrid) {
+    .devoirs-groupe {
+      display: grid;
+      grid-template-columns: max-content 4px 1fr max-content;
+      column-gap: 8px;
+    }
+    .devoirs-groupe > .row {
+      display: grid;
+      grid-template-columns: subgrid;
+      grid-column: 1 / -1;
+      align-items: baseline;
+    }
+    .devoirs-groupe > .row > .primary {
+      grid-column: 1;
+    }
+    .devoirs-groupe > .row > .filet-matiere {
+      grid-column: 2;
+    }
+    .devoirs-groupe > .row > .secondary {
+      grid-column: 3;
+    }
+    .devoirs-groupe > .row > .trailing {
+      grid-column: 4;
+    }
+  }
+
   /* La photo de l'élève. La carte qui l'affiche la laisse désactivée par
      défaut : une photo d'enfant sur un tableau de bord se retrouve dans une
      capture d'écran ou un partage de vue. */
