@@ -115,9 +115,11 @@ mois de requêtes, en une seconde, sans que personne ne l'ait demandé.
 
 Cela se voit immédiatement en vue mensuelle :
 
-![La vue mois : une seule semaine porte des pastilles, le reste du mois est vide](assets/ha-calendar/mois.png)
+![La vue mois : une seule semaine porte des pastilles, le reste du mois est vide](assets/ha-calendar/mois.svg)
 
-Les pastilles s'arrêtent au vendredi de la semaine en cours, et le « +5 en plus »
+*Illustration synthétique : toutes les valeurs sont fictives.*
+
+Les pastilles s'arrêtent au vendredi de la semaine en cours, et le « +4 en plus »
 dit qu'une journée ne tient pas dans une case. Le reste du mois n'est pas vide
 parce qu'il n'y a pas cours : il est vide parce que rien n'a été collecté, et
 que faire défiler n'ira rien chercher.
