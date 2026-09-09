@@ -1,56 +1,102 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 370" width="372" height="370" role="img" aria-label="Aperçu de la carte Vue journée : flèches de navigation, bornes de la journée, cours en grille avec couleur de matière, zone repas et cours annulé.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 524" width="372" height="524" role="img" aria-label="Aperçu de la carte Vue journée : flèches de navigation et bornes de la journée en en-tête, puis une colonne d'horaires, un filet de couleur par matière, la salle et le professeur ; un cours annulé barré avec sa pastille, deux cours portant la pastille « Cours modifié », une zone repas, et un cours à plusieurs professeurs dont la liste passe à la ligne.">
   <title>Carte Vue journée</title>
-  <desc>Illustration synthétique. Rien n'y vient d'un élève réel : les dates, les horaires et les valeurs sont inventés, et les matières sont des matières de programme.</desc>
+  <desc>Illustration synthétique. Rien n'y vient d'un élève réel : la date, les horaires, les salles et les professeurs sont inventés, les professeurs sont réduits à une initiale, et les matières sont des matières de programme. Le signe ≈ marque une fin d'heure déduite plutôt que donnée.</desc>
 
   <style>
     .bg { fill: #f2f4f7; }
     .card { fill: #ffffff; }
     .shadow { fill: #101828; opacity: .06; }
     .h { font: 600 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
-    .p { font: 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 600 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
     .s { font: 400 11.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
-    .t { font: 400 12.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
-    .sect { font: 600 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #475467; letter-spacing: .04em; }
-    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    .t { font: 400 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .chip { font: 600 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #ffffff; }
     .rule { stroke: #eaecf0; stroke-width: 1; }
+    .meal { font: italic 400 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
     .strike { text-decoration: line-through; }
   </style>
 
-  <rect class="bg" width="372" height="370"/>
+  <rect class="bg" width="372" height="524"/>
   <g transform="translate(16 16)">
-    <rect class="shadow" x="1" y="3" width="340" height="338" rx="12"/>
-    <rect class="card" width="340" height="338" rx="12"/>
+    <rect class="shadow" x="1" y="3" width="340" height="492" rx="12"/>
+    <rect class="card" width="340" height="492" rx="12"/>
+
+    <!-- En-tête : navigation d'un jour à l'autre, et bornes de la journée de classe -->
     <text class="h" x="18" y="28" fill="#175cd3">‹</text>
-    <text class="h" x="38" y="28">Jeudi 10 septembre</text>
-    <text class="h" x="176" y="28" fill="#175cd3">›</text>
-    <text class="t" x="322" y="28" text-anchor="end">08:30 – ≈16:30</text>
-    <line class="rule" x1="18" y1="40" x2="322" y2="40"/>
-    <rect x="18" y="49" width="3" height="28" rx="1.5" fill="#2e90fa"/>
-    <text class="p" x="28" y="62">Mathématiques</text>
-    <text class="s" x="28" y="78">08:30 – 09:30 · Salle 1.4 · M. B.</text>
-    <line class="rule" x1="18" y1="88" x2="322" y2="88"/>
-    <rect x="18" y="97" width="3" height="28" rx="1.5" fill="#f79009"/>
-    <text class="p" x="28" y="110">Histoire-géographie</text>
-    <text class="s" x="28" y="126">09:30 – 10:30 · Salle 1.4</text>
-    <line class="rule" x1="18" y1="136" x2="322" y2="136"/>
-    <rect x="18" y="145" width="3" height="28" rx="1.5" fill="#12b76a"/>
-    <text class="p" x="28" y="158">Français</text>
-    <rect x="261" y="145" width="61" height="19" rx="9.5" fill="#eaf3ff"/>
-    <text class="chip" x="268" y="158" fill="#175cd3">en cours</text>
-    <text class="s" x="28" y="174">10:30 – ≈11:30 · Salle 2.9 · Mme A.</text>
-    <line class="rule" x1="18" y1="184" x2="322" y2="184"/>
-    <rect x="18" y="193" width="3" height="28" rx="1.5" fill="#98a2b3"/>
-    <text class="p" x="28" y="206">Repas</text>
-    <text class="s" x="28" y="222">11:30 → 13:30</text>
-    <line class="rule" x1="18" y1="232" x2="322" y2="232"/>
-    <rect x="18" y="241" width="3" height="28" rx="1.5" fill="#7a5af8"/>
-    <text class="p strike" x="28" y="254">Anglais</text>
-    <rect x="273" y="241" width="49" height="19" rx="9.5" fill="#fef3f2"/>
-    <text class="chip" x="280" y="254" fill="#b42318">annulé</text>
-    <text class="s" x="28" y="270">13:30 – 14:30 · Salle 3.1</text>
-    <line class="rule" x1="18" y1="280" x2="322" y2="280"/>
-    <rect x="18" y="289" width="3" height="28" rx="1.5" fill="#ee46bc"/>
-    <text class="p" x="28" y="302">SVT</text>
-    <text class="s" x="28" y="318">14:30 – ≈15:30 · Salle 0.2</text>
+    <text class="h" x="38" y="28">Jeudi 12 mars</text>
+    <text class="h" x="146" y="28" fill="#175cd3">›</text>
+    <text class="t" x="322" y="28" text-anchor="end">08:30 – ≈17:00</text>
+    <line class="rule" x1="18" y1="44" x2="322" y2="44"/>
+
+    <!-- Cours ordinaire -->
+    <text class="t" x="18" y="68">08:30</text>
+    <text class="t" x="18" y="86">≈09:30</text>
+    <rect x="64" y="54" width="3" height="32" rx="1.5" fill="#ee46bc"/>
+    <text class="p" x="74" y="68">MATHÉMATIQUES</text>
+    <text class="s" x="74" y="87">Salle 1.4 · M. B.</text>
+    <line class="rule" x1="18" y1="96" x2="322" y2="96"/>
+
+    <!-- Cours annulé : intitulé barré, pastille, et la salle s'en va avec le cours -->
+    <text class="t" x="18" y="120">09:30</text>
+    <text class="t" x="18" y="138">≈10:30</text>
+    <rect x="64" y="106" width="3" height="32" rx="1.5" fill="#d0d5dd"/>
+    <text class="p strike" x="74" y="120" fill="#667085">ATELIER</text>
+    <rect x="272" y="108" width="50" height="20" rx="10" fill="#d92d20"/>
+    <text class="chip" x="297" y="122" text-anchor="middle">annulé</text>
+    <text class="s" x="74" y="139">Mme A.</text>
+    <line class="rule" x1="18" y1="148" x2="322" y2="148"/>
+
+    <!-- Deux heures d'affilée, modifiées toutes les deux -->
+    <text class="t" x="18" y="172">10:30</text>
+    <text class="t" x="18" y="190">≈11:30</text>
+    <rect x="64" y="158" width="3" height="32" rx="1.5" fill="#12b76a"/>
+    <text class="p" x="74" y="172">TECHNOLOGIE</text>
+    <rect x="232" y="160" width="90" height="20" rx="10" fill="#f79009"/>
+    <text class="chip" x="277" y="174" text-anchor="middle">Cours modifié</text>
+    <text class="s" x="74" y="191">Salle 2.9 · M. C.</text>
+    <line class="rule" x1="18" y1="200" x2="322" y2="200"/>
+
+    <text class="t" x="18" y="224">11:30</text>
+    <text class="t" x="18" y="242">≈12:30</text>
+    <rect x="64" y="210" width="3" height="32" rx="1.5" fill="#12b76a"/>
+    <text class="p" x="74" y="224">TECHNOLOGIE</text>
+    <rect x="232" y="212" width="90" height="20" rx="10" fill="#f79009"/>
+    <text class="chip" x="277" y="226" text-anchor="middle">Cours modifié</text>
+    <text class="s" x="74" y="243">Salle 2.9 · M. C.</text>
+    <line class="rule" x1="18" y1="252" x2="322" y2="252"/>
+
+    <!-- Le creux du midi : pas un cours, donc un filet pointillé et pas de couleur -->
+    <text class="t" x="18" y="276">12:30≈</text>
+    <text class="t" x="18" y="294">14:00</text>
+    <line x1="65.5" y1="262" x2="65.5" y2="294" stroke="#d0d5dd" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 6"/>
+    <text class="meal" x="74" y="280">Repas</text>
+    <line class="rule" x1="18" y1="304" x2="322" y2="304"/>
+
+    <!-- Cours ordinaire -->
+    <text class="t" x="18" y="328">14:00</text>
+    <text class="t" x="18" y="346">≈15:00</text>
+    <rect x="64" y="314" width="3" height="32" rx="1.5" fill="#eaaa08"/>
+    <text class="p" x="74" y="328">ESPAGNOL LV2</text>
+    <text class="s" x="74" y="347">Salle 3.1 · Mme D.</text>
+    <line class="rule" x1="18" y1="356" x2="322" y2="356"/>
+
+    <!-- Plusieurs professeurs : la liste passe à la ligne et la rangée grandit,
+         la fin d'heure restant collée au bas de la rangée -->
+    <text class="t" x="18" y="380">15:00</text>
+    <text class="t" x="18" y="420">≈16:00</text>
+    <rect x="64" y="366" width="3" height="54" rx="1.5" fill="#f04438"/>
+    <text class="p strike" x="74" y="380" fill="#667085">CHORALE</text>
+    <rect x="272" y="368" width="50" height="20" rx="10" fill="#d92d20"/>
+    <text class="chip" x="297" y="382" text-anchor="middle">annulé</text>
+    <text class="s" x="74" y="399">M. B., Mme A., M. C., Mme D.,</text>
+    <text class="s" x="74" y="417">M. E., Mme F.</text>
+    <line class="rule" x1="18" y1="430" x2="322" y2="430"/>
+
+    <!-- Dernière heure du jour : sa fin déduite est la borne droite de l'en-tête -->
+    <text class="t" x="18" y="454">16:00</text>
+    <text class="t" x="18" y="472">≈17:00</text>
+    <rect x="64" y="440" width="3" height="32" rx="1.5" fill="#0e9384"/>
+    <text class="p" x="74" y="454">ÉDUCATION MUSICALE</text>
+    <text class="s" x="74" y="473">Salle 0.2 · M. G.</text>
   </g>
 </svg>
