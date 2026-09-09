@@ -48,10 +48,20 @@ Deux conséquences pratiques :
 - Activer l'option sur une instance sans photo ne casse rien et n'affiche
   rien. Il n'y a pas de réglage à chercher : c'est l'établissement qui
   décide.
-- Même quand la photo existe, l'URL fournie par le serveur est parfois
-  invalide ou injoignable (défaut connu de la bibliothèque `pronotepy`).
-  L'image peut donc ne pas se charger sans que ni la carte ni
-  l'intégration soient en cause.
+- Même quand la photo existe, elle peut ne jamais se charger, et la
+  carte n'y est pour rien. L'intégration cherche l'image **une seule
+  fois par rechargement** : `image.py` pose son drapeau de tentative
+  *avant* l'appel et avale l'échec, si bien qu'une adresse injoignable
+  laisse l'entité vide jusqu'au prochain rechargement de l'intégration —
+  pas jusqu'à la prochaine collecte. Une seule tentative est délibéré :
+  réessayer à chaque affichage dépenserait le budget quotidien sur une
+  image inexistante, ce qui est la même règle qui interdit aux cartes de
+  collecter à l'affichage. Seul un report du limiteur remet le drapeau à
+  zéro, parce que reporté n'est pas échoué.
+- **Il n'y a donc aucun réglage à chercher : c'est un rechargement de
+  l'intégration, ou rien.** Et l'entité reste *disponible* dès que le
+  compte annonce une photo, qu'elle finisse par en rendre une ou non —
+  sinon la carte clignoterait.
 
 ## Si la carte est vide
 

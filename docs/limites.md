@@ -124,6 +124,28 @@ maîtrise inventerait une échelle qui n'est pas celle de l'établissement ;
 recomposer une durée écrite à la main lui ferait dire autre chose. Les
 quatre catalogues de langue ne portent que les mots de l'interface.
 
+**Et aucune contradiction apparente n'est réconciliée.** Le cas relevé
+sur une installation réelle :
+
+```yaml
+justified: true
+hours:     "2h00"
+reasons:   ["MALADIE SANS CERTIFICAT"]
+```
+
+La carte affiche les trois côte à côte : `2h00 · MALADIE SANS
+CERTIFICAT`, avec la pastille « justifiée ». Ça se lit comme une
+incohérence et ça n'en est pas une. Le motif est ce que la famille a
+fourni, le drapeau est ce que l'établissement a accepté : la vie scolaire
+a justifié l'absence **malgré** l'absence de certificat. Les deux sont
+vrais et ils ne parlent pas de la même chose. Masquer l'un au nom de
+l'autre effacerait l'information la plus intéressante des deux.
+
+Corollaire pour une automatisation : la justification se lit dans
+`justified`, jamais en cherchant un mot dans `reasons`. Une condition qui
+cherchait « sans certificat » conclurait ici l'exact contraire de la
+vérité.
+
 ## Injecter le HTML du serveur
 
 PRONOTE écrit les énoncés de devoirs en HTML. Aucune carte ne les

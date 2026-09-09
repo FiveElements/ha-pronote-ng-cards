@@ -62,12 +62,41 @@ const teachersOf = (value: unknown): string =>
       : '';
 
 /**
+ * Le seul libellé de `status` que la pastille d'annulation dit déjà.
+ * C'est du texte de serveur, jamais traduit (voir `docs/limites.md`) : on le
+ * compare tel quel, on ne le reformule pas.
+ */
+const CANCELED_STATUS = 'Cours annulé';
+
+/**
  * `canceled` est le signal nominal, mais certaines versions de l'intégration
  * ne posent que `status` (par exemple « Cours annulé ») sans lever
  * `canceled`. L'ignorer ferait apparaître un cours annulé comme un cours
  * normal — exactement ce que la règle « signalé et non masqué » interdit.
  */
-const isCanceled = (l: Lesson): boolean => l.canceled === true || l.status === 'Cours annulé';
+const isCanceled = (l: Lesson): boolean =>
+  l.canceled === true || l.status === CANCELED_STATUS;
+
+/**
+ * Le motif écrit par l'établissement, quand il dit plus que la pastille
+ * d'annulation.
+ *
+ * `status` est **orthogonal** à `canceled`, et c'est un relevé d'instance qui
+ * l'a montré : sur une semaine de 27 créneaux, `canceled: true` avec
+ * « Prof. absent », et `canceled: false` avec « Cours modifié ». Le drapeau
+ * dit SI le cours a lieu, le libellé dit POURQUOI — et le pourquoi est ce
+ * qu'un parent veut lire. La carte ne montrait que le drapeau : les deux
+ * cours modifiés de la semaine s'affichaient comme des cours ordinaires, ce
+ * qui est du masquage, pas de la sobriété.
+ *
+ * Rendu vide quand le libellé ne fait que répéter la pastille — même règle
+ * que le capteur bridé de la carte limiteur : deux surfaces qui affirment la
+ * même chose finissent par se désaccorder sans qu'on sache laquelle croire.
+ */
+const statusLabel = (l: Lesson): string => {
+  const label = typeof l.status === 'string' ? l.status.trim() : '';
+  return label === CANCELED_STATUS ? '' : label;
+};
 
 
 export const SPEC: CardSpec<Config> = {
@@ -200,6 +229,11 @@ export const SPEC: CardSpec<Config> = {
       const badges: TemplateResult[] = [];
       if (current) badges.push(chip(ctx.t('emploi_du_temps.current'), 'ok'));
       if (canceled) badges.push(chip(ctx.t('emploi_du_temps.canceled'), 'problem'));
+      // Le motif du serveur, tel qu'il l'a écrit. Toujours en `warn` : c'est
+      // une réserve sur le créneau, pas une panne — même quand il accompagne
+      // une annulation, qui porte déjà sa propre pastille rouge.
+      const reason = statusLabel(l);
+      if (reason !== '') badges.push(chip(reason, 'warn'));
       if (l.test) badges.push(chip(ctx.t('emploi_du_temps.test'), 'warn'));
       if (l.outing) badges.push(chip(ctx.t('emploi_du_temps.outing')));
 

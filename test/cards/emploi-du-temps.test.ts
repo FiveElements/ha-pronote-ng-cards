@@ -132,6 +132,81 @@ describe('carte emploi-du-temps', () => {
     expect(el.shadowRoot?.querySelector('.canceled')).not.toBeNull();
   });
 
+  it("affiche le `status` d'un cours qui n'est PAS annulé", async () => {
+    // Relevé sur une instance réelle : sur 27 créneaux d'une semaine, deux
+    // portent `status: 'Cours modifié'` avec `canceled: false`. La carte les
+    // rendait comme des cours parfaitement ordinaires — elle masquait
+    // l'information au lieu de la signaler.
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      day({
+        lessons: [
+          {
+            subject: 'SVT',
+            start: '2026-09-08T08:00:00+02:00',
+            end: '2026-09-08T09:00:00+02:00',
+            canceled: false,
+            status: 'Cours modifié',
+          },
+        ],
+      })
+    );
+    const t = text(el);
+    expect(t).toContain('SVT');
+    expect(t).toContain('Cours modifié');
+    // Modifié n'est pas annulé : la ligne ne doit pas être barrée.
+    expect(el.shadowRoot?.querySelector('.canceled')).toBeNull();
+  });
+
+  it("garde le motif d'annulation quand `status` en dit plus que « annulé »", async () => {
+    // Relevé réel : `canceled: true` avec `status: 'Prof. absent'`. Le
+    // drapeau et le motif ne disent pas la même chose, et le motif est ce
+    // qu'un parent veut lire.
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      day({
+        lessons: [
+          {
+            subject: 'SVT',
+            start: '2026-09-08T08:00:00+02:00',
+            end: '2026-09-08T09:00:00+02:00',
+            canceled: true,
+            status: 'Prof. absent',
+          },
+        ],
+      })
+    );
+    const t = text(el);
+    expect(t).toContain('annulé');
+    expect(t).toContain('Prof. absent');
+    expect(el.shadowRoot?.querySelector('.canceled')).not.toBeNull();
+  });
+
+  it('ne dit pas deux fois « annulé » quand `status` ne dit rien de plus', async () => {
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      day({
+        lessons: [
+          {
+            subject: 'SVT',
+            start: '2026-09-08T08:00:00+02:00',
+            end: '2026-09-08T09:00:00+02:00',
+            canceled: true,
+            status: 'Cours annulé',
+          },
+        ],
+      })
+    );
+    const t = text(el);
+    expect(t).toContain('annulé');
+    // Une seule mention : le libellé du serveur ne se répète pas à côté de la
+    // pastille qui dit déjà la même chose.
+    expect(t).not.toContain('Cours annulé');
+  });
+
   it('signale les contrôles', async () => {
     const el = await mountCard('pronote-ng-emploi-du-temps', { device_id: 'dev_enfant' }, day({ lessons }));
     expect(text(el)).toContain('contrôle');
