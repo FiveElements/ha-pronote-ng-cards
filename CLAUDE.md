@@ -61,6 +61,13 @@ Deux leçons qui valent au-delà de ce champ :
 1. **`render()` est enveloppé dans un `try`/`catch`.** Lit laisse la racine d'ombre VIDE quand `render` lève, et Home Assistant rappelle le rendu à chaque évènement : une carte fautive disparaît de la page sans un mot. Le filet affiche un message et laisse la trace en console. Ne le retirez pas.
 2. **La fixture de test mentait.** Elle écrivait `time_zone: 'Europe/Paris'`, ce qu'aucune instance n'envoie. Une fixture qui invente une forme que le producteur ne produit pas ne protège de rien — elle garantit seulement que le test et le code partagent la même erreur. Vérifiez les formes d'attributs contre la source de l'intégration, pas contre votre souvenir : c'est ainsi qu'on a découvert que la carte notes lisait `grade` là où l'intégration publie `value`, et affichait donc **toutes** les notes en « — ».
 
+### Valider sur une instance réelle
+
+Les pires défauts de ce dépôt ont tous été trouvés en ouvrant la page, jamais en relisant le code : les portes (tests, types, lint) étaient vertes pendant que deux cartes n'affichaient rien. Quand une validation se fait sur une instance, deux réflexes :
+
+- **Un appareil peut être orphelin.** L'intégration crée un appareil par enfant, et un enfant peut en avoir deux — un vivant, un resté au registre après un changement d'identifiant côté intégration. Les cartes du second tombent alors toutes en « indisponible » **en même temps**, ce qui ressemble beaucoup à une panne de l'intégration. Le signe qui tranche : l'attribut **`restored`** sur l'entité. Il dit que Home Assistant a recréé l'entité depuis le registre **sans plateforme pour la servir** — donc que rien ne la nourrit et que rien ne la nourrira. Une observation de production : 56 entités, toutes `unavailable`, toutes `restored`, toutes changées à la même milliseconde. Ce n'est pas un déchargement de plateforme, c'est un appareil mort. Cherchez le préfixe vivant et rebranchez les cartes dessus.
+- **Une entité `unknown` n'est pas forcément un défaut.** Un `button` jamais pressé et un `event` jamais déclenché valent `unknown` par construction. Ne les comptez pas comme des pannes.
+
 ### Les trois états
 
 C'est la raison d'être du projet : les cartes `markdown` qu'il remplace confondent ces trois cas.
