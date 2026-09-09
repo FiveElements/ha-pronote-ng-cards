@@ -55,6 +55,40 @@ capteur voit ce que l'attribut ne porte pas — jour banalisé, cours déplacé
 après la collecte, élève dispensé. À `on` sans créneau correspondant, la
 carte ne fabrique rien.
 
+## Le code couleur des matières
+
+PRONOTE laisse l'établissement choisir une couleur par matière, et l'élève
+la connaît déjà de l'interface officielle. Les cartes la reprennent : une
+**bordure colorée** à gauche de la ligne, de la couleur de la matière.
+
+C'est la seule couleur que ces cartes n'inventent pas. Trois précisions,
+parce qu'elle se comporte différemment de tout le reste.
+
+**Une bordure, jamais un fond.** Les couleurs PRONOTE sont choisies pour le
+fond blanc de son interface. Posées en aplat derrière du texte, elles
+cassent le contraste dès qu'un thème sombre est actif, et le thème n'y peut
+alors plus rien. En bordure, le pire cas est un accent peu visible : on perd
+un rappel, jamais la lisibilité de la ligne.
+
+**Rien à configurer, et rien à faire si votre établissement n'en met pas.**
+Les lignes sans couleur gardent le même retrait que les autres — la
+gouttière est réservée, simplement transparente. Une matière sans couleur ne
+décale donc pas son voisinage.
+
+**Les cartes concernées sont celles dont le producteur envoie une couleur** :
+l'emploi du temps, les [devoirs](devoirs.md) et les moyennes par matière de
+la carte [notes](notes.md). Les notes individuelles, les évaluations et le
+bulletin n'en portent pas côté PRONOTE ; le prochain cours non plus, faute
+d'être publié pour cette entité.
+
+!!! info "Pas encore visible"
+
+    L'intégration décode cette couleur mais ne la publie pas encore dans les
+    attributs de ses entités. Les cartes la lisent déjà : l'accent
+    apparaîtra dès qu'une version de l'intégration l'expose, sans aucune
+    modification de votre tableau de bord. D'ici là, l'affichage est
+    inchangé.
+
 ## Si la carte est vide
 
 « Aucun cours » : week-end, jour férié, vacances. Ce n'est pas une panne

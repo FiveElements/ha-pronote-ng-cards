@@ -1,4 +1,4 @@
-import { html, type TemplateResult } from 'lit';
+import { html, nothing, type TemplateResult } from 'lit';
 import type { Translate } from '../types';
 
 export type Tone = 'neutral' | 'ok' | 'warn' | 'problem';
@@ -39,10 +39,32 @@ export interface RowOptions {
   secondary?: string | TemplateResult;
   trailing?: string | TemplateResult;
   canceled?: boolean;
+  /**
+   * L'accent de couleur de la matière, et ses **trois** valeurs.
+   *
+   * - `undefined` : cette liste n'est pas codée par couleur. Aucune gouttière,
+   *   aucun décalage — le rendu est exactement celui d'avant l'introduction de
+   *   l'accent. C'est le cas du limiteur, de la cantine, de la vie scolaire et
+   *   de l'élève, dont les lignes ne portent pas de matière.
+   * - `null` : cette liste **est** codée par couleur, mais cette ligne-ci n'a
+   *   pas de couleur exploitable. La gouttière est réservée, transparente.
+   *   Sans ce troisième cas, un créneau sans couleur s'alignerait trois pixels
+   *   à gauche de son voisin coloré, et ce décalage se lirait comme un défaut
+   *   d'affichage plutôt que comme une absence de donnée.
+   * - une couleur : la gouttière la prend.
+   *
+   * La valeur doit avoir traversé `subjectColor` : elle finit dans un attribut
+   * `style`, où une chaîne de serveur non filtrée permettrait d'ajouter des
+   * propriétés CSS arbitraires.
+   */
+  accent?: string | null;
 }
 
 export const listRow = (o: RowOptions): TemplateResult => html`
-  <div class="row ${o.canceled ? 'canceled' : ''}">
+  <div
+    class="row ${o.canceled ? 'canceled' : ''} ${o.accent === undefined ? '' : 'accented'}"
+    style=${typeof o.accent === 'string' ? `--pronote-subject-color: ${o.accent}` : nothing}
+  >
     <span class="primary">${o.primary}</span>
     ${o.secondary ? html`<span class="secondary">${o.secondary}</span>` : ''}
     ${o.trailing ? html`<span class="trailing">${o.trailing}</span>` : ''}

@@ -3,6 +3,7 @@ import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } fro
 import { formatDayLabel, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
+import { subjectColor } from '../core/subject-color';
 
 interface Config extends PronoteCardConfig {
   range?: 'today' | 'tomorrow' | 'week';
@@ -20,6 +21,12 @@ interface Lesson {
   status?: string;
   test?: boolean;
   outing?: boolean;
+  /**
+   * La couleur que l'établissement associe à la matière (`CouleurFond` côté
+   * protocole). Déclarée `unknown` : c'est une chaîne de serveur, et le champ
+   * traverse `subjectColor` avant d'atteindre un attribut `style`.
+   */
+  background_color?: unknown;
 }
 
 /**
@@ -252,6 +259,10 @@ export const SPEC: CardSpec<Config> = {
           // Un cours annulé reste visible, barré. Le retirer donnerait
           // l'illusion qu'il n'a jamais existé.
           canceled,
+          // `?? null` et non `?? undefined` : la grille entière réserve la
+          // gouttière, donc un créneau sans couleur reste aligné sur ses
+          // voisins colorés. Voir `RowOptions.accent`.
+          accent: subjectColor(l.background_color) ?? null,
         })
       );
     }

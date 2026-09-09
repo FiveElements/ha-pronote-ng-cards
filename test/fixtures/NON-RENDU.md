@@ -92,6 +92,20 @@ intégration — `background_color` en particulier, parce qu'une couleur venue
 du serveur ne tombe pas sous l'interdiction des couleurs en dur, qui vise
 les couleurs écrites dans le code d'une carte.
 
+**Correction de portée, mesurée depuis :** le protocole envoie une couleur de
+matière sur **trois** familles, pas une. La passerelle la décode quatre fois —
+`CouleurFond` sur les créneaux (deux chemins de décodage) et sur les devoirs,
+`couleur` en minuscules sur les moyennes par matière — et le capteur n'en
+publie aucune : `sensor.py` ne contient pas une seule occurrence de couleur.
+Les notes individuelles, elles, n'en portent pas côté protocole.
+
+**Ce point est traité côté carte.** L'emploi du temps, les devoirs et les
+moyennes par matière lisent `background_color` et le rendent en accent de
+gouttière ; rien ne change à l'écran tant que l'intégration ne publie pas le
+champ. C'est le seul poste de ce document où le travail de carte est fait avant
+la donnée, et il n'y a pas de raison d'attendre : la lecture est écrite, testée
+et sans effet en son absence.
+
 ## Priorités, si l'on décide de combler
 
 1. **`punishments[].exclusion`** — deux sanctions de gravité très inégale

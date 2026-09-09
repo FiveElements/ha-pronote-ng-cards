@@ -3,6 +3,7 @@ import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } fro
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
 import { formatDayLabel, parseTimestamp, plainText } from '../core/format';
+import { subjectColor } from '../core/subject-color';
 
 interface Config extends PronoteCardConfig {
   filter?: 'todo' | 'tomorrow' | 'all';
@@ -26,6 +27,12 @@ interface Homework {
   description_text?: string;
   due?: string;
   done?: boolean;
+  /**
+   * La couleur de la matière (`CouleurFond`), le même code visuel que sur
+   * l'emploi du temps. `unknown` : chaîne de serveur, filtrée par
+   * `subjectColor` avant d'atteindre un attribut `style`.
+   */
+  background_color?: unknown;
 }
 
 const TODO: EntityKey = 'sensor:homework_todo';
@@ -244,6 +251,9 @@ export const SPEC: CardSpec<Config> = {
               ? ctx.t('devoirs.due', { date: dueLabel })
               : ''}
           `,
+          // La même gouttière que sur l'emploi du temps, et le même `?? null`
+          // pour que les devoirs sans couleur restent alignés.
+          accent: subjectColor(h.background_color) ?? null,
         })}
       `;
     };

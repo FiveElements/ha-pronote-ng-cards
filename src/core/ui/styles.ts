@@ -84,6 +84,30 @@ export const sharedStyles = css`
     opacity: 0.6;
   }
 
+  /* Le code couleur des matières, tel que l'établissement l'a choisi.
+     Posé en variable par la ligne elle-même (voir RowOptions.accent), et
+     seulement sur les listes qui portent une matière : les autres cartes ne
+     réservent pas la gouttière et gardent leur alignement d'origine.
+
+     Un ACCENT, jamais un fond ni une couleur de texte. Les couleurs PRONOTE
+     sont choisies pour le fond blanc de l'interface officielle : en aplat
+     derrière du texte, elles cassent le contraste dès qu'un thème sombre est
+     actif, et le thème de l'utilisateur ne peut plus rien y faire. En bordure,
+     le pire cas est un accent peu visible — on perd un rappel, jamais la
+     lisibilité de la ligne.
+
+     Le repli transparent fait le travail des lignes sans couleur : la
+     gouttière est réservée, donc rien ne se décale.
+
+     (Aucun guillemet oblique dans ce fichier, y compris en commentaire : tout
+     est à l'intérieur d'un gabarit de patron, qu'un guillemet oblique
+     fermerait au milieu de la feuille de styles. La compilation échoue alors
+     sur une erreur de syntaxe JavaScript à des dizaines de lignes de là.) */
+  .row.accented {
+    border-left: 3px solid var(--pronote-subject-color, transparent);
+    padding-left: 6px;
+  }
+
   /* La photo de l'élève. La carte qui l'affiche la laisse désactivée par
      défaut : une photo d'enfant sur un tableau de bord se retrouve dans une
      capture d'écran ou un partage de vue. */

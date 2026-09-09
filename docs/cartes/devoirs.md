@@ -59,6 +59,13 @@ texte simple (`description_text`), et c'est elle qui est affichée. Sur une
 intégration plus ancienne, la carte dévêt le HTML elle-même — sans jamais
 l'injecter.
 
+## Le code couleur des matières
+
+Chaque devoir porte la couleur que l'établissement associe à sa matière, en
+bordure gauche — le même code visuel que sur l'emploi du temps, dont la page
+explique [comment il fonctionne et pourquoi il n'est pas encore
+visible](emploi-du-temps.md#le-code-couleur-des-matieres).
+
 ## Si la carte est vide
 
 Trois phrases, selon le filtre : « rien à faire », « rien à rendre

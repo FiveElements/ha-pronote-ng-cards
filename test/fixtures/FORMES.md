@@ -128,6 +128,27 @@ décode : `background_color`, `subject_id`, `groups`, `virtual_classrooms`,
 dans l'attribut. Une carte ne peut donc pas s'en servir — ce n'est pas une
 donnée manquante côté serveur, c'est une donnée non exposée.
 
+### `background_color` — lu par les cartes, pas encore publié
+
+Trois cartes lisent `background_color` **aujourd'hui** : l'emploi du temps sur
+`lessons[]`, les devoirs sur `items[]`, les notes sur les `items[]` de
+`sensor:averages`. Aucune installation ne le reçoit encore : la passerelle le
+décode aux quatre endroits où le protocole l'envoie (`CouleurFond` sur les
+créneaux et les devoirs, `couleur` — en minuscules — sur les moyennes par
+matière) et le capteur ne l'expose sur aucune entité. Une demande de
+publication est déposée côté intégration.
+
+C'est donc le seul champ de ce fichier dont la forme vient d'une **demande** et
+non d'un relevé. Les fixtures l'écrivent en hexadécimal (`#1e88e5`) parce que
+c'est ce que le contrat demandé prévoit ; quand une installation le recevra
+vraiment, **vérifiez la forme reçue et mettez cette section à jour** — c'est
+exactement le genre de supposition qui a produit les trois défauts du tableau
+en tête de fichier.
+
+Une valeur qui n'est pas un hexadécimal strict est ignorée par `subjectColor`,
+et la ligne s'affiche alors sans accent de couleur. Le champ est donc sans
+risque de régression : le pire cas est le rendu d'aujourd'hui.
+
 `status` est **orthogonal** à `canceled` : `canceled` dit si le cours a lieu,
 `status` dit pourquoi. Relevé réel sur une semaine — `canceled: true` avec
 « Prof. absent », et `canceled: false` avec « Cours modifié ». Traitez `status`

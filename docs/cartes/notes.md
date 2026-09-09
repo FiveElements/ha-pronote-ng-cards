@@ -55,6 +55,19 @@ afficherait donc une période qu'il ne maîtrise pas. La période **en cours**
 s'affiche en revanche comme une ligne transverse, dès qu'elle est
 exploitable.
 
+## Le code couleur des matières
+
+Les **moyennes par matière** portent la couleur que l'établissement associe
+à la matière, en bordure gauche — le même code visuel que sur l'emploi du
+temps, dont la page explique [comment il fonctionne et pourquoi il n'est pas
+encore visible](emploi-du-temps.md#le-code-couleur-des-matieres).
+
+C'est la seule section colorée de cette carte : PRONOTE n'envoie pas de
+couleur pour une note individuelle ni pour une matière de bulletin. Les
+autres lignes gardent malgré tout le même retrait, pour que la liste des
+notes et celle des moyennes — qui se suivent sans intertitre — restent
+alignées.
+
 ## Si la carte est vide
 
 « Aucune note pour cette période » : c'est le cas normal à la rentrée, et
