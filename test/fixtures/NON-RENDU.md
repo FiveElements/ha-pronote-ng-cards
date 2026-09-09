@@ -10,10 +10,26 @@ mentionne, puis les attributs réels relevés sur instance croisés avec les
 champs que chaque `render` lit. Pas de mémoire ; les formes non observables
 viennent du source Python de l'intégration, et c'est dit à chaque fois.
 
-**Ce document liste des manques, pas des bogues.** Rien ici ne rend une
-carte fausse. Mais une information qu'on ne montre pas est une information
-perdue pour le parent, et le but du projet est qu'elle ne le soit pas par
-inadvertance.
+**Ce document listait des manques. Il ne le fait plus.** La première version
+affirmait que « rien ici ne rend une carte fausse » ; c'était vrai de ce
+qu'elle contenait, et les relectures qui ont suivi l'ont rendu faux. Quatre
+entrées d'ici font qu'une carte **affirme quelque chose d'inexact**, et elles
+ne se rangent pas avec les autres :
+
+| carte | l'affirmation fausse | le champ qui la corrigerait |
+| --- | --- | --- |
+| Vie scolaire | une exclusion présentée comme une retenue | `punishments[].exclusion`, publié |
+| Notes | une note de bonus ou facultative présentée comme une note qui compte | `items[].is_bonus`, `.is_optional`, publiés |
+| Cantine | un dîner titré « menu du jour » | `is_lunch`, publié |
+| Notes | « /20 » sur une moyenne générale, quelle que soit l'échelle | aucun — le producteur publie une constante |
+
+**Un manque se voit ; une affirmation fausse ressemble à un affichage
+correct.** C'est pourquoi ces quatre-là passent devant tout le reste de ce
+document, et pourquoi la liste de priorités du bas ne les concerne plus.
+
+Le reste tient toujours : une information qu'on ne montre pas est une
+information perdue pour le parent, et le but du projet est qu'elle ne le soit
+pas par inadvertance.
 
 ## Niveau 1 — les familles entières sans aucune carte
 
@@ -46,7 +62,7 @@ dont les listes sont vides sur l'instance de référence.
 | --- | --- | --- |
 | `absences[].days` | **non** | une absence de trois jours s'affiche comme une absence d'une heure ; seule la durée en heures est montrée |
 | `delays[].justification` | **non** | champ **distinct** de `reasons` : le texte de justification est perdu |
-| `punishments[].exclusion` | **non** | **une exclusion s'affiche exactement comme une retenue.** C'est la perte la plus grave de tout le document : deux sanctions de nature très différente rendues à l'identique |
+| `punishments[].exclusion` | **non** | **une exclusion s'affiche exactement comme une retenue.** C'est la perte la plus grave de tout le document : deux sanctions de nature très différente rendues à l'identique. Lecture confirmée à la source — `_punishment_dict` (`sensor.py:636`) publie bien `exclusion`, un booléen (`models.py:313`), et la carte déclare `nature`, `giver` et `schedule[].duration_minutes` sans lui |
 | `punishments[].reasons` | **non** | le motif de la punition, alors que le motif d'une absence est bien montré |
 | `punishments[].schedule[].start` | **non** | la durée totale est calculée, mais **quand** la punition a lieu n'est jamais dit |
 | `absences[].id`, `delays[].id`, `punishments[].id` | non | sans conséquence d'affichage |
@@ -123,8 +139,28 @@ disponible.
 Ni les cartes ni la documentation n'y ont accès : la passerelle décode ces
 champs et le capteur ne les expose pas dans `lessons`.
 
-`background_color` (depuis `CouleurFond`), `subject_id`, `groups`,
-`virtual_classrooms`, `num`, `place`, `duration`.
+Sur un créneau : `background_color` (depuis `CouleurFond`), `subject_id`,
+`groups`, `virtual_classrooms`, `num`, `place`, `duration`.
+
+Sur une punition, trois champs du modèle que `_punishment_dict`
+(`sensor.py:629`) n'expose pas : `given_at`, `during_lesson` et
+**`homework`**. Le dernier compte : une punition peut porter un travail
+supplémentaire, et ni la carte vie scolaire ni la carte devoirs ne peuvent
+le voir.
+
+Sur une note, `subject_id` — publié pour une moyenne par matière, pas pour
+une note. **S'ils étaient égaux**, une carte pourrait poser une note à côté
+de la moyenne de sa matière sans apparier des libellés d'affichage, ce qui
+est la seule jointure possible aujourd'hui. L'égalité n'est **pas mesurée**
+et ne doit pas être supposée : l'un est une référence de service, l'autre
+l'identifiant d'une entrée de liste. La mesure est en attente parce qu'elle
+est impossible — zéro note sur l'instance de référence, la période venant de
+commencer.
+
+Sur un plat de cantine, le tableau `labels` : voir la section cantine de
+`FORMES.md`. Ce cas est le plus grave des trois, parce que la donnée est
+aplatie **avant** d'atteindre le moindre objet de transfert, et parce que
+l'ancienne carte l'affichait — c'est une régression, pas un manque.
 
 Ce n'est pas un manque des cartes. C'est une demande à porter côté
 intégration — `background_color` en particulier, parce qu'une couleur venue
