@@ -21,9 +21,41 @@ export interface PronoteCardConfig {
   [option: string]: unknown;
 }
 
+/**
+ * Vue en lecture de `HomeAssistant` : tout, sauf `callService`. C'est ce qui
+ * rend vraie la promesse de docs/limites.md — le socle ne donne aux cartes
+ * aucun moyen d'appeler un service Home Assistant via `ctx.hass` ; le seul
+ * chemin d'appel est `RenderCtx.callService`, restreint par le type à
+ * `AllowedCall`.
+ */
+export type HassView = Omit<HomeAssistant, 'callService'>;
+
+/**
+ * Compose un couple domaine/service sans jamais écrire la paire en dur,
+ * contiguë, dans le source : la garde anti-identifiant du projet
+ * (test/decorators.test.ts) repère `todo.` suivi de minuscules comme un
+ * identifiant d'entité codé en dur.
+ */
+type Call<Domain extends string, Service extends string> = `${Domain}.${Service}`;
+
+/**
+ * Les seuls appels qu'une carte peut émettre. Toute autre valeur est refusée
+ * à la compilation — en particulier aucun des services à réponse (celui qui
+ * rend l'URL iCal, celui qui rend le bloc d'identité, celui qui produit le
+ * PDF d'emploi du temps, celui qui rend l'état du limiteur, celui qui
+ * exporte les identifiants, celui qui rend le numéro INE) ne peut y figurer
+ * sans passer par cette liste, revue en revue de code.
+ */
+export type AllowedCall = Call<'pronote_ng', 'refresh'> | Call<'todo', 'update_item'>;
+
 export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
-  hass: HomeAssistant;
+  /** Vue en lecture : `callService` n'y figure pas (voir `HassView`). */
+  hass: HassView;
   config: C;
+  /** Langue de Home Assistant. Commodité pour éviter `ctx.hass.language`. */
+  language: string;
+  /** Fuseau horaire de Home Assistant. Commodité pour éviter `ctx.hass.locale.time_zone`. */
+  timeZone: string;
   /** Nom affiché de l'appareil résolu. Jamais un nom codé en dur. */
   deviceName: string;
   entityId(key: EntityKey): string | undefined;
@@ -33,10 +65,22 @@ export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
   attr<T = unknown>(key: EntityKey, name: string): T | undefined;
   /** Chaîne localisée depuis src/localize. */
   t(path: string, vars?: Record<string, string | number>): string;
-  /** Seul service appelable. Ne place aucun appel réseau PRONOTE : relève une priorité. */
+  /**
+   * Seul point d'appel de service ouvert aux cartes, restreint par le type
+   * à `AllowedCall`. Ne place aucun appel réseau PRONOTE lui-même : c'est
+   * l'ordonnanceur, côté intégration, qui reste soumis au limiteur.
+   */
+  callService(
+    call: AllowedCall,
+    data?: Record<string, unknown>,
+    target?: Record<string, unknown>
+  ): Promise<void>;
+  /** Relève une priorité de collecte auprès de l'ordonnanceur. Passe par `callService`. */
   refresh(tier?: string): Promise<void>;
   /** Vrai pendant l'intervalle de garde suivant un refresh (spec §4.5). */
   refreshCoolingDown: boolean;
+  /** Vrai si le dernier `refresh` a échoué (rejet du service). Remis à faux au prochain appel. */
+  refreshFailed: boolean;
 }
 
 export interface CardSpec<C extends PronoteCardConfig = PronoteCardConfig> {
@@ -52,9 +96,20 @@ export interface CardSpec<C extends PronoteCardConfig = PronoteCardConfig> {
   /** Au moins une doit être résolue. Vide si sans objet. */
   requiresAny?(config: C): EntityKey[];
   optional(config: C): EntityKey[];
-  schema(config: C): HaFormSchema[];
+  /**
+   * `t` est optionnel pour que les cartes non encore migrées continuent de
+   * compiler ; une carte qui l'ignore retombe sur des libellés en dur.
+   */
+  schema(config: C, t?: Translate): HaFormSchema[];
   /** Config par défaut proposée par l'éditeur de tableau de bord. */
   stub?: Partial<C>;
   size?: number;
+  /**
+   * Déclare que la carte a besoin d'être repeinte périodiquement même sans
+   * qu'aucune propriété réactive ne change — compte à rebours, créneau en
+   * cours, bouton grisé par le temps. Le socle pose la minuterie ; la carte
+   * ne gère jamais elle-même de `setInterval`.
+   */
+  tickMs?: number;
   render(ctx: RenderCtx<C>): TemplateResult;
 }

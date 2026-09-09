@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isChildDevice, resolveDevice, resolveEntities } from '../src/core/resolve';
+import { createResolveCache, isChildDevice, resolveDevice, resolveEntities } from '../src/core/resolve';
 import { makeHass } from './fixtures/hass';
 
 const enfant = (key: string, entity_id: string, extra = {}) =>
@@ -117,5 +117,50 @@ describe('resolveEntities', () => {
     expect(['sensor.abc_notes_p1', 'sensor.abc_notes_p2']).toContain(
       r.get('sensor:grades_period')
     );
+  });
+
+  it("ignore la surcharge quand son domaine ne correspond pas à celui de la clé — un identifiant d'un autre domaine n'est plus accepté sans un mot", () => {
+    const hass = makeHass([]);
+    const r = resolveEntities(hass, 'dev_enfant', 'child', ['sensor:next_lesson'], {
+      'sensor:next_lesson': 'todo.mauvais_domaine',
+    });
+    expect(r.has('sensor:next_lesson')).toBe(false);
+  });
+
+  it('accepte la surcharge quand son domaine correspond bien à celui de la clé', () => {
+    const hass = makeHass([]);
+    const r = resolveEntities(hass, 'dev_enfant', 'child', ['sensor:next_lesson'], {
+      'sensor:next_lesson': 'sensor.surcharge',
+    });
+    expect(r.get('sensor:next_lesson')).toBe('sensor.surcharge');
+  });
+});
+
+describe('createResolveCache', () => {
+  it('mémoïse le résultat tant que le registre, l’appareil, la surcharge et les clés ne changent pas', () => {
+    const hass = makeHass([enfant('sensor:next_lesson', 'sensor.abc_prochain_cours')]);
+    const cache = createResolveCache();
+    const r1 = cache.resolve(hass, 'dev_enfant', 'child', ['sensor:next_lesson'], undefined);
+    const r2 = cache.resolve(hass, 'dev_enfant', 'child', ['sensor:next_lesson'], undefined);
+    expect(r2).toBe(r1);
+  });
+
+  it('recalcule quand le registre change d’identité (hass.entities ou hass.devices)', () => {
+    const hass1 = makeHass([enfant('sensor:next_lesson', 'sensor.abc_prochain_cours')]);
+    const hass2 = makeHass([enfant('sensor:next_lesson', 'sensor.autre_id')]);
+    const cache = createResolveCache();
+    const r1 = cache.resolve(hass1, 'dev_enfant', 'child', ['sensor:next_lesson'], undefined);
+    const r2 = cache.resolve(hass2, 'dev_enfant', 'child', ['sensor:next_lesson'], undefined);
+    expect(r2).not.toBe(r1);
+    expect(r2.get('sensor:next_lesson')).toBe('sensor.autre_id');
+  });
+
+  it('recalcule quand les clés demandées changent, même avec le même registre', () => {
+    const hass = makeHass([enfant('sensor:next_lesson', 'sensor.abc_prochain_cours')]);
+    const cache = createResolveCache();
+    const r1 = cache.resolve(hass, 'dev_enfant', 'child', ['sensor:next_lesson'], undefined);
+    const r2 = cache.resolve(hass, 'dev_enfant', 'child', [], undefined);
+    expect(r2).not.toBe(r1);
+    expect(r2.size).toBe(0);
   });
 });
