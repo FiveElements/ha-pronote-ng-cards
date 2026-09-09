@@ -157,5 +157,20 @@
     "empty": "Nenhuma avaliação para este período.",
     "limit": "Número de avaliações mostradas",
     "show_acquisitions": "Detalhar as competências"
+  },
+  "journee": {
+    "name": "Vista do dia",
+    "empty": "Nenhuma aula hoje.",
+    "meal": "Refeição",
+    "meal_inferred": "Este intervalo começa numa hora de fim deduzida pela integração: a sua posição pode ser aproximada.",
+    "canceled": "cancelada",
+    "test": "teste",
+    "outing": "saída",
+    "show_meal": "Mostrar a faixa da refeição",
+    "meal_label": "Etiqueta da faixa da refeição",
+    "meal_from": "Início do período do almoço (HH:MM)",
+    "meal_to": "Fim do período do almoço (HH:MM)",
+    "show_rooms": "Mostrar as salas",
+    "show_current": "Destacar a aula em curso"
   }
 }

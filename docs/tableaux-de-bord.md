@@ -210,4 +210,4 @@ temps, ce qui est une bonne nouvelle — mais en haut, ça se lit comme une pann
   absent
 - [Afficher les données](https://fiveelements.github.io/ha-pronote-ng/AFFICHER-LES-DONNEES/)
   — côté intégration : les cartes intégrées de Home Assistant, pour ce que ces
-  neuf cartes ne couvrent pas
+  cartes ne couvrent pas

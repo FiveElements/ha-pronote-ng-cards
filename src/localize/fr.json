@@ -157,5 +157,20 @@
     "empty": "Aucune évaluation pour cette période.",
     "limit": "Nombre d'évaluations affichées",
     "show_acquisitions": "Détailler les compétences"
+  },
+  "journee": {
+    "name": "Vue journée",
+    "empty": "Aucun cours aujourd'hui.",
+    "meal": "Repas",
+    "meal_inferred": "Cet intervalle commence à une heure de fin déduite par l'intégration : sa position peut être approximative.",
+    "canceled": "annulé",
+    "test": "contrôle",
+    "outing": "sortie",
+    "show_meal": "Afficher la zone repas",
+    "meal_label": "Libellé de la zone repas",
+    "meal_from": "Début de la plage du midi (HH:MM)",
+    "meal_to": "Fin de la plage du midi (HH:MM)",
+    "show_rooms": "Afficher les salles",
+    "show_current": "Mettre en avant le cours en cours"
   }
 }

@@ -157,5 +157,20 @@
     "empty": "Ninguna evaluación para este periodo.",
     "limit": "Número de evaluaciones mostradas",
     "show_acquisitions": "Detallar las competencias"
+  },
+  "journee": {
+    "name": "Vista del día",
+    "empty": "No hay clases hoy.",
+    "meal": "Comida",
+    "meal_inferred": "Este intervalo empieza en una hora de fin deducida por la integración: su posición puede ser aproximada.",
+    "canceled": "anulada",
+    "test": "examen",
+    "outing": "salida",
+    "show_meal": "Mostrar la franja de la comida",
+    "meal_label": "Etiqueta de la franja de la comida",
+    "meal_from": "Inicio del tramo del mediodía (HH:MM)",
+    "meal_to": "Fin del tramo del mediodía (HH:MM)",
+    "show_rooms": "Mostrar las aulas",
+    "show_current": "Destacar la clase en curso"
   }
 }

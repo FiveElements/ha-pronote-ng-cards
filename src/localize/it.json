@@ -157,5 +157,20 @@
     "empty": "Nessuna valutazione per questo periodo.",
     "limit": "Numero di valutazioni mostrate",
     "show_acquisitions": "Dettagliare le competenze"
+  },
+  "journee": {
+    "name": "Vista giornata",
+    "empty": "Nessuna lezione oggi.",
+    "meal": "Pasto",
+    "meal_inferred": "Questo intervallo inizia a un'ora di fine dedotta dall'integrazione: la sua posizione può essere approssimativa.",
+    "canceled": "annullata",
+    "test": "verifica",
+    "outing": "uscita",
+    "show_meal": "Mostrare la fascia del pasto",
+    "meal_label": "Etichetta della fascia del pasto",
+    "meal_from": "Inizio della fascia di mezzogiorno (HH:MM)",
+    "meal_to": "Fine della fascia di mezzogiorno (HH:MM)",
+    "show_rooms": "Mostrare le aule",
+    "show_current": "Evidenziare la lezione in corso"
   }
 }

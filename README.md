@@ -1,15 +1,16 @@
 # Pronote NG — Cartes
 
-Neuf cartes Lovelace pour afficher, dans un tableau de bord Home Assistant, les données scolaires collectées par l'intégration [Pronote NG](https://github.com/FiveElements/ha-pronote-ng) : emploi du temps, devoirs, notes, cantine, vie scolaire.
+Dix cartes Lovelace pour afficher, dans un tableau de bord Home Assistant, les données scolaires collectées par l'intégration [Pronote NG](https://github.com/FiveElements/ha-pronote-ng) : emploi du temps, devoirs, notes, cantine, vie scolaire.
 
-![Trois des neuf cartes : prochain cours, devoirs et vie scolaire](docs/assets/apercu.svg)
+![Trois des dix cartes : prochain cours, devoirs et vie scolaire](docs/assets/apercu.svg)
 
 *Illustration synthétique — aucune donnée réelle n'entre dans ce dépôt.*
 
-## Les neuf cartes
+## Les dix cartes
 
 - Élève — en-tête de synthèse
 - Prochain cours
+- Vue journée — la journée en grille, avec couleurs de matière et zone repas
 - Emploi du temps
 - Devoirs
 - Notes

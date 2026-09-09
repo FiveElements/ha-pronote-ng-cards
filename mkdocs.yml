@@ -17,6 +17,7 @@ nav:
   - Cartes:
       - Élève: cartes/eleve.md
       - Prochain cours: cartes/prochain-cours.md
+      - Vue journée: cartes/journee.md
       - Emploi du temps: cartes/emploi-du-temps.md
       - Devoirs: cartes/devoirs.md
       - Notes: cartes/notes.md

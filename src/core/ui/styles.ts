@@ -141,6 +141,94 @@ export const sharedStyles = css`
     outline-offset: 2px;
   }
 
+  /* ---- La vue journée -------------------------------------------------
+     Une grille à trois colonnes : les horaires, le filet de couleur, le
+     corps. La colonne d'horaires est de largeur fixe pour que tous les
+     filets s'alignent verticalement, ce qui est ce qui fait lire la journée
+     comme une journée et non comme une liste. */
+  .jour {
+    display: flex;
+    flex-direction: column;
+  }
+  .jour-ligne {
+    display: grid;
+    /* Deux chiffres, deux points, deux chiffres, plus le marqueur de fin
+       déduite : 4,5em tient « ≈08:00 » sans que la police du thème puisse
+       le tronquer. */
+    grid-template-columns: 4.5em 4px 1fr;
+    gap: 10px;
+    align-items: stretch;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--divider-color);
+  }
+  .jour-ligne:last-child {
+    border-bottom: none;
+  }
+  .jour-heures {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.35;
+  }
+  /* Le filet. Sa couleur vient du serveur ou de la table de l'utilisateur,
+     posée en style en ligne ; le repli neutre est une variable de thème,
+     jamais une couleur écrite ici. Un ACCENT et non un aplat : il situe et
+     décore, il ne porte aucune information à lui seul — les horaires,
+     l'intitulé et les pastilles informent. */
+  .jour-filet {
+    border-radius: 2px;
+    background: var(--divider-color);
+  }
+  .jour-filet-neutre {
+    background: var(--divider-color);
+  }
+  .jour-corps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 8px;
+    min-width: 0;
+  }
+  .jour-matiere {
+    font-weight: 500;
+    color: var(--primary-text-color);
+  }
+  .jour-salle {
+    color: var(--secondary-text-color);
+    font-size: 0.9em;
+  }
+  .jour-pastilles {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-left: auto;
+  }
+  /* Le cours en cours. Un fond très léger dérivé de la couleur d'accent du
+     thème, pas une couleur propre : la mise en avant doit survivre à un
+     thème sombre comme à un thème clair. */
+  .jour-courant {
+    background: var(--secondary-background-color);
+    border-radius: 6px;
+  }
+  /* La zone repas. Volontairement discrète et en italique : ce n'est pas un
+     cours, et le libellé est une convention de l'utilisateur — pas une
+     affirmation du module sur ce que fait l'élève à cette heure-là. */
+  .jour-repas .jour-matiere {
+    font-weight: 400;
+    font-style: italic;
+    color: var(--secondary-text-color);
+  }
+  .jour-repas .jour-filet {
+    background: repeating-linear-gradient(
+      to bottom,
+      var(--divider-color) 0 4px,
+      transparent 4px 8px
+    );
+  }
+
   /* Photo et lignes d'identité côte à côte. Un flux flex plutôt qu'un
      flottement, qui se comporte mal dès qu'une ligne est plus haute que la
      photo. */

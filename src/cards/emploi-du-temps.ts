@@ -3,30 +3,13 @@ import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } fro
 import { formatDayLabel, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
+import { isCanceled, statusLabel, teachersOf, type Lesson } from '../core/lesson';
 import { subjectColor } from '../core/subject-color';
 
 interface Config extends PronoteCardConfig {
   range?: 'today' | 'tomorrow' | 'week';
   show_rooms?: boolean;
   show_teachers?: boolean;
-}
-
-interface Lesson {
-  subject?: string;
-  start?: string;
-  end?: string;
-  classroom?: string;
-  teachers?: string[] | string;
-  canceled?: boolean;
-  status?: string;
-  test?: boolean;
-  outing?: boolean;
-  /**
-   * La couleur que l'établissement associe à la matière (`CouleurFond` côté
-   * protocole). Déclarée `unknown` : c'est une chaîne de serveur, et le champ
-   * traverse `subjectColor` avant d'atteindre un attribut `style`.
-   */
-  background_color?: unknown;
 }
 
 /**
@@ -59,52 +42,6 @@ const keyFor = (c: Config): EntityKey => KEYS[c.range ?? 'today'];
 const IN_CLASS: EntityKey = 'binary_sensor:in_class';
 const TEST_TODAY: EntityKey = 'binary_sensor:test_today';
 const OUTING_TODAY: EntityKey = 'binary_sensor:outing_today';
-
-/** `teachers` arrive tantôt en tableau, tantôt en chaîne selon la version de l'intégration. */
-const teachersOf = (value: unknown): string =>
-  Array.isArray(value)
-    ? value.filter(Boolean).join(', ')
-    : typeof value === 'string'
-      ? value
-      : '';
-
-/**
- * Le seul libellé de `status` que la pastille d'annulation dit déjà.
- * C'est du texte de serveur, jamais traduit (voir `docs/limites.md`) : on le
- * compare tel quel, on ne le reformule pas.
- */
-const CANCELED_STATUS = 'Cours annulé';
-
-/**
- * `canceled` est le signal nominal, mais certaines versions de l'intégration
- * ne posent que `status` (par exemple « Cours annulé ») sans lever
- * `canceled`. L'ignorer ferait apparaître un cours annulé comme un cours
- * normal — exactement ce que la règle « signalé et non masqué » interdit.
- */
-const isCanceled = (l: Lesson): boolean =>
-  l.canceled === true || l.status === CANCELED_STATUS;
-
-/**
- * Le motif écrit par l'établissement, quand il dit plus que la pastille
- * d'annulation.
- *
- * `status` est **orthogonal** à `canceled`, et c'est un relevé d'instance qui
- * l'a montré : sur une semaine de 27 créneaux, `canceled: true` avec
- * « Prof. absent », et `canceled: false` avec « Cours modifié ». Le drapeau
- * dit SI le cours a lieu, le libellé dit POURQUOI — et le pourquoi est ce
- * qu'un parent veut lire. La carte ne montrait que le drapeau : les deux
- * cours modifiés de la semaine s'affichaient comme des cours ordinaires, ce
- * qui est du masquage, pas de la sobriété.
- *
- * Rendu vide quand le libellé ne fait que répéter la pastille — même règle
- * que le capteur bridé de la carte limiteur : deux surfaces qui affirment la
- * même chose finissent par se désaccorder sans qu'on sache laquelle croire.
- */
-const statusLabel = (l: Lesson): string => {
-  const label = typeof l.status === 'string' ? l.status.trim() : '';
-  return label === CANCELED_STATUS ? '' : label;
-};
-
 
 export const SPEC: CardSpec<Config> = {
   type: 'pronote-ng-emploi-du-temps',

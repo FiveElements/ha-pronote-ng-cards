@@ -1,0 +1,358 @@
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { defineCard } from '../../src/core/registry';
+import { SPEC, testClock } from '../../src/cards/journee';
+import { makeHass } from '../fixtures/hass';
+import { mountCard, text } from '../fixtures/mount';
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'pronote-ng-journee': HTMLElement & {
+      setConfig(c: unknown): void;
+      hass: unknown;
+      readonly updateComplete: Promise<unknown>;
+    };
+  }
+}
+
+beforeAll(() => {
+  defineCard(SPEC);
+});
+
+beforeEach(() => {
+  testClock.now = undefined;
+});
+
+/**
+ * Les cinq éléments du seuil d'acceptation, nommés par l'utilisateur : heure
+ * de début ET de fin, filet de couleur, intitulé de matière, barré plus
+ * pastille sur un cours annulé, zone repas. Ce fichier les couvre un par un,
+ * puis les pièges.
+ *
+ * Toutes les valeurs sont synthétiques. Les matières inventées ne
+ * correspondent à aucun établissement.
+ */
+
+/** Une journée à trou méridien : deux cours le matin, un l'après-midi. */
+const JOURNEE = [
+  {
+    subject: 'Maths',
+    start: '2026-09-09T08:00:00+02:00',
+    end: '2026-09-09T09:00:00+02:00',
+    classroom: '2.14',
+  },
+  {
+    subject: 'Histoire',
+    start: '2026-09-09T09:00:00+02:00',
+    end: '2026-09-09T10:00:00+02:00',
+  },
+  {
+    subject: 'Anglais',
+    start: '2026-09-09T13:30:00+02:00',
+    end: '2026-09-09T14:30:00+02:00',
+  },
+];
+
+const jour = (lessons: unknown[], language = 'fr') =>
+  makeHass(
+    [
+      {
+        key: 'sensor:lessons_today',
+        entity_id: 'sensor.abc_cours_du_jour',
+        device: 'dev_enfant',
+        state: String(lessons.length),
+        attributes: { lessons },
+      },
+    ],
+    language
+  );
+
+const monter = (config: Record<string, unknown>, lessons: unknown[] = JOURNEE) =>
+  mountCard('pronote-ng-journee', { device_id: 'dev_enfant', ...config }, jour(lessons));
+
+/** Les lignes de la grille, dans l'ordre du rendu. */
+const lignes = (el: HTMLElement) =>
+  [...(el.shadowRoot?.querySelectorAll('.jour-ligne') ?? [])].map((l) => {
+    const filet = l.querySelector('.jour-filet');
+    return {
+      repas: l.classList.contains('jour-repas'),
+      courant: l.classList.contains('jour-courant'),
+      heures: [...l.querySelectorAll('.jour-heures span')].map((s) => s.textContent?.trim() ?? ''),
+      matiere: l.querySelector('.jour-matiere')?.textContent?.trim() ?? '',
+      barre: l.querySelector('.jour-matiere')?.classList.contains('canceled') ?? false,
+      couleur:
+        filet instanceof HTMLElement
+          ? filet.style.background.trim() || null
+          : null,
+      neutre: filet?.classList.contains('jour-filet-neutre') ?? false,
+      pastilles: [...l.querySelectorAll('.chip')].map((c) => c.textContent?.trim() ?? ''),
+      salle: l.querySelector('.jour-salle')?.textContent?.trim() ?? '',
+    };
+  });
+
+describe('carte vue journée — les cinq éléments requis', () => {
+  it('affiche l’heure de début ET de fin, en colonne à deux lignes', async () => {
+    const el = await monter({});
+    const l = lignes(el);
+    // Trois cours plus la zone repas.
+    expect(l).toHaveLength(4);
+    expect(l[0]?.heures).toEqual(['08:00', '09:00']);
+    expect(l[1]?.heures).toEqual(['09:00', '10:00']);
+  });
+
+  it('affiche l’intitulé de matière', async () => {
+    const el = await monter({});
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Maths', 'Histoire', 'Repas', 'Anglais']);
+  });
+
+  it('pose le filet à la couleur déclarée par l’utilisateur', async () => {
+    // Le rang 2 de la couleur, et aujourd'hui le seul qui produise quelque
+    // chose : l'intégration ne publie pas encore `background_color`.
+    const el = await monter({ subject_colors: { maths: '#1e88e5' } });
+    const l = lignes(el);
+    // happy-dom rend la valeur telle qu'elle a été posée ; un navigateur la
+    // normalise en `rgb(30, 136, 229)`, ce qui a été vérifié sur instance.
+    // C'est la valeur POSÉE qu'on teste ici, pas la normalisation du moteur.
+    expect(l[0]?.couleur).toBe('#1e88e5');
+    expect(l[0]?.neutre).toBe(false);
+    // Et la matière sans couleur déclarée garde l'accent neutre du thème.
+    expect(l[1]?.couleur).toBeNull();
+    expect(l[1]?.neutre).toBe(true);
+  });
+
+  it('préfère la couleur publiée par le serveur à celle de l’utilisateur', async () => {
+    // Rang 1 devant rang 2 : le jour où l'intégration publie le champ, il
+    // prend le dessus sans que la table de l'utilisateur soit à supprimer.
+    const el = await monter({ subject_colors: { maths: '#000000' } }, [
+      { ...JOURNEE[0], background_color: '#1e88e5' },
+    ]);
+    expect(lignes(el)[0]?.couleur).toBe('#1e88e5');
+  });
+
+  it('ignore une couleur déclarée qui n’est pas un hexadécimal strict', async () => {
+    // Même filtre que pour la couleur du serveur : la valeur atteint un
+    // attribut `style`, et une table de tableau de bord est du texte libre.
+    const el = await monter({ subject_colors: { maths: 'red; position: fixed' } });
+    const l = lignes(el);
+    expect(l[0]?.couleur).toBeNull();
+    expect(l[0]?.neutre).toBe(true);
+    expect(l[0]?.matiere).toBe('Maths');
+  });
+
+  it('barre un cours annulé ET lui pose sa pastille', async () => {
+    const el = await monter({}, [{ ...JOURNEE[0], canceled: true }]);
+    const l = lignes(el);
+    expect(l[0]?.barre).toBe(true);
+    expect(l[0]?.pastilles).toContain('annulé');
+    // Le cours reste visible : le retirer donnerait l'illusion qu'il n'a
+    // jamais existé.
+    expect(l[0]?.matiere).toBe('Maths');
+  });
+
+  it('reconnaît une annulation portée par le seul libellé de statut', async () => {
+    const el = await monter({}, [{ ...JOURNEE[0], status: 'Cours annulé' }]);
+    const l = lignes(el);
+    expect(l[0]?.barre).toBe(true);
+    // Et le libellé ne double PAS la pastille qu'il a déclenchée.
+    expect(l[0]?.pastilles).toEqual(['annulé']);
+  });
+
+  it('rend le motif du serveur tel quel, sans le classer', async () => {
+    const el = await monter({}, [{ ...JOURNEE[0], status: 'Prof. absent' }]);
+    expect(lignes(el)[0]?.pastilles).toEqual(['Prof. absent']);
+  });
+
+  it('insère une zone repas dans le trou méridien', async () => {
+    const el = await monter({});
+    const repas = lignes(el).filter((x) => x.repas);
+    expect(repas).toHaveLength(1);
+    expect(repas[0]?.matiere).toBe('Repas');
+    // Aux bornes du trou, pas à une heure inventée.
+    expect(repas[0]?.heures).toEqual(['10:00', '13:30']);
+  });
+});
+
+describe('carte vue journée — la zone repas ne raconte rien', () => {
+  it('n’affirme rien de plus que « pas de cours ici »', async () => {
+    const el = await monter({});
+    // Aucun mot sur un menu, un plat ou la présence de l'élève : la carte ne
+    // lit aucune entité de cantine et ne doit rien en laisser croire.
+    const t = text(el).toLowerCase();
+    expect(t).toContain('repas');
+    expect(t).not.toContain('menu');
+    expect(t).not.toContain('cantine');
+  });
+
+  it('accepte un libellé choisi par l’utilisateur', async () => {
+    // Le mot est une convention assumée par l'utilisateur, pas une
+    // affirmation du module — donc il doit pouvoir le changer.
+    const el = await monter({ meal_label: 'Pause déjeuner' });
+    expect(lignes(el).find((x) => x.repas)?.matiere).toBe('Pause déjeuner');
+  });
+
+  it('n’affiche rien sur un trou hors de la plage du midi', async () => {
+    const el = await monter({}, [
+      JOURNEE[0],
+      // Trou de 09:00 à 11:00 : long, mais la plage par défaut commence à
+      // 11:00 et le trou se termine pile à son début.
+      { subject: 'Anglais', start: '2026-09-09T09:00:00+02:00', end: '2026-09-09T10:00:00+02:00' },
+      { subject: 'Sport', start: '2026-09-09T11:00:00+02:00', end: '2026-09-09T12:00:00+02:00' },
+    ]);
+    expect(lignes(el).filter((x) => x.repas)).toHaveLength(0);
+    // Assertion positive appariée : les trois cours sont bien là.
+    expect(lignes(el)).toHaveLength(3);
+  });
+
+  it('n’affiche rien sur un trou de fin d’après-midi', async () => {
+    // La borne HAUTE de la plage, que le test précédent ne couvre pas : il
+    // vérifie un trou qui finit avant le début du midi, celui-ci un trou qui
+    // commence après sa fin. Ce cas manquait, et une mutation l'a révélé —
+    // supprimer la comparaison de borne haute laissait les 26 tests verts,
+    // et le mot « Repas » serait apparu sur un trou de 15 h à 17 h.
+    const el = await monter({}, [
+      { subject: 'Maths', start: '2026-09-09T14:00:00+02:00', end: '2026-09-09T15:00:00+02:00' },
+      { subject: 'Sport', start: '2026-09-09T17:00:00+02:00', end: '2026-09-09T18:00:00+02:00' },
+    ]);
+    expect(lignes(el).filter((x) => x.repas)).toHaveLength(0);
+    expect(lignes(el)).toHaveLength(2);
+  });
+
+  it('n’affiche rien sur un trou trop court pour être un repas', async () => {
+    const el = await monter({}, [
+      { subject: 'Maths', start: '2026-09-09T11:00:00+02:00', end: '2026-09-09T12:00:00+02:00' },
+      // Dix minutes : un changement de salle, pas un déjeuner.
+      { subject: 'Histoire', start: '2026-09-09T12:10:00+02:00', end: '2026-09-09T13:10:00+02:00' },
+    ]);
+    expect(lignes(el).filter((x) => x.repas)).toHaveLength(0);
+    expect(lignes(el)).toHaveLength(2);
+  });
+
+  it('suit une plage du midi configurée', async () => {
+    // Trou de 09:00 à 10:30, hors plage par défaut, dans la plage configurée.
+    const lessons = [
+      { subject: 'Maths', start: '2026-09-09T08:00:00+02:00', end: '2026-09-09T09:00:00+02:00' },
+      { subject: 'Histoire', start: '2026-09-09T10:30:00+02:00', end: '2026-09-09T11:30:00+02:00' },
+    ];
+    const sans = await monter({}, lessons);
+    expect(lignes(sans).filter((x) => x.repas)).toHaveLength(0);
+
+    const avec = await monter({ meal_from: '09:00', meal_to: '10:30' }, lessons);
+    expect(lignes(avec).filter((x) => x.repas)).toHaveLength(1);
+  });
+
+  it('retombe sur la plage par défaut quand la configuration est illisible', async () => {
+    // Une plage saisie à la main peut être n'importe quoi. Une valeur
+    // invalide ne doit pas faire disparaître la zone repas : elle doit être
+    // ignorée, et la plage par défaut reprendre.
+    const el = await monter({ meal_from: 'midi', meal_to: '99:99' });
+    expect(lignes(el).filter((x) => x.repas)).toHaveLength(1);
+  });
+
+  it('se désactive entièrement sur demande', async () => {
+    const el = await monter({ show_meal: false });
+    expect(lignes(el).filter((x) => x.repas)).toHaveLength(0);
+    expect(lignes(el)).toHaveLength(3);
+  });
+});
+
+describe('carte vue journée — l’heure de fin déduite', () => {
+  it('marque d’un « ≈ » une heure de fin que le serveur n’a pas fournie', async () => {
+    // Le piège propre à cette carte : sa colonne affiche l'heure de FIN, et
+    // sur l'établissement de référence `end_inferred` vaut `true` sur 37
+    // créneaux sur 37. Sans marqueur, toute la colonne présenterait un calcul
+    // comme une donnée.
+    const el = await monter({}, [{ ...JOURNEE[0], end_inferred: true }]);
+    const l = lignes(el);
+    expect(l[0]?.heures[0]).toBe('08:00');
+    expect(l[0]?.heures[1]).toBe('≈09:00');
+  });
+
+  it('ne marque pas une heure de fin envoyée par le serveur', async () => {
+    const el = await monter({}, [{ ...JOURNEE[0], end_inferred: false }]);
+    expect(lignes(el)[0]?.heures[1]).toBe('09:00');
+  });
+
+  it('marque la zone repas quand sa borne gauche est une fin déduite', async () => {
+    const el = await monter({}, [
+      { ...JOURNEE[1], end_inferred: true },
+      JOURNEE[2],
+    ]);
+    const repas = lignes(el).find((x) => x.repas);
+    expect(repas?.heures[0]).toBe('10:00≈');
+  });
+});
+
+describe('carte vue journée — le cours en cours', () => {
+  it('met en avant le créneau qui contient l’instant courant', async () => {
+    testClock.now = '2026-09-09T08:30:00+02:00';
+    const el = await monter({});
+    const l = lignes(el);
+    expect(l[0]?.courant).toBe(true);
+    expect(l[1]?.courant).toBe(false);
+  });
+
+  it('ne met rien en avant quand le capteur de cours dit « off »', async () => {
+    // Droit de VETO : le capteur voit ce que l'attribut ne porte pas — jour
+    // banalisé, cours déplacé après la collecte, élève dispensé.
+    testClock.now = '2026-09-09T08:30:00+02:00';
+    const hass = makeHass([
+      {
+        key: 'sensor:lessons_today',
+        entity_id: 'sensor.abc_cours_du_jour',
+        device: 'dev_enfant',
+        state: '3',
+        attributes: { lessons: JOURNEE },
+      },
+      {
+        key: 'binary_sensor:in_class',
+        entity_id: 'binary_sensor.abc_en_cours',
+        device: 'dev_enfant',
+        state: 'off',
+      },
+    ]);
+    const el = await mountCard('pronote-ng-journee', { device_id: 'dev_enfant' }, hass);
+    expect(lignes(el).filter((x) => x.courant)).toHaveLength(0);
+    // Appariement positif : la journée s'affiche quand même.
+    expect(lignes(el).length).toBeGreaterThan(0);
+  });
+
+  it('ne met jamais en avant un cours annulé', async () => {
+    testClock.now = '2026-09-09T08:30:00+02:00';
+    const el = await monter({}, [{ ...JOURNEE[0], canceled: true }]);
+    expect(lignes(el)[0]?.courant).toBe(false);
+    expect(lignes(el)[0]?.barre).toBe(true);
+  });
+});
+
+describe('carte vue journée — le reste', () => {
+  it('affiche la salle et sait la taire', async () => {
+    expect(lignes(await monter({}))[0]?.salle).toBe('2.14');
+    expect(lignes(await monter({ show_rooms: false }))[0]?.salle).toBe('');
+  });
+
+  it('dit « aucun cours » sur une journée vide, et non « indisponible »', async () => {
+    const el = await monter({}, []);
+    expect(text(el)).toContain("Aucun cours aujourd'hui");
+    expect(lignes(el)).toHaveLength(0);
+  });
+
+  it('survit à un attribut lessons qui n’est pas un tableau', async () => {
+    // Une exception dans `render` n'affiche pas un message : elle efface la
+    // carte entière.
+    const hass = makeHass([
+      {
+        key: 'sensor:lessons_today',
+        entity_id: 'sensor.abc_cours_du_jour',
+        device: 'dev_enfant',
+        state: '1',
+        attributes: { lessons: 'pas un tableau' },
+      },
+    ]);
+    const el = await mountCard('pronote-ng-journee', { device_id: 'dev_enfant' }, hass);
+    expect(text(el)).toContain("Aucun cours aujourd'hui");
+  });
+
+  it('trie les créneaux même reçus dans le désordre', async () => {
+    const el = await monter({}, [JOURNEE[2], JOURNEE[0], JOURNEE[1]]);
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Maths', 'Histoire', 'Repas', 'Anglais']);
+  });
+});
