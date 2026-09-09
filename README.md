@@ -1,16 +1,15 @@
 # Pronote NG Cards — Cartes Lovelace pour Home Assistant
-[![Version](https://img.shields.io/github/v/release/FiveElements/ha-pronote-ng-cards?style=flat-square&label=version)](https://github.com/FiveElements/ha-pronote-ng-cards)
-[![Validate](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/validate.yml?branch=main&style=flat-square&label=validate)](https://github.com/FiveElements/ha-pronote-ng-cards/actions)
+[![Version](https://img.shields.io/github/v/release/FiveElements/ha-pronote-ng-cards?style=flat-square&label=version)](https://github.com/FiveElements/ha-pronote-ng-cards/releases)
+[![Validate](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/validate.yml?branch=main&style=flat-square&label=validate)](https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/validate.yml)
 ![Home Assistant 2026.9.0 minimum](https://img.shields.io/badge/Home%20Assistant-2026.9.0%2B-41BDF5?style=flat-square&logo=homeassistant&logoColor=white)
 ![MIT License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 
 
-[📖 Documentation](https://fiveelements.github.io/ha-pronote-ng-cards/) · [🔌 Pronote NG](https://github.com/FiveElements/ha-pronote-ng) · [🐛 Signaler un problème](https://github.com/FiveElements/ha-pronote-ng-cards/issues)
+[📖 Documentation](https://fiveelements.github.io/ha-pronote-ng-cards/) · [🔌 Pronote NG](https://github.com/FiveElements/ha-pronote-ng) · [🐛 Signaler un problème](https://github.com/FiveElements/ha-pronote-ng-cards/issues/new/choose)
+
 ---
 
- ## 📚 À propos
-
- **Pronote NG Cards** est un ensemble de **cartes Lovelace personnalisées pour Home Assistant**, conçu pour afficher de manière claire et moderne les données scolaires fournies par l'intégration **Pronote NG**.
+  **Pronote NG Cards** est un ensemble de **cartes Lovelace personnalisées pour Home Assistant**, conçu pour afficher de manière claire et moderne les données scolaires fournies par l'intégration **[Pronote NG](https://github.com/FiveElements/ha-pronote-ng)**.
 
  Les cartes permettent de transformer les données PRONOTE en un véritable **tableau de bord scolaire dans Home Assistant**.
 
@@ -26,19 +25,22 @@
 - 👨‍🎓 les informations de l'élève
 - 🚦 le budget de requêtes PRONOTE
 
- > **Pronote NG Cards nécessite l'intégration Pronote NG.**
+ > **Pronote NG Cards nécessite l'intégration [Pronote NG](https://github.com/FiveElements/ha-pronote-ng)** — voir son [guide de l'utilisateur](https://fiveelements.github.io/ha-pronote-ng/GUIDE-UTILISATEUR/) pour l'installer et la connecter.
 
 ---
 
  ## ✨ Les 10 cartes
 
- ### 👨‍🎓 Élève
+ Chaque carte a sa page : aperçu, options, exemple complet à copier,
+entités consommées, et ce qu'elle ne peut pas savoir.
+
+ ### 👨‍🎓 [Élève](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/eleve/)
 
  Une carte de synthèse permettant d'afficher les principales informations concernant l'élève.
 
 ---
 
- ### 🕐 Prochain cours
+ ### 🕐 [Prochain cours](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/prochain-cours/)
 
  Affiche rapidement le prochain cours :
 
@@ -52,7 +54,7 @@
 
 ---
 
- ### 📅 Vue journée
+ ### 📅 [Vue journée](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/journee/)
 
  Une représentation graphique de la journée avec :
 
@@ -67,7 +69,7 @@
 
 ---
 
- ### 🗓️ Emploi du temps
+ ### 🗓️ [Emploi du temps](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/emploi-du-temps/)
 
  Affiche l'emploi du temps PRONOTE dans Home Assistant.
 
@@ -75,7 +77,7 @@
 
 ---
 
- ### 📝 Devoirs
+ ### 📝 [Devoirs](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/devoirs/)
 
  Affiche les devoirs récupérés depuis PRONOTE.
 
@@ -89,31 +91,31 @@
 
 ---
 
- ### 📊 Notes
+ ### 📊 [Notes](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/notes/)
 
  Affiche les notes et informations associées dans une présentation adaptée à Home Assistant.
 
 ---
 
- ### 🎯 Évaluations
+ ### 🎯 [Évaluations](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/evaluations/)
 
  Permet d'afficher les évaluations et les informations de compétences fournies par PRONOTE.
 
 ---
 
- ### 🍽️ Cantine
+ ### 🍽️ [Cantine](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/menu/)
 
  Affiche les menus de cantine directement dans le tableau de bord Home Assistant.
 
 ---
 
- ### 🏫 Vie scolaire
+ ### 🏫 [Vie scolaire](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/vie-scolaire/)
 
  Permet de visualiser les informations liées à la vie scolaire, notamment les absences et autres événements disponibles dans PRONOTE.
 
 ---
 
- ### 🚦 Limiteur
+ ### 🚦 [Limiteur](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/limiteur/)
 
  Affiche l'état du limiteur de requêtes de Pronote NG.
 
@@ -128,7 +130,7 @@
 
 ---
 
- # 🖼️ Aperçu
+ ## 🖼️ Aperçu
 
  Les cartes sont conçues pour être utilisées ensemble afin de créer un tableau de bord scolaire complet.
 
@@ -136,38 +138,43 @@
 
 ---
 
- # 🚀 Installation
+ ## 🚀 Installation
 
- ## Avec HACS
+ ### Avec HACS
 
- Pronote NG Cards peut être installé directement depuis **HACS** en tant que dépôt personnalisé.
+ Pronote NG Cards s'installe depuis **HACS** en tant que dépôt personnalisé.
 
- 1. Ouvrez **HACS**
-2. Allez dans **Frontend**
-3. Ouvrez le menu **⋮**
-4. Sélectionnez **Dépôts personnalisés**
-5. Ajoutez :
+[![Ouvrir ce dépôt dans HACS sur votre Home Assistant](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=FiveElements&repository=ha-pronote-ng-cards&category=plugin)
 
-```
-https://github.com/FiveElements/ha-pronote-ng-cards
-```
+ Ce bouton ouvre **votre** Home Assistant sur la fiche du dépôt dans HACS. Il ne
+reste qu'à **Télécharger**, puis à recharger la page du navigateur.
 
- 6. Sélectionnez la catégorie **Lovelace**
-7. Cliquez sur **Ajouter**
-8. Installez **Pronote NG Cards**
-9. Rechargez le frontend Home Assistant
+<details>
+<summary>Ajouter le dépôt à la main, si le bouton n'aboutit pas</summary>
+
+1. Ouvrez **HACS**
+2. Ouvrez le menu **⋮** puis **Dépôts personnalisés**
+3. Ajoutez `https://github.com/FiveElements/ha-pronote-ng-cards`
+4. Sélectionnez la catégorie **Lovelace**, puis **Ajouter**
+5. Installez **Pronote NG Cards** et rechargez la page
+
+</details>
 
  > 💡 Après l'installation, les ressources JavaScript nécessaires aux cartes sont automatiquement gérées par HACS.
+ >
+ > Sur un tableau de bord en **mode YAML**, la ressource doit en revanche être
+ > déclarée à la main — c'est le seul cas où une carte n'apparaît même pas
+ > dans le catalogue. La procédure est dans [Installation](https://fiveelements.github.io/ha-pronote-ng-cards/installation/).
 
 ---
 
- # 🔌 Prérequis
+ ## 🔌 Prérequis
 
  Pronote NG Cards est une extension d'affichage.
 
  Vous devez donc avoir installé et configuré :
 
- **Pronote NG — Intégration PRONOTE pour Home Assistant**
+ **[Pronote NG — Intégration PRONOTE pour Home Assistant](https://github.com/FiveElements/ha-pronote-ng)**
 
  L'intégration Pronote NG fournit les données PRONOTE.
 
@@ -194,7 +201,7 @@ Pronote NG
 
 ---
 
- # 🧩 Utilisation
+ ## 🧩 Utilisation
 
  Après installation, ajoutez une carte depuis l'éditeur de tableau de bord Home Assistant.
 
@@ -209,30 +216,29 @@ Pronote NG
 - les entités nécessaires
 - les possibilités de personnalisation
 
- 👉 **Consulter la documentation complète**
+ 👉 **[Consulter la documentation complète](https://fiveelements.github.io/ha-pronote-ng-cards/)**
 
 ---
 
- # 📖 Documentation
+ ## 📖 Documentation
 
  La documentation complète est disponible ici :
 
- **📖 Documentation Pronote NG Cards**
+ **[📖 Documentation Pronote NG Cards](https://fiveelements.github.io/ha-pronote-ng-cards/)**
 
  Vous y trouverez notamment :
 
- - Guide d'installation
-- Guide de configuration
-- Documentation de chaque carte
-- Exemples YAML
-- Personnalisation
-- Architecture
-- Limites connues
-- Guide pour les contributeurs
+ - [Guide d'installation](https://fiveelements.github.io/ha-pronote-ng-cards/installation/)
+- [Assembler un tableau de bord](https://fiveelements.github.io/ha-pronote-ng-cards/tableaux-de-bord/)
+- [Documentation de chaque carte](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/eleve/) — une page par carte
+- Exemples YAML — un exemple complet sur la page de chaque carte
+- [Personnalisation des couleurs de matière](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/journee/)
+- [Limites connues](https://fiveelements.github.io/ha-pronote-ng-cards/limites/)
+- [Guide pour les contributeurs](CONTRIBUTING.md)
 
 ---
 
- # ⚙️ Architecture
+ ## ⚙️ Architecture
 
  Pronote NG Cards est volontairement séparé de l'intégration PRONOTE.
 
@@ -240,7 +246,7 @@ Pronote NG
 
  ### Pronote NG
 
- Récupère et expose les données PRONOTE dans Home Assistant.
+ Récupère et expose les données PRONOTE dans Home Assistant. Le [catalogue de ses entités et services](https://fiveelements.github.io/ha-pronote-ng/annexe-a-entites/) donne, pour chaque champ publié, d'où il vient — c'est le contrat que ces cartes lisent.
 
  ### Pronote NG Cards
 
@@ -252,7 +258,7 @@ Pronote NG
 
 ---
 
- # 🔒 Données personnelles
+ ## 🔒 Données personnelles
 
  Les captures et illustrations du projet sont conçues pour ne pas contenir de données scolaires réelles.
 
@@ -267,19 +273,19 @@ Pronote NG
 
 ---
 
- # ⚠️ Limites
+ ## ⚠️ Limites
 
  Ces cartes sont uniquement une interface d'affichage.
 
  Elles ne remplacent pas l'intégration Pronote NG et ne communiquent pas directement avec PRONOTE.
 
- Les limitations liées à la récupération des données, au protocole PRONOTE ou au rate limiting sont donc principalement gérées par **Pronote NG**.
+ Les limitations liées à la récupération des données, au protocole PRONOTE ou au rate limiting sont donc principalement gérées par **[Pronote NG](https://github.com/FiveElements/ha-pronote-ng)** — son [annexe sur le limiteur de requêtes](https://fiveelements.github.io/ha-pronote-ng/annexe-b-rate-limit/) en donne le détail.
 
- 👉 Consultez la page **Limites** pour connaître précisément le comportement des cartes.
+ 👉 Consultez la page **[Limites](https://fiveelements.github.io/ha-pronote-ng-cards/limites/)** pour connaître précisément le comportement des cartes.
 
 ---
 
- # 🧑‍💻 Développement
+ ## 🧑‍💻 Développement
 
  Le projet est développé avec :
 
@@ -300,11 +306,11 @@ npm test
 
  Consultez également :
 
- **CONTRIBUTING.md**
+ **[`CONTRIBUTING.md`](CONTRIBUTING.md)**
 
 ---
 
- # 🤝 Contribuer
+ ## 🤝 Contribuer
 
  Les contributions sont les bienvenues.
 
@@ -317,7 +323,7 @@ npm test
 - 🧪 ajoutant des tests
 - 💻 proposant une Pull Request
 
- 👉 **Voir les issues**
+ 👉 **[Voir les issues](https://github.com/FiveElements/ha-pronote-ng-cards/issues)**
 
  Lorsque vous signalez un problème, indiquez si possible :
 
@@ -330,7 +336,7 @@ npm test
 
 ---
 
- # ⚠️ Important
+ ## ⚠️ Important
 
  **Pronote NG Cards n'est pas développé, maintenu ou officiellement supporté par Index Éducation / PRONOTE.**
 
@@ -340,7 +346,7 @@ npm test
 
 ---
 
- # 📄 Licence
+ ## 📄 Licence
 
  Pronote NG Cards est distribué sous licence **MIT**.
 
