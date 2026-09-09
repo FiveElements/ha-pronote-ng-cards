@@ -9,6 +9,10 @@ Chaque carte se configure avec un seul réglage : l'appareil de
 l'enfant. Aucune ne demande d'identifiant d'entité — voir
 [Installation](installation.md) pour comprendre pourquoi.
 
+![Trois des neuf cartes : prochain cours, devoirs et vie scolaire](assets/apercu.svg)
+
+*Illustration synthétique — aucune donnée réelle n'entre dans ce dépôt.*
+
 ## Les neuf cartes
 
 | Carte | À quoi elle sert |
