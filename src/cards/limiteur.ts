@@ -139,8 +139,26 @@ export const SPEC: CardSpec<Config> = {
           ? Object.keys(failing)
           : [];
 
+      /**
+       * Ne pas nommer deux fois le même palier.
+       *
+       * Le cas réel observé est `tiers_due: ['static']` avec
+       * `failing: { static: 2 }` — un palier jamais collecté est dû
+       * « maintenant », donc son retard vaut zéro alors qu'il échoue depuis
+       * le démarrage. La ligne affichait « static · en échec : static ».
+       *
+       * Quand les deux ensembles coïncident, seul l'échec est dit : il porte
+       * déjà le nom du palier ET la raison. « aucun palier en attente » ne
+       * s'affiche que si rien n'est ni dû ni en échec — sinon la ligne se
+       * contredirait elle-même.
+       */
       const detail = [
-        due.length > 0 ? due.join(', ') : ctx.t('limiteur.none'),
+        failingTiers.length > 0
+          ? // Les paliers dus QUI NE SONT PAS déjà nommés par l'échec.
+            due.filter((tier) => !failingTiers.includes(tier)).join(', ')
+          : due.length > 0
+            ? due.join(', ')
+            : ctx.t('limiteur.none'),
         overdue
           ? ctx.t('limiteur.overdue', {
               duration: formatDuration(Math.round(overdueBy / 60), lang),

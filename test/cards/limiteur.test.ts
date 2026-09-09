@@ -299,6 +299,39 @@ describe('carte limiteur', () => {
     );
   });
 
+  it('ne nomme pas deux fois le même palier', async () => {
+    // Cas réel : un palier jamais collecté est dû « maintenant », donc son
+    // retard vaut zéro alors qu'il échoue depuis le démarrage. La ligne
+    // affichait « static · en échec : static ».
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:next_collection', 'sensor.cpt_prochaine', '2026-09-08T09:00:00+02:00', {
+        tiers_due: ['static'],
+        overdue_by: 0,
+        failing: { static: 2 },
+      }),
+    ]);
+    const t = text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass));
+    expect(t).toContain('en échec : static');
+    // Une seule occurrence : celle que porte l'échec.
+    expect(t.match(/static/g)).toHaveLength(1);
+    // Et jamais « aucun palier en attente » à côté d'un palier en échec.
+    expect(t).not.toContain('aucun');
+  });
+
+  it('garde les paliers dus que l’échec ne nomme pas', async () => {
+    const hass = makeHass([
+      compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
+      compte('sensor:next_collection', 'sensor.cpt_prochaine', '2026-09-08T09:00:00+02:00', {
+        tiers_due: ['static', 'marks'],
+        failing: { static: 2 },
+      }),
+    ]);
+    const t = text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass));
+    expect(t).toContain('marks');
+    expect(t).toContain('en échec : static');
+  });
+
   it('ne parle ni de retard ni d’échec quand les attributs sont absents', async () => {
     // Intégration antérieure à ces deux attributs : la ligne reste celle
     // d'avant, relatif compris.
