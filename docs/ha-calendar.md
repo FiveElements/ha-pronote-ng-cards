@@ -195,7 +195,9 @@ Il affiche fidèlement ce qu'on lui donne, et c'est sa qualité. Mais il ne sait
 rien de ce que les données **taisent** :
 
 - **une heure de fin déduite** plutôt que fournie par l'établissement s'affiche
-  comme une heure normale. Les cartes de ce dépôt la marquent d'un `≈` ;
+  comme une heure normale. Les cartes de ce dépôt la signalent : d'un `≈` sur
+  la carte prochain cours, qui n'en affiche qu'une, et en infobulle sur la
+  carte vue journée, qui en affiche une par ligne ;
 - **un devoir en retard** n'est pas distingué d'un devoir à venir ;
 - **une couleur de matière** n'existe pas : la couleur d'un événement est celle
   de son agenda, pas de sa matière.

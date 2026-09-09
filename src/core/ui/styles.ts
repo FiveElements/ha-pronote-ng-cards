@@ -274,8 +274,10 @@ export const sharedStyles = css`
   .jour-ligne {
     display: grid;
     /* Les horaires, puis le filet, puis le corps. Deux chiffres, deux points,
-       deux chiffres, plus le marqueur de fin déduite : 4,5em tient
-       « ≈08:00 » sans que la police du thème puisse le tronquer.
+       deux chiffres : 4,5em tient « 08:00 » sans que la police du thème
+       puisse le tronquer. La valeur réservait aussi la place d'un marqueur de
+       fin déduite, retiré depuis ; elle est donc large d'un caractère, et
+       c'est volontaire tant que rien ne demande de resserrer la colonne.
 
        Le filet est ici un SEPARATEUR entre l'heure et la matière, et c'est la
        seule carte des six où il ne borde pas la ligne. Le propriétaire a

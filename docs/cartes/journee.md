@@ -108,7 +108,7 @@ rien, et c'est la seule affirmation fausse qu'elle pourrait produire.
 ## La navigation d'un jour à l'autre
 
 ```
-‹  mercredi 9 septembre  ›                    08:00 – ≈14:30
+‹  mercredi 9 septembre  ›                    08:00 – 14:30
 ```
 
 Les flèches ne coûtent **aucune requête**, et c'est la seule raison pour
@@ -208,7 +208,8 @@ qui viennent de la source de l'intégration :
 - **la fin peut être une heure déduite**, parce qu'elle est la plus tardive
   des fins de cours et qu'une fin de cours peut l'être. L'attribut, lui, ne le
   dit pas : la carte va chercher le drapeau sur le créneau qui porte cette
-  fin, et affiche `08:00 – ≈14:30` le cas échéant.
+  fin, et le dit en infobulle sur les bornes — sans marqueur visible, voir
+  [L'heure de fin déduite](#lheure-de-fin-deduite).
 
 Sur une **journée vide**, l'en-tête reste et porte la date. C'est le moment où
 il sert le plus : « aucun cours » tout seul laisse le doute sur le jour dont
@@ -315,31 +316,38 @@ disent **lequel**. À `off`, aucun créneau n'est mis en avant même si
 l'horloge le suggère : le capteur voit ce que l'attribut ne porte pas — jour
 banalisé, cours déplacé après la collecte, élève dispensé.
 
-## Le « ≈ » devant une heure de fin
+## L'heure de fin déduite
 
 PRONOTE n'envoie pas toujours l'heure de **fin** d'un cours. L'intégration la
 calcule alors depuis la grille horaire de l'établissement, et ce calcul peut
-se tromper. La carte le signale par un `≈`, dont le sens est donné en
-infobulle.
+se tromper. Cette carte le dit en **infobulle**, en survolant l'heure : elle
+n'affiche aucun marqueur visible.
 
-Sur certains établissements ce marqueur est présent sur **chaque ligne** :
-le serveur n'y publie aucune heure de fin. Ce n'est pas un défaut
-d'affichage — c'est le cas de l'établissement sur lequel ces cartes sont
-validées, où les 37 créneaux d'une semaine étaient tous dans ce cas.
+!!! note "Le « ≈ » a été retiré de cette carte"
 
-Comme cette carte affiche l'heure de fin sur **toutes** ses lignes, c'est
-elle qui rencontre le plus ce marqueur. Sans lui, sa colonne d'horaires
-présenterait un calcul comme une donnée, toute la journée.
+    Elle marquait la fin déduite d'un `≈` devant l'heure, comme le fait
+    encore la carte [prochain cours](prochain-cours.md). Ce marqueur a été
+    retiré le 10 septembre 2026, pour la raison même qui l'avait fait poser :
+    beaucoup d'établissements ne publient **aucune** heure de fin, et sur
+    celui où ces cartes sont validées les 37 créneaux d'une semaine étaient
+    tous déduits. Le signe était donc sur chaque ligne de chaque journée — et
+    un marqueur que tout porte n'avertit plus de rien.
 
-Le marqueur peut aussi apparaître sur la **zone repas** : le creux commence à
-la fin du cours précédent, donc quand cette fin est déduite, la position du
-repas l'est aussi.
+    La différence avec la carte prochain cours est ce qui explique qu'elle le
+    garde : elle n'affiche **qu'une** heure de fin. Un signe rare y reste un
+    signe ; répété trente-sept fois il devient une décoration.
+
+L'information n'est pas perdue : l'infobulle n'a jamais dépendu du glyphe, et
+c'est elle qu'il faut lire pour savoir si une heure est donnée ou calculée.
+La **zone repas** a la sienne, sur son libellé : le creux commence à la fin du
+cours précédent, donc quand cette fin est déduite, la position du repas l'est
+aussi.
 
 Sur les jours **autres** qu'aujourd'hui, les bornes de l'en-tête sont
 calculées par la carte, faute que l'intégration les publie pour ces jours-là.
 Elle reprend la formule à l'identique — la première heure de début, la dernière
 heure de fin, cours annulés compris — pour que l'en-tête veuille dire la même
-chose d'un jour à l'autre. Le `≈` y suit le même drapeau.
+chose d'un jour à l'autre. L'infobulle des bornes y suit le même drapeau.
 
 ## Si la carte est vide
 

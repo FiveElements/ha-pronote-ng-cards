@@ -77,7 +77,15 @@ const lignes = (el: HTMLElement) =>
       repas: l.classList.contains('jour-repas'),
       courant: l.classList.contains('jour-courant'),
       heures: [...l.querySelectorAll('.jour-heures span')].map((s) => s.textContent?.trim() ?? ''),
+      // Les infobulles des deux horaires. Depuis le retrait du « ≈ », c'est
+      // la SEULE trace qu'une heure de fin est calculée et non donnée : les
+      // deux cas rendent désormais le même texte, et un test qui ne lirait
+      // que `heures` ne distinguerait plus rien.
+      infobulles: [...l.querySelectorAll('.jour-heures span')].map(
+        (s) => s.getAttribute('title') ?? ''
+      ),
       matiere: l.querySelector('.jour-matiere')?.textContent?.trim() ?? '',
+      titreMatiere: l.querySelector('.jour-matiere')?.getAttribute('title') ?? '',
       barre: l.querySelector('.jour-matiere')?.classList.contains('canceled') ?? false,
       // La couleur telle que la carte la POSE : une propriété personnalisée,
       // la même que la gouttière des cinq autres cartes. La carte écrivait
@@ -153,7 +161,7 @@ const cours = (
 const LUNDI = [cours('07', 'Français', '08:00', '09:00')];
 const MARDI = [
   cours('08', 'SVT', '10:00', '11:00'),
-  // Fin déduite : l'en-tête d'un autre jour doit porter le « ≈ » lui aussi.
+  // Fin déduite : l'en-tête d'un autre jour doit porter l'infobulle aussi.
   cours('08', 'Sport', '14:00', '16:00', { end_inferred: true }),
 ];
 const JEUDI = [cours('10', 'Physique', '09:00', '10:00')];
@@ -444,26 +452,54 @@ describe('carte vue journée — la zone repas ne raconte rien', () => {
 });
 
 describe('carte vue journée — l’heure de fin déduite', () => {
-  it('marque d’un « ≈ » une heure de fin que le serveur n’a pas fournie', async () => {
-    // Le piège propre à cette carte : sa colonne affiche l'heure de FIN, et
-    // sur l'établissement de référence `end_inferred` vaut `true` sur 37
-    // créneaux sur 37. Sans marqueur, toute la colonne présenterait un calcul
-    // comme une donnée.
+  /**
+   * Le « ≈ » a été retiré de cette carte le 10 septembre 2026, sur demande du
+   * propriétaire. La raison est celle-là même qui l'avait fait poser : sur
+   * l'établissement de référence `end_inferred` vaut `true` sur **37 créneaux
+   * sur 37**, donc le marqueur était sur chaque ligne de chaque journée. Un
+   * signe que tout porte n'avertit plus — il décore.
+   *
+   * Ces tests ne mesurent donc plus un glyphe mais l'**infobulle**, qui n'a
+   * jamais dépendu de lui. Et ils gagnent une exigence que le glyphe rendait
+   * inutile : puisque les deux cas rendent maintenant le même texte, chacun
+   * doit affirmer l'état de l'infobulle, sinon il ne distingue plus rien.
+   */
+  it('ne montre AUCUN marqueur sur une heure de fin que le serveur n’a pas fournie', async () => {
     const el = await monter({}, [{ ...JOURNEE[0], end_inferred: true }]);
     const l = lignes(el);
     expect(l[0]?.heures[0]).toBe('08:00');
-    expect(l[0]?.heures[1]).toBe('≈09:00');
+    expect(l[0]?.heures[1]).toBe('09:00');
+    expect(l[0]?.heures[1]).not.toContain('≈');
+    // Appariement positif : l'absence du glyphe passerait aussi sur un rendu
+    // cassé. L'infobulle prouve que la carte a bien VU le drapeau.
+    expect(l[0]?.infobulles[1]).not.toBe('');
   });
 
-  it('ne marque pas une heure de fin envoyée par le serveur', async () => {
+  it('laisse l’infobulle vide sur une heure de fin envoyée par le serveur', async () => {
+    // C'est ce test qui porte la distinction depuis le retrait du glyphe : le
+    // texte des deux cas est identique, seule l'infobulle les sépare.
     const el = await monter({}, [{ ...JOURNEE[0], end_inferred: false }]);
-    expect(lignes(el)[0]?.heures[1]).toBe('09:00');
+    const l = lignes(el);
+    expect(l[0]?.heures[1]).toBe('09:00');
+    expect(l[0]?.infobulles[1]).toBe('');
   });
 
-  it('marque la zone repas quand sa borne gauche est une fin déduite', async () => {
+  it('signale la zone repas dont la borne gauche est une fin déduite', async () => {
+    // La zone repas ne portait pas son seul marqueur sur l'horaire : son
+    // libellé a une infobulle propre, qui survit donc telle quelle au retrait
+    // du glyphe posé, lui, sur la borne gauche.
     const el = await monter({}, [{ ...JOURNEE[1], end_inferred: true }, JOURNEE[2]]);
     const repas = lignes(el).find((x) => x.repas);
-    expect(repas?.heures[0]).toBe('10:00≈');
+    expect(repas?.heures[0]).toBe('10:00');
+    expect(repas?.titreMatiere).not.toBe('');
+  });
+
+  it('laisse le libellé du repas sans infobulle quand la fin est ferme', async () => {
+    const el = await monter({}, [{ ...JOURNEE[1], end_inferred: false }, JOURNEE[2]]);
+    const repas = lignes(el).find((x) => x.repas);
+    expect(repas?.titreMatiere).toBe('');
+    // Appariement positif : la zone repas est bien là, seule l'infobulle manque.
+    expect(repas?.heures[0]).toBe('10:00');
   });
 });
 
@@ -641,7 +677,7 @@ describe('carte vue journée — l’en-tête de journée', () => {
     expect(e?.bornes).toBe('08:00 – 14:30');
   });
 
-  it('marque d’un « ≈ » une fin de journée qui vient d’un calcul', async () => {
+  it('signale par infobulle une fin de journée qui vient d’un calcul', async () => {
     // `last_end` est le `max` des fins de cours, et une fin de cours peut
     // etre deduite — sans que l'attribut le dise. La carte va chercher le
     // drapeau sur le creneau qui porte cette fin.
@@ -655,7 +691,9 @@ describe('carte vue journée — l’en-tête de journée', () => {
       )
     );
     const e = entete(el);
-    expect(e?.bornes).toBe('08:00 – ≈09:00');
+    expect(e?.bornes).toBe('08:00 – 09:00');
+    expect(e?.bornes).not.toContain('≈');
+    // Seule l'infobulle distingue ce cas du suivant, où la borne est ferme.
     expect(e?.infobulle).not.toBe('');
   });
 
@@ -746,14 +784,15 @@ describe('carte vue journée — la navigation d’un jour à l’autre', () => 
     expect(lignes(el).map((x) => x.matiere)).toEqual(['Physique']);
   });
 
-  it('recalcule les bornes de la journée pour un autre jour, « ≈ » compris', async () => {
+  it('recalcule les bornes de la journée pour un autre jour, infobulle comprise', async () => {
     // Rien n'est publié pour les autres jours : la carte reprend la formule de
     // l'intégration — min(début), max(fin) sur tous les créneaux — pour que
-    // l'en-tête veuille dire la même chose d'un jour à l'autre. Et le « ≈ »
-    // suit le drapeau du créneau qui porte cette fin.
+    // l'en-tête veuille dire la même chose d'un jour à l'autre. Et l'infobulle
+    // suit le drapeau du créneau qui porte cette fin, les autres jours comme
+    // aujourd'hui.
     const el = await monterSemaine();
     await cliquer(el, 0);
-    expect(entete(el)?.bornes).toBe('10:00 – ≈16:00');
+    expect(entete(el)?.bornes).toBe('10:00 – 16:00');
     expect(entete(el)?.infobulle).not.toBe('');
   });
 

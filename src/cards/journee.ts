@@ -717,7 +717,19 @@ export const SPEC: CardSpec<Config> = {
      *   journée, ce qui est le bon sens de « journée de classe » : l'élève est
      *   attendu à cette heure-là tant qu'on ne lui a pas dit le contraire ;
      * - `last_end` peut être une heure **déduite**, sans que l'attribut le
-     *   dise. D'où le « ≈ », dont l'origine est cherchée dans la liste.
+     *   dise. Le drapeau est donc cherché dans la liste, sur le créneau qui
+     *   porte cette fin, et il alimente l'**infobulle** des bornes.
+     *
+     * Cette carte marquait la fin déduite d'un « ≈ » visible, ici et sur
+     * chaque ligne. Le propriétaire l'a fait retirer le 10 septembre 2026 :
+     * sur l'établissement de référence le serveur n'envoie **aucune** heure de
+     * fin, le marqueur était donc sur les 37 créneaux de la semaine, et un
+     * signe présent partout ne distingue plus rien — il ne restait que le
+     * bruit. L'information n'est pas perdue pour autant : le `title` la porte,
+     * il n'a jamais dépendu du glyphe, et il reste la seule chose à lire pour
+     * savoir si une heure est donnée ou calculée. La carte prochain cours,
+     * elle, garde son « ≈ » : elle n'affiche qu'une heure de fin, pas
+     * trente-sept.
      *
      * Les flèches restent visibles quand `show_header` est coupé, avec la
      * seule date : naviguer sans voir quel jour on regarde n'aurait aucun
@@ -799,7 +811,7 @@ export const SPEC: CardSpec<Config> = {
               : html`<span
                   class="jour-bornes"
                   title=${inferred ? ctx.t('common.inferred_time') : ''}
-                  >${from} – ${inferred ? '≈' : ''}${to}</span
+                  >${from} – ${to}</span
                 >`
           }
         </div>
@@ -839,7 +851,10 @@ export const SPEC: CardSpec<Config> = {
         return html`
           <div class="jour-ligne jour-repas">
             <div class="jour-heures">
-              <span>${formatTime(slot.start, lang, tz)}${mealInferred ? '≈' : ''}</span>
+              <!-- Pas de marqueur visible sur la borne gauche : l'infobulle
+                   de la ligne, elle, dit que le creux vient d'une fin
+                   déduite. -->
+              <span>${formatTime(slot.start, lang, tz)}</span>
               <span>${formatTime(slot.end, lang, tz)}</span>
             </div>
             <div class="jour-filet" aria-hidden="true"></div>
@@ -891,13 +906,14 @@ export const SPEC: CardSpec<Config> = {
         <div class="jour-ligne ${current ? 'jour-courant' : ''}">
           <div class="jour-heures">
             <span>${formatTime(l.start, lang, tz)}</span>
-            <!-- L'heure de FIN, et le « ≈ » quand l'intégration l'a déduite
-                 faute que le serveur l'envoie. Sur certains établissements le
-                 marqueur est sur CHAQUE ligne : ce n'est pas un défaut
-                 d'affichage. Sans lui, cette colonne présenterait un calcul
-                 comme une donnée, sur toute la journée. -->
+            <!-- L'heure de FIN. Quand l'intégration l'a déduite faute que le
+                 serveur l'envoie, seule l'infobulle le dit : le glyphe qui la
+                 précédait a été retiré sur demande du propriétaire, parce que
+                 l'établissement de référence le produisait sur CHAQUE ligne.
+                 Ne le remettez pas sans le mesurer : un marqueur que 37
+                 créneaux sur 37 portent n'avertit plus, il décore. -->
             <span title=${l.end_inferred === true ? ctx.t('common.inferred_time') : ''}
-              >${l.end_inferred === true ? '≈' : ''}${formatTime(l.end, lang, tz)}</span
+              >${formatTime(l.end, lang, tz)}</span
             >
           </div>
           <!-- Le filet ENTRE les horaires et le corps : sur cette carte il
