@@ -23,11 +23,20 @@ identifiant complet plausible.
 
 ### 1.2 Jamais de collecte depuis une carte
 
-Une carte lit `hass.states`, rien d'autre. Le seul service qu'elle peut
-appeler est `pronote_ng.refresh`, et seulement sur action explicite de
-l'utilisateur — un bouton « Rafraîchir », jamais au montage ni au rendu.
-Tout le reste des actions de l'intégration se règle côté intégration, pas
-ici.
+Une carte lit `hass.states`, `hass.entities` et `hass.devices` pour se
+résoudre et s'afficher — elle ne déclenche jamais de collecte PRONOTE en
+s'affichant. Le type qui décrit ce qu'une carte peut faire n'autorise que
+deux appels de service, et aucun autre ne compile :
+
+- `pronote_ng.refresh`, et seulement sur action explicite de l'utilisateur
+  — un bouton « Rafraîchir », jamais au montage ni au rendu. Il ne place
+  aucune requête PRONOTE : il relève une priorité auprès de l'ordonnanceur.
+- `todo.update_item`, qui coche un devoir sur une entité `todo` de Home
+  Assistant — sans rapport avec le limiteur ni avec une collecte.
+
+Un test de garde échoue en plus si un couple domaine/service hors de cette
+liste apparaît dans `src/`. Tout le reste des actions de l'intégration se
+règle côté intégration, pas ici.
 
 ### 1.3 Jamais de donnée réelle, jamais le journaliseur `pronotepy`
 

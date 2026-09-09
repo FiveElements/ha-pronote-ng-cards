@@ -20,6 +20,29 @@ Cette bibliothèque n'est pas dans le magasin par défaut de HACS.
 2. Installez le dépôt qui apparaît, puis rechargez Home Assistant (ou
    au moins le cache du navigateur).
 
+## Ajouter la ressource à la main (tableau de bord en mode YAML)
+
+Sur un tableau de bord géré par l'interface (le mode par défaut), HACS
+ajoute la ressource tout seul : rien de plus à faire, passez à la
+section suivante.
+
+Si votre tableau de bord est en **mode YAML** (un fichier
+`ui-lovelace.yaml` ou équivalent), HACS n'injecte rien pour vous : il
+faut déclarer la ressource vous-même.
+
+1. Allez dans **Paramètres → Tableaux de bord**, ouvrez le menu (les
+   trois points en haut à droite), puis choisissez **Ressources**.
+2. Cliquez sur **Ajouter une ressource**.
+3. Renseignez l'URL `/hacsfiles/ha-pronote-ng-cards/pronote-ng-cards.js`
+   et choisissez le type **Module JavaScript**.
+4. Rechargez la page, ou tout le navigateur, avant de chercher les
+   cartes.
+
+Si les cartes n'apparaissent pas dans le catalogue de l'éditeur alors
+que l'étape précédente s'est bien déroulée, c'est le signe le plus
+probable que cette ressource manque encore ou pointe vers la mauvaise
+URL.
+
 ## Ajouter une carte
 
 Dans l'éditeur de tableau de bord, ajoutez une carte, cherchez
@@ -68,10 +91,16 @@ Cette documentation, elle, reste uniquement en français.
 
 ## Si une carte reste vide
 
-Ouvrez l'éditeur de la carte : il affiche un diagnostic de résolution
-qui indique, pour l'appareil choisi, quelles clés d'entités il a
-trouvées et lesquelles manquent. Les pages de chaque carte listent ces
-clés et précisent lesquelles sont indispensables.
+Si la carte n'apparaît même pas dans le catalogue de l'éditeur, voyez
+d'abord [Ajouter la ressource à la main](#ajouter-la-ressource-a-la-main-tableau-de-bord-en-mode-yaml) :
+c'est le symptôme d'un tableau de bord en mode YAML sans ressource
+déclarée.
+
+Si la carte apparaît mais reste vide, ouvrez son éditeur : il affiche
+un diagnostic de résolution qui indique, pour l'appareil choisi,
+quelles clés d'entités il a trouvées et lesquelles manquent. Les pages
+de chaque carte listent ces clés et précisent lesquelles sont
+indispensables.
 
 Voir aussi [ce que ces cartes ne feront jamais](limites.md) pour ce qui
 est volontairement absent de cette bibliothèque.

@@ -14,11 +14,17 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Vérifier que le bundle n'est pas vide et contient les cartes
+        run: |
+          test -s dist/pronote-ng-cards.js
+          grep -q 'pronote-ng-prochain-cours' dist/pronote-ng-cards.js
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/pronote-ng-cards.js
