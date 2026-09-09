@@ -10,7 +10,7 @@
     "refresh_pending": "Pedido enviado",
     "of": "de",
     "render_error": "Este cartão não conseguiu apresentar-se. O detalhe está na consola do navegador.",
-    "inferred_time": "Hora deduzida pela integração, não fornecida pelo servidor."
+    "inferred_time": "Hora de fim deduzida: o servidor não a forneceu, ou forneceu-a inutilizável."
   },
   "editor": {
     "device_id": "Aluno",

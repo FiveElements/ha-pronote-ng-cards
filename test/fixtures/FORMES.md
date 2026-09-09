@@ -106,6 +106,22 @@ subjects[] de sensor:report_card
 `description` est du **HTML** ; `description_text` est le même énoncé en texte
 simple, avec de vrais retours à la ligne. Lisez `description_text` d'abord.
 
+`end_inferred` veut dire « **ne faites pas confiance à cette fin** », et non
+« le serveur ne l'a pas envoyée ». Deux causes le lèvent : la fin est absente
+de la réponse, ou elle est présente mais inutilisable (à l'heure de début ou
+avant), auquel cas l'intégration la remplace par un créneau d'une heure. Le
+champ est toujours présent, et il peut valoir `true` sur **tous** les créneaux
+— sur l'instance de référence, 37 sur 37, parce que cet établissement ne
+publie aucune heure de fin. Le champ existe bel et bien côté protocole et
+d'autres serveurs le renseignent : ne concluez pas de ce 37/37 que la donnée
+est toujours déduite.
+
+`status` est **orthogonal** à `canceled` : `canceled` dit si le cours a lieu,
+`status` dit pourquoi. Relevé réel sur une semaine — `canceled: true` avec
+« Prof. absent », et `canceled: false` avec « Cours modifié ». Traitez `status`
+comme du texte opaque : les libellés observés sont ceux qu'un établissement a
+écrits, pas une énumération fermée.
+
 `hours` est une **chaîne écrite par l'établissement** (« 2h00 »), pas un nombre,
 et `reasons` un tableau de chaînes. Ni l'un ni l'autre ne se reformule : un
 motif d'absence peut contredire le drapeau `justified` sans que ce soit une

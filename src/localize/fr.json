@@ -10,7 +10,7 @@
     "refresh_pending": "Demande envoyée",
     "of": "sur",
     "render_error": "Cette carte n'a pas pu s'afficher. Le détail est dans la console du navigateur.",
-    "inferred_time": "Heure déduite par l'intégration, non fournie par le serveur."
+    "inferred_time": "Heure de fin déduite : le serveur ne l'a pas fournie, ou l'a fournie inutilisable."
   },
   "editor": {
     "device_id": "Enfant",

@@ -10,7 +10,7 @@
     "refresh_pending": "Richiesta inviata",
     "of": "su",
     "render_error": "Questa scheda non è riuscita a visualizzarsi. Il dettaglio è nella console del browser.",
-    "inferred_time": "Ora dedotta dall'integrazione, non fornita dal server."
+    "inferred_time": "Ora di fine dedotta: il server non l'ha fornita, o l'ha fornita inutilizzabile."
   },
   "editor": {
     "device_id": "Alunno",

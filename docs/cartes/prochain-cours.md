@@ -37,10 +37,19 @@ Quand `binary_sensor:in_class` est à `on`, un intitulé « Prochain cours »
 sépare la mention du cours affiché : la pastille décrit **maintenant**, la
 ligne décrit **la suite**. Sans cet intitulé, on lisait l'une pour l'autre.
 
-Une heure de fin peut être **déduite** plutôt que fournie : quand PRONOTE
-omet la fin d'un créneau, elle est calculée depuis sa position dans la
-grille horaire, et ce calcul peut se tromper. Elle porte alors un `≈`,
-dont le sens est donné en infobulle.
+Une heure de fin peut être **déduite** plutôt que fournie. Elle porte alors
+un `≈`, dont le sens est donné en infobulle. Deux causes, et le marqueur ne
+les distingue pas :
+
+- PRONOTE **omet** la fin du créneau, et elle est calculée depuis la
+  position du cours dans la grille horaire de l'établissement ;
+- PRONOTE **fournit** une fin inutilisable — à l'heure de début ou avant —
+  et l'intégration la remplace par un créneau d'une heure.
+
+Le `≈` se lit donc « ne prenez pas cette heure au pied de la lettre », et
+non « le serveur ne l'a pas envoyée ». Sur certains établissements il est
+allumé sur **chaque** ligne : le serveur n'y publie aucune heure de fin, et
+ce n'est pas un défaut d'affichage.
 
 ## Si la carte est vide
 
