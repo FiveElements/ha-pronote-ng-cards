@@ -14,27 +14,65 @@ const walk = (dir: string, exts: string[]): string[] => {
 
 const read = (files: string[]) => files.map((f) => [f, readFileSync(f, 'utf8')] as const);
 
-// Le contenu publié couvert par les gardes ci-dessous : code, tests, docs et
-// gabarits GitHub. `superpowers/` est exclu — c'est le plan et la spécification
-// eux-mêmes, qui nomment légitimement les interdits pour les interdire.
+// Les fichiers de la racine sont publiés au même titre que docs/ : ce sont
+// les deux premières pages qu'un visiteur lit sur GitHub, et elles sont
+// restées hors du radar des gardes jusqu'ici — c'est CONTRIBUTING.md qui a
+// publié une affirmation de sécurité fausse sans qu'aucun test bronche.
+const ROOT_DOCS = ['README.md', 'CONTRIBUTING.md', 'CLAUDE.md'];
+
+// Le contenu publié couvert par les gardes ci-dessous : code, tests, docs,
+// gabarits GitHub et pages de la racine. `superpowers/` est exclu — c'est le
+// plan et la spécification eux-mêmes, qui nomment légitimement les interdits
+// pour les interdire.
 const published = () =>
   read([
     ...walk('src', ['.ts', '.json']),
     ...walk('docs', ['.md']),
     ...walk('.github', ['.yml', '.md']),
+    ...ROOT_DOCS,
   ]).filter(([f]) => !f.includes('superpowers'));
 
 describe("garde : aucun identifiant d'entité en dur", () => {
-  // Un identifiant réel, pas la clé qualifiée 'sensor:next_lesson' (deux-points).
-  const HARDCODED =
-    /\b(sensor|binary_sensor|calendar|todo|button|event|image)\.[a-z0-9_]{2,}/;
+  /**
+   * La liste des domaines est volontairement large, et non limitée à ceux que
+   * `pronote_ng` crée aujourd'hui. Une liste fermée sur six domaines laissait
+   * passer `switch.quelque_chose` sans un mot : le jour où l'intégration crée
+   * une entité dans un domaine de plus, la garde se tait au lieu de parler.
+   */
+  const DOMAINS = [
+    'sensor',
+    'binary_sensor',
+    'calendar',
+    'todo',
+    'button',
+    'event',
+    'image',
+    'number',
+    'select',
+    'switch',
+    'text',
+    'update',
+    'device_tracker',
+    'person',
+    'input_boolean',
+    'input_text',
+    'input_number',
+    'input_select',
+    'input_datetime',
+  ];
+  // La sentinelle de fin refuse une suite en majuscule : `event.currentTarget`
+  // est un accès de propriété JavaScript, pas un identifiant d'entité, et
+  // `event` est un domaine Home Assistant.
+  const HARDCODED = new RegExp(
+    String.raw`\b(?:${DOMAINS.join('|')})\.[a-z0-9_]{2,}(?![A-Za-z0-9_])`
+  );
 
   /**
-   * Les deux appels de service autorisés ont la forme `domaine.service`, que la
+   * Les appels de service autorisés ont la forme `domaine.service`, que la
    * règle ci-dessus ne sait pas distinguer d'un identifiant d'entité. Ce sont
    * pourtant deux choses opposées : un identifiant d'entité varie d'une
-   * installation à l'autre — c'est tout l'objet de cette garde — alors qu'un nom
-   * de service est fixe et fait partie du contrat de Home Assistant.
+   * installation à l'autre — c'est tout l'objet de cette garde — alors qu'un
+   * nom de service est fixe et fait partie du contrat de Home Assistant.
    *
    * On les retire donc du texte avant de chercher, plutôt que de contorsionner
    * le code appelant pour esquiver la règle : une garde qui force à écrire
@@ -43,14 +81,89 @@ describe("garde : aucun identifiant d'entité en dur", () => {
    * identique à `AllowedCall` (src/core/types.ts) : tout autre couple
    * `domaine.service` continue d'être signalé.
    */
-  const ALLOWED_CALLS = ['todo.update_item', 'pronote_ng.refresh'];
   const withoutAllowedCalls = (body: string): string =>
     ALLOWED_CALLS.reduce((acc, call) => acc.split(call).join(''), body);
 
+  /**
+   * On ne cherche que dans les CHAÎNES du fichier, jamais dans le code nu.
+   * Un identifiant d'entité n'est utilisable que sous forme de chaîne ; en
+   * revanche `event.currentTarget` est un accès de propriété JavaScript
+   * parfaitement légitime, et `event` est un domaine Home Assistant. Élargir
+   * la liste des domaines sans restreindre le terrain de recherche fabrique
+   * des faux positifs qui finissent par faire désactiver la garde — ce qui
+   * est exactement ce qu'on cherche à éviter.
+   */
+  // Une chaîne contenant une apostrophe échappée sera coupée trop tôt ; sans
+  // conséquence ici, la garde cherche un motif, pas à analyser le langage.
+  const STRINGS = /'([^']*)'|"([^"]*)"|`([^`]*)`/g;
+  const literalsOf = (file: string, body: string): string[] =>
+    file.endsWith('.json')
+      ? [body]
+      : [...body.matchAll(STRINGS)].map((m) => m[1] ?? m[2] ?? m[3] ?? '');
+
   it('src/ ne contient aucun identifiant complet', () => {
     for (const [file, body] of read(walk('src', ['.ts', '.json']))) {
-      const hit = withoutAllowedCalls(body).match(HARDCODED);
-      expect(hit, `${file} contient « ${hit?.[0]} »`).toBeNull();
+      for (const literal of literalsOf(file, body)) {
+        const hit = withoutAllowedCalls(literal).match(HARDCODED);
+        expect(hit, `${file} contient « ${hit?.[0]} »`).toBeNull();
+      }
+    }
+  });
+});
+
+/**
+ * Liste BLANCHE des appels de service, et non liste noire des interdits.
+ *
+ * Chercher six noms interdits par `includes` est franchissable par une simple
+ * concaténation, et n'aurait jamais révélé qu'un document publié mentait sur
+ * ce que le code fait. Énumérer au contraire TOUS les appels réellement
+ * présents dans `src/` et exiger que chaque couple `domaine.service` figure
+ * ci-dessous inverse la charge : un appel nouveau échoue par défaut, sans que
+ * personne ait à prévoir lequel.
+ *
+ * Cette liste doit rester identique à `AllowedCall` (src/core/types.ts). Le
+ * type est la garantie ; ce test est la vérification de texte qui la double,
+ * pas un substitut — la nuance a son importance, docs/limites.md l'explique.
+ */
+const ALLOWED_CALLS = ['pronote_ng.refresh', 'todo.update_item'];
+
+describe('garde : liste blanche des appels de service', () => {
+  // Le seul endroit du socle qui reconstitue domaine et service à partir de
+  // `AllowedCall`, et donc le seul qui a le droit de toucher `hass.callService`.
+  const BRIDGE = join('src', 'core', 'base-card.ts');
+
+  it('tout appel de service part d’un littéral de la liste blanche', () => {
+    for (const [file, body] of read(walk('src', ['.ts']))) {
+      for (const m of body.matchAll(/(?<!\w)callService\(\s*([^)]{0,40})/g)) {
+        const head = m[1] ?? '';
+        // Une DÉCLARATION, pas un appel : le premier « argument » y est un
+        // paramètre annoté (`domain: string`). ha-types.ts et types.ts
+        // décrivent la surface de Home Assistant, ils n'appellent rien.
+        if (/^[A-Za-z_$][\w$]*\s*[:?]/.test(head)) continue;
+        // base-card.ts définit le pont : son argument est la variable typée
+        // `AllowedCall`, déjà fermée à la compilation.
+        if (file === BRIDGE && !head.startsWith("'")) continue;
+        expect(
+          head.startsWith("'"),
+          `${file} : appel de service dont le premier argument n’est pas un littéral`
+        ).toBe(true);
+      }
+      for (const m of body.matchAll(/(?<!\w)callService\(\s*'([^']*)'/g)) {
+        const call = m[1] ?? '';
+        expect(
+          ALLOWED_CALLS.includes(call),
+          `${file} appelle « ${call} », absent de la liste blanche`
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('hass.callService ne s’atteint que depuis le socle', () => {
+    for (const [file, body] of read(walk('src', ['.ts']))) {
+      if (file === BRIDGE) continue;
+      expect(/\bhass\.callService\s*\(/.test(body), `${file} appelle hass.callService directement`).toBe(
+        false
+      );
     }
   });
 });
@@ -65,27 +178,8 @@ describe('garde : les services à réponse restent hors du projet', () => {
     'ine_number',
   ];
 
-  it('src/ n’en mentionne aucun', () => {
-    for (const [file, body] of read(walk('src', ['.ts', '.json']))) {
-      for (const f of FORBIDDEN) {
-        expect(body.includes(f), `${file} mentionne ${f}`).toBe(false);
-      }
-    }
-  });
-
-  it('docs/ n’en mentionne aucun, sauf le document de conception qui les interdit', () => {
-    const files = read(walk('docs', ['.md'])).filter(
-      ([f]) => !f.includes('superpowers')
-    );
-    for (const [file, body] of files) {
-      for (const f of FORBIDDEN) {
-        expect(body.includes(f), `${file} mentionne ${f}`).toBe(false);
-      }
-    }
-  });
-
-  it('.github/ n’en mentionne aucun (gabarits d’issues, workflows)', () => {
-    for (const [file, body] of read(walk('.github', ['.yml', '.md']))) {
+  it('aucun fichier publié n’en mentionne un', () => {
+    for (const [file, body] of published()) {
       for (const f of FORBIDDEN) {
         expect(body.includes(f), `${file} mentionne ${f}`).toBe(false);
       }
@@ -103,24 +197,23 @@ describe('garde : le journaliseur pronotepy n’est jamais recommandé', () => {
 });
 
 describe('garde : src/ ne dépend d’aucun module Node natif', () => {
-  // import … from 'node:xxx', import 'node:xxx' (effet de bord),
-  // require('node:xxx'). tsconfig.json élargit "types" à ["…", "node"]
-  // pour que test/guards.test.ts (qui lit l'arborescence) type
-  // node:fs/node:path — cet élargissement ne vaut que pour les tests :
-  // il ne doit jamais rendre compilable une carte qui s'exécute dans un
-  // navigateur, pas dans Node.
-  const NODE_IMPORT = /(?:\bfrom\s+|\bimport\s+|\brequire\(\s*)['"]node:[a-z0-9/_-]+['"]/;
+  /**
+   * `import … from 'node:x'`, `import 'node:x'`, `require('node:x')` ET
+   * `import('node:x')` — la forme dynamique manquait, et c'est justement
+   * celle qu'on écrit quand on veut qu'un import passe inaperçu.
+   *
+   * tsconfig.json élargit `types` à ["…", "node"] pour que ce fichier, qui lit
+   * l'arborescence, compile. Cet élargissement ne vaut que pour les tests : il
+   * ne doit jamais rendre compilable une carte qui s'exécute dans un
+   * navigateur, pas dans Node.
+   */
+  const NODE_IMPORT =
+    /(?:\bfrom\s+|\bimport\s+|\bimport\s*\(\s*|\brequire\(\s*)['"]node:[a-z0-9/_-]+['"]/;
 
   it("aucun fichier de src/ n'importe un module node:", () => {
     for (const [file, body] of read(walk('src', ['.ts', '.json']))) {
       const hit = body.match(NODE_IMPORT);
-      expect(
-        hit,
-        `${file} importe « ${hit?.[0]} » : src/ part dans un navigateur, ` +
-          `pas dans Node. L'élargissement de "types" à "node" dans ` +
-          `tsconfig.json n'est justifié que par les tests, jamais par le ` +
-          `code de carte.`
-      ).toBeNull();
+      expect(hit, `${file} importe « ${hit?.[0]} » : src/ part dans un navigateur, pas dans Node.`).toBeNull();
     }
   });
 });
@@ -130,25 +223,47 @@ describe('garde : aucune donnée réelle', () => {
   const ALLOWED_HOSTS = new Set([
     'github.com',
     'fiveelements.github.io',
+    'home-assistant.io',
     'www.home-assistant.io',
     'developers.home-assistant.io',
     'hacs.xyz',
+    'demo.example.invalid',
   ]);
 
-  it('toutes les URL citées pointent vers un hôte autorisé', () => {
-    const files = read([
+  const scanned = () =>
+    read([
       ...walk('src', ['.ts', '.json']),
       ...walk('test', ['.ts']),
       ...walk('docs', ['.md']),
       ...walk('.github', ['.yml', '.md']),
+      ...ROOT_DOCS,
     ]).filter(([f]) => !f.includes('superpowers'));
-    for (const [file, body] of files) {
-      // Une adresse d'instance réelle (nom d'établissement, sous-domaine
-      // interne) n'a rien à faire ici : chaque hôte cité doit figurer dans
-      // la liste blanche ci-dessus.
+
+  it('toutes les URL citées pointent vers un hôte autorisé', () => {
+    for (const [file, body] of scanned()) {
       for (const match of body.matchAll(/https?:\/\/([a-zA-Z0-9.-]+)/g)) {
         const host = match[1] ?? '';
         expect(ALLOWED_HOSTS.has(host), `${file} cite l'hôte ${host}`).toBe(true);
+      }
+    }
+  });
+
+  /**
+   * Une adresse d'instance PRONOTE s'écrit tout aussi bien sans schéma, et la
+   * règle précédente, ancrée sur `http`, ne la voyait pas. Aucun exemple
+   * concret n'est donné ici : la garde s'applique à son propre fichier. On cherche donc aussi les noms d'hôtes nus, reconnus à leur
+   * domaine de premier niveau. Les extensions de fichiers du projet (.ts,
+   * .json, .md, .yml) n'y figurent pas : elles ne peuvent pas déclencher de
+   * faux positif.
+   */
+  const TLD = 'fr|com|net|org|io|xyz|edu|dev|app|eu|be|ch';
+  const BARE_HOST = new RegExp(String.raw`(?<![\w./@-])((?:[a-z0-9-]+\.)+(?:${TLD}))(?![\w-])`, 'g');
+
+  it('aucun nom d’hôte nu, sans schéma, n’échappe à la liste blanche', () => {
+    for (const [file, body] of scanned()) {
+      for (const match of body.matchAll(BARE_HOST)) {
+        const host = match[1] ?? '';
+        expect(ALLOWED_HOSTS.has(host), `${file} cite l'hôte nu ${host}`).toBe(true);
       }
     }
   });
