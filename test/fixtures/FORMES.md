@@ -64,6 +64,26 @@ donc il doit rester honnête.
 Aucune carte ne les lit aujourd'hui. Ils sont là si une carte veut un jour dire
 « figée depuis 11:21 » plutôt que de se taire.
 
+**Et leur absence ne prouve rien.** Home Assistant ne publie **aucun** attribut
+sur une entité `unavailable` — quelle qu'en soit la cause, pas seulement une
+entité restaurée. Seuls survivent `restored`, `state_class`, `friendly_name` et
+`supported_features`. Donc « le capteur n'a plus `fetched_at` » est une
+reformulation de « le capteur est `unavailable` », et non un indice
+supplémentaire sur ce que l'intégration porte en mémoire : elle peut très bien
+tenir un instantané frais derrière une entité qui s'affiche indisponible.
+
+Ce dépôt avait déjà la moitié de l'observation — les 56 entités restaurées ne
+gardaient que ces quatre attributs — et il l'avait attribuée à la
+**restauration**, qui n'en est qu'un cas. La généralisation vient de la session
+du dépôt de l'intégration, **qui l'a mesurée** le 10 septembre 2026 : dix-neuf
+entités indisponibles alors que les dix paliers avaient collecté et publié.
+
+Conséquence pratique pour un banc de test : le discriminant fiable est du côté
+des diagnostics de l'intégration — `data.account.limiter` → `calls_by_tier`, et
+`data.account.scheduler` → `age_seconds`. Si l'âge est renseigné, la donnée est
+là et le problème est l'affichage ; `homeassistant.update_entity` suffit alors à
+la faire réapparaître, sans redémarrage ni publication.
+
 ## Le piège des unités
 
 Deux capteurs de durée, **deux unités différentes**, toutes deux déclarées :

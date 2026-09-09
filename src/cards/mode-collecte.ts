@@ -10,7 +10,8 @@ import { chip, listRow } from '../core/ui/parts';
  * est ce qui justifie la carte : basculer en heures calmes cette nuit-là a
  * demandé d'ouvrir le flux d'options de l'intégration, de trouver dans
  * laquelle des trois étapes du menu vivait le réglage, et de sauvegarder —
- * ce qui **recharge l'entrée** et a vidé douze entités sur seize.
+ * ce qui **recharge l'entrée** et a rendu douze entités sur seize
+ * indisponibles.
  *
  * ## Ce qui marche aujourd'hui, et ce qui attend l'intégration
  *
@@ -37,11 +38,21 @@ import { chip, listRow } from '../core/ui/parts';
  * ## Pourquoi elle n'écrit pas l'option
  *
  * Parce qu'une sauvegarde d'options recharge l'entrée, et qu'un rechargement
- * perd les instantanés — mesuré le 9 septembre 2026 à 23 h 55 : douze
- * entités sur seize en `unavailable`, et les trois capteurs d'emploi du temps
- * sans `lessons`. Une carte qui produirait ça à chaque clic serait pire que
- * le formulaire qu'elle remplace. Le contrat demandé à l'intégration est donc
- * un **forçage d'exécution**, en mémoire, sans rechargement.
+ * perd les instantanés : `scheduler.py` ne fait traverser que
+ * `last_collected` par `export_state`/`import_state`, et il n'y a **aucun
+ * `Store`** dans le composant — les instantanés ne vivent qu'en mémoire.
+ * Observé le 9 septembre 2026 à 23 h 55 : douze entités sur seize en
+ * `unavailable`, sans rien de recollecté avant 6 h avec les heures calmes
+ * actives. Une carte qui produirait ça à chaque clic serait pire que le
+ * formulaire qu'elle remplace ; le contrat demandé à l'intégration est donc un
+ * **forçage d'exécution**, en mémoire, sans rechargement.
+ *
+ * Ce commentaire ajoutait d'abord « et les trois capteurs d'emploi du temps
+ * sans `lessons` » comme s'il s'agissait d'une preuve de plus. Ce n'en était
+ * pas une : Home Assistant ne publie aucun attribut sur une entité
+ * `unavailable`, quelle qu'en soit la cause, donc « sans `lessons` » ne dit
+ * rien de plus que « indisponible ». Ce qui porte la conclusion est le code du
+ * composant, pas cette observation — voir `test/fixtures/FORMES.md`.
  *
  * ## L'invariant n'est pas cassé, et la réponse naïve est « oui »
  *

@@ -4529,9 +4529,17 @@ et un rechargement perd les instantanés : `scheduler.py` fait traverser
 `Store`** dans le composant, donc les données ne vivent qu'en mémoire.
 
 Mesuré le 9 septembre 2026 à 23 h 55, sur la 0.0.13 : après l'écriture de
-l'option, **12 entités sur 16 en `unavailable`**, et les trois capteurs
-d'emploi du temps sans `lessons`, sans `fetched_at`, sans `stale`. Avec les
-heures calmes actives, rien n'aurait été recollecté avant 6 h.
+l'option, **12 entités sur 16 en `unavailable`**. Avec les heures calmes
+actives, rien n'aurait été recollecté avant 6 h.
+
+Cette mesure disait aussi « et les trois capteurs d'emploi du temps sans
+`lessons`, sans `fetched_at`, sans `stale` », présenté comme une preuve de plus
+que les instantanés étaient perdus. **Ce n'en était pas une.** Home Assistant
+ne publie aucun attribut sur une entité `unavailable`, quelle qu'en soit la
+cause : l'absence de ces trois attributs ne dit rien de plus que le mot
+`unavailable` lui-même. Ce qui porte la conclusion est le paragraphe
+ci-dessus — l'absence de `Store` dans le composant — et lui seul. La règle
+générale est notée dans `test/fixtures/FORMES.md`.
 
 Une carte qui produirait cet effet à chaque clic serait pire que le formulaire
 qu'elle remplace. **Il faut donc un forçage d'exécution, pas une écriture de
