@@ -1,0 +1,117 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Langue
+
+**Tout ce que ce dépôt publie est rédigé en français** : commentaires, JSDoc, noms de tests, messages de commit, documentation, gabarits d'issue. Les identifiants de code restent en anglais. Cette règle n'est pas cosmétique — le public visé est un parent francophone qui installe ces cartes chez lui.
+
+## Commandes
+
+```bash
+npm run lint        # oxlint src test  (typeAware activé)
+npm run typecheck   # tsc --noEmit
+npm test            # vitest run
+npm run build       # vite build → dist/pronote-ng-cards.js
+npm run format      # prettier --write src test
+```
+
+Les quatre premières sont les portes : elles doivent toutes passer avant un commit.
+
+Un seul fichier de test : `npx vitest run test/cards/notes.test.ts`
+Un seul cas : `npx vitest run test/cards/notes.test.ts -t "affiche la moyenne"`
+Lint ciblé : `npx oxlint src/cards/notes.ts test/cards/notes.test.ts`
+
+Node 22 ou plus (`.nvmrc`). `dist/` est ignoré par git et reconstruit par la CI.
+
+## Ce que le projet ne fera jamais
+
+Ces contraintes viennent de l'intégration `pronote_ng` et priment sur toute considération de confort. `test/guards.test.ts` les rend **exécutables** : un test échoue si l'une est enfreinte.
+
+- **Jamais d'identifiant d'entité en dur.** Les identifiants dérivent du nom affiché de l'enfant : ils sont propres à chaque installation. Tout passe par les clés qualifiées et la résolution (voir ci-dessous).
+- **Six services à réponse sont hors d'atteinte, y compris leur nom en commentaire** : ceux qui rendent l'URL iCal, le bloc d'identité, le PDF d'emploi du temps, l'état du limiteur, les identifiants exportés, le numéro INE. L'URL iCal donne accès à l'emploi du temps complet d'un élève **sans aucun identifiant** — elle se traite comme un mot de passe. Ces données ne sont délibérément pas des états d'entités : ce sont des réponses de service, pour qu'aucune surface partageable ne les retienne.
+- **Deux appels de service seulement**, garantis par le type (`AllowedCall` dans `src/core/types.ts`) : `pronote_ng.refresh` et `todo.update_item`. Une carte ne déclenche **jamais** de collecte à l'affichage — le serveur PRONOTE sanctionne l'adresse IP, et le budget de requêtes est géré par un limiteur côté intégration. `refresh` ne place aucune requête : il relève une priorité auprès de l'ordonnanceur.
+- **Ne jamais conseiller d'activer le journaliseur `pronotepy`** : il écrit l'hexadécimal de chaque requête au niveau DEBUG, identifiants compris.
+- **Aucune donnée réelle** — nom d'élève, d'établissement, de compte — dans le code, les tests, la documentation ou les messages de commit. Valeurs synthétiques : `demo.example.invalid`, `dev_enfant`, `sensor.abc_prochain_cours`.
+
+## Architecture
+
+### La résolution des entités — l'idée centrale
+
+Une carte ne connaît pas les identifiants d'entités de l'utilisateur. Elle déclare des **clés qualifiées par domaine** (`sensor:next_lesson`, `todo:homework`) et `src/core/resolve.ts` les traduit en identifiants via le registre.
+
+La qualification par domaine est nécessaire : un `translation_key` n'est unique qu'à l'intérieur d'un domaine. `homework` nomme trois entités distinctes (un `sensor`, un `calendar`, un `todo`).
+
+**`resolveEntities` ne consulte jamais `hass.states`.** C'est l'invariant porteur du projet : une entité inscrite au registre mais non chargée doit se résoudre quand même, pour tomber en « pas encore collectée » et non en « introuvable ».
+
+Elle rend la **première** correspondance, sans détection de conflit. C'est pourquoi aucune carte n'expose de sélecteur de période : l'intégration crée une entité par période close, toutes avec le même `translation_key` sur le même appareil, et rien ne permet de les distinguer.
+
+### Les appareils et le `scope`
+
+L'intégration crée un appareil par enfant, rattaché à un appareil de compte par `via_device_id`. **Les huit cartes se configurent avec l'appareil de l'enfant**, y compris celle du limiteur qui lit des entités de diagnostic vivant sur le compte : `scope: 'account'` fait remonter le socle par `via_device_id`. C'est le point le plus déroutant de l'intégration — ne demandez jamais à l'utilisateur de choisir un autre appareil.
+
+### Les trois états
+
+C'est la raison d'être du projet : les cartes `markdown` qu'il remplace confondent ces trois cas.
+
+| état | sens | qui le gère |
+|---|---|---|
+| `missing` | l'entité est absente du registre pour cet appareil | le socle |
+| `unavailable` | elle est au registre mais sans état exploitable — transitoire, **pas une erreur** | le socle |
+| vide | l'état est là, la liste est simplement vide | **la carte** |
+
+Une carte ne réimplémente jamais les deux premiers : quand `render()` est appelé, ses entités requises sont résolues et ont un état exploitable. Le vide lui appartient, parce qu'elle seule sait qu'une liste de zéro devoir se dit « rien à rendre demain » et non « donnée indisponible ».
+
+### `CardSpec` — les cartes sont des objets, pas des classes
+
+Une carte est un objet déclaratif exporté sous le nom `SPEC` depuis `src/cards/<nom>.ts` : son `type`, sa `key` (racine de catalogue, pour les libellés d'éditeur), son `scope`, les clés qu'elle `requires` / `requiresAny` / `optional`, son `schema(config, t)` et son `render(ctx)`.
+
+`src/core/base-card.ts` en fabrique l'élément Lit ; `src/core/registry.ts` l'enregistre, définit l'éditeur générique une seule fois et pousse l'entrée `window.customCards`. `src/index.ts` importe les huit `SPEC` et appelle `defineCard` sur chacune — c'est le seul endroit qui les connaît toutes.
+
+Ajouter une carte : un fichier dans `src/cards/`, un fichier dans `test/cards/`, une ligne dans `src/index.ts`. Les chaînes vivent déjà dans les catalogues.
+
+### `RenderCtx` — la seule voie d'accès
+
+Une carte ne touche jamais `hass` directement pour lire une entité. Elle passe par `ctx.entity`, `ctx.attr`, `ctx.status`, `ctx.entityId`, `ctx.deviceName`, `ctx.t`, `ctx.language`, `ctx.timeZone`.
+
+`ctx.hass` est une `HassView` — un `HomeAssistant` **sans** `callService`. La restriction est une garantie de type, pas une convention.
+
+### Rendu piloté par le temps
+
+`shouldUpdate` ne repeint que sur changement de configuration, de registre, ou d'état d'une entité résolue — un objet `hass` neuf à chaque évènement de la maison déclencherait sinon un balayage complet du registre, multiplié par huit cartes.
+
+Conséquence : une carte dont l'affichage dépend de `Date.now()` (compte à rebours, créneau en cours, bouton en garde) doit déclarer `tickMs` dans son `CardSpec`. Le socle pose et retire la minuterie. **Ne mettez pas de `setInterval` dans une carte.**
+
+### Internationalisation
+
+Quatre catalogues dans `src/localize/` (fr, it, pt, es), tenus en parité stricte — clés **et** variables `{...}` — par `test/localize.test.ts`. Le français est le repli.
+
+Les cartes appellent `ctx.t(chemin, vars)`, jamais `localize` : le socle y lie déjà `hass.language`. Un `localize()` sans langue rend du français à tout le monde et annule le travail des catalogues.
+
+Une clé absente rend **le chemin lui-même** — une chaîne manquante doit être visible, pas silencieuse.
+
+## Pièges de la chaîne d'outils
+
+- **`lib: ES2022` dans `tsconfig.json` est délibéré.** `target` (tsconfig comme Vite) abaisse la *syntaxe*, jamais les *méthodes d'exécution* : rien ne polyfille `toSorted`, `toReversed`, `with`, `findLast`. `lib` est le seul garde-fou sur ce que `src/` peut employer dans un navigateur. Une tentative de l'élargir pour satisfaire une règle de lint a déjà été annulée.
+- **Ne jamais élargir un réglage de compilateur ou de bundler pour faire passer une règle de lint.** Corrigez le code, ou posez un `oxlint-disable-next-line` **avec une justification en français** qui explique pourquoi la règle a tort ici. `types: ["vitest/globals", "node"]` est l'exception assumée — les gardes lisent l'arborescence — et une garde interdit en retour tout import `node:` dans `src/`.
+- **Le bundle ne doit jamais être vide.** `vite build` réussit en écrivant un fichier de 0 octet ; c'est déjà arrivé, et la publication l'aurait attaché sans un mot. `release.yml` le vérifie désormais.
+- Aucune couleur en dur : uniquement les variables CSS de Home Assistant, pour que les cartes suivent le thème.
+- Zéro dépendance d'exécution hors `lit`, qui est empaquetée dans le bundle (`rolldownOptions.external` vide). `lit` reste en `dependencies` et non en `devDependencies`, pour que `npm audit --omit=dev` continue de le scanner.
+
+## Tests
+
+`test/fixtures/hass.ts` fabrique un `hass` synthétique : `makeHass(entities, language)` crée `dev_enfant` (avec `via_device_id: 'dev_compte'`) et `dev_compte`. `EntitySpec.unloaded` simule une entité au registre mais sans état.
+
+`test/fixtures/mount.ts` monte une carte : `mountCard(tagName, config, hass)` plus `text(el)`. Chaque fichier de test augmente `HTMLElementTagNameMap` avec sa balise — c'est ce qui évite les conversions `as` dans les tests.
+
+Toujours passer `device_id: 'dev_enfant'` dans les configurations montées, y compris pour tester le cas « entité introuvable ». Sans lui, la carte affiche « choisissez un enfant » et le test valide autre chose que ce qu'il annonce.
+
+Un test qui n'assère qu'une **absence** passe aussi quand le rendu est entièrement cassé : appariez-le toujours à une assertion positive.
+
+## Documentation
+
+`docs/limites.md` est la page la plus sensible du dépôt : elle explique ce que le projet ne fera jamais, et pourquoi. **N'y écrivez jamais qu'une propriété est « impossible par construction » si elle ne repose que sur une recherche de texte.** Distinguez toujours ce que le type garantit de ce qu'un test vérifie — cette page a déjà publié une affirmation fausse sur ce point exact.
+
+## Import d'une configuration Codex
+
+Une configuration OpenAI Codex a été détectée (`~/.codex/config.toml`). Répondez `/import` pour lister ce qui est importable (serveurs MCP, commandes, sous-agents, compétences, instructions), puis `/import --yes=<empreinte>` pour appliquer les éléments au niveau utilisateur. Si `/import` n'est pas disponible ici, lancez `claude import` depuis un terminal.
