@@ -15,8 +15,12 @@ beforeAll(() => {
 });
 
 const grades = [
-  { subject: 'Maths', grade: 14.5, out_of: 20, coefficient: 2, date: '2026-09-05' },
-  { subject: 'Anglais', grade: 12, out_of: 20, coefficient: 1, date: '2026-09-06' },
+  // `value`, `student` : les noms que l'integration publie reellement
+  // (`_grade_dict`, `_average_dict`). Les anciennes fixtures ecrivaient
+  // `grade` et `average`, qui n'existent pas — et la carte, qui les lisait,
+  // affichait donc « — » a la place de chaque note sur une vraie instance.
+  { subject: 'Maths', value: 14.5, out_of: 20, coefficient: 2, date: '2026-09-05' },
+  { subject: 'Anglais', value: 12, out_of: 20, coefficient: 1, date: '2026-09-06' },
 ];
 
 const base = () =>
@@ -46,7 +50,7 @@ const base = () =>
       device: 'dev_enfant',
       state: '2',
       attributes: {
-        items: [{ subject: 'Maths', average: 14.2, class_average: 12.1 }],
+        items: [{ subject: 'Maths', student: 14.2, class_average: 12.1, out_of: 20 }],
       },
     },
   ]);
@@ -83,7 +87,7 @@ describe('carte notes', () => {
         device: 'dev_enfant',
         state: '1',
         attributes: {
-          items: [{ subject: 'Maths', average: 14.2, class_average: 12.1 }],
+          items: [{ subject: 'Maths', student: 14.2, class_average: 12.1, out_of: 20 }],
         },
       },
     ]);
@@ -288,7 +292,24 @@ describe('carte notes', () => {
         key: 'sensor:report_card',
         entity_id: 'sensor.abc_bulletin',
         device: 'dev_enfant',
-        state: 'Publié',
+        // L'état vaut le nombre de matières du bulletin.
+        state: '2',
+        // Forme confirmée sur `_report_attributes` : c'est `subjects[]` qui
+        // porte les moyennes, et `comments` l'appréciation générale.
+        attributes: {
+          period: 'Trimestre 1',
+          comments: ['Trimestre satisfaisant.'],
+          subjects: [
+            {
+              name: 'Mathématiques',
+              student_average: 14.5,
+              class_average: 12.1,
+              coefficient: 2,
+              comments: ['Des progrès à confirmer.'],
+            },
+            { name: 'Anglais', student_average: 16 },
+          ],
+        },
       },
     ]);
     const el = await mountCard(
@@ -298,7 +319,15 @@ describe('carte notes', () => {
     );
     const t = text(el);
     expect(t).toContain('Bulletin');
-    expect(t).toContain('Publié');
+    // Les matières et leurs moyennes, et non le seul état du capteur — la
+    // carte se contentait de ce dernier faute de connaître la forme.
+    expect(t).toContain('Mathématiques');
+    expect(t).toContain('14,5');
+    expect(t).toContain('Anglais');
+    expect(t).toContain('16');
+    // L'appréciation générale et celle du professeur, telles qu'écrites.
+    expect(t).toContain('Trimestre satisfaisant.');
+    expect(t).toContain('Des progrès à confirmer.');
   });
 
   it('ne montre pas le bulletin dans les sections par défaut', async () => {

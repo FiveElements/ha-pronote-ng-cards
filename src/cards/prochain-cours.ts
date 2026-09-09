@@ -104,6 +104,13 @@ export const SPEC: CardSpec<Config> = {
     // pastille — l'absence d'information n'est pas une information (spec
     // « les trois états », qui appartient ici entièrement à la carte
     // puisque ces deux clés sont optionnelles).
+    // Quand un cours est en train de se dérouler, la pastille « Cours en ce
+    // moment » surplombe une ligne qui décrit le cours SUIVANT : sur une
+    // instance réelle, cela donnait « Cours en ce moment / FRANCAIS 10:30 –
+    // 11:30 · dans 28 min », qu'on lit comme si FRANCAIS était le cours en
+    // train de se dérouler. Un intitulé explicite sépare les deux — posé
+    // seulement dans ce cas, puisque sans pastille il n'y a aucune ambiguïté
+    // à lever et le titre ne serait qu'une redite.
     const inClass = ctx.status(IN_CLASS) === 'ok' && ctx.entity(IN_CLASS)?.state === 'on';
     const lessonsCanceledToday =
       ctx.status(LESSONS_CANCELED) === 'ok' && ctx.entity(LESSONS_CANCELED)?.state === 'on';
@@ -115,6 +122,7 @@ export const SPEC: CardSpec<Config> = {
             ${lessonsCanceledToday ? chip(ctx.t('prochain_cours.lessons_canceled'), 'warn') : ''}
           </div>`
         : ''}
+      ${inClass ? html`<div class="title">${ctx.t('prochain_cours.name')}</div>` : ''}
       ${listRow({
         primary: subject || ctx.t('prochain_cours.name'),
         secondary: start

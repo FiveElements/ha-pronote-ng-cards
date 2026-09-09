@@ -13,7 +13,14 @@ interface Config extends PronoteCardConfig {
 
 interface Grade {
   subject?: string;
-  grade?: number | string;
+  /**
+   * La note elle-même. Le champ s'appelle `value` — pas `grade`, que la carte
+   * lisait : `formatGrade(undefined)` rendant « — », chaque note s'affichait
+   * en tiret sans que rien ne le signale. Défaut trouvé en confrontant la
+   * carte à la source de l'intégration (`_grade_dict`), pas aux tests, dont
+   * les fixtures reprenaient le nom inventé.
+   */
+  value?: number | string;
   out_of?: number | string;
   coefficient?: number;
   date?: string;
@@ -23,9 +30,23 @@ interface Grade {
 
 interface Average {
   subject?: string;
-  average?: number | string;
+  /** `_average_dict` nomme la moyenne de l'élève `student`, jamais `average`. */
   student?: number | string;
   class_average?: number | string;
+  out_of?: number | string;
+}
+
+/**
+ * Une matière du bulletin (`_report_attributes`). L'intégration publie aussi
+ * `id` et `teachers` : non déclarés, parce qu'un champ déclaré et jamais lu
+ * fait croire qu'il est traité.
+ */
+interface ReportSubject {
+  name?: string;
+  student_average?: number | string;
+  class_average?: number | string;
+  coefficient?: number;
+  comments?: unknown;
 }
 
 const OVERALL: EntityKey = 'sensor:overall_average';
@@ -135,7 +156,7 @@ export const SPEC: CardSpec<Config> = {
                     value: g.coefficient.toLocaleString(ctx.language),
                   })
                 : undefined,
-            trailing: g.status ?? formatGrade(g.grade, g.out_of, ctx.language),
+            trailing: g.status ?? formatGrade(g.value, g.out_of, ctx.language),
           })
         );
       }
@@ -149,26 +170,47 @@ export const SPEC: CardSpec<Config> = {
             primary: a.subject ?? '—',
             secondary:
               a.class_average != null
-                ? `${ctx.t('notes.class')} ${formatGrade(a.class_average, undefined, ctx.language)}`
+                ? `${ctx.t('notes.class')} ${formatGrade(a.class_average, a.out_of, ctx.language)}`
                 : undefined,
-            trailing: formatGrade(a.average ?? a.student, undefined, ctx.language),
+            trailing: formatGrade(a.student, a.out_of, ctx.language),
           })
         );
       }
     }
 
     if (wanted.includes('report_card') && ctx.status(REPORT) === 'ok') {
-      // La forme des attributs de `sensor:report_card` n'a pas été vérifiée
-      // sur une instance PRONOTE réelle (liste de matières ? appréciation
-      // générale ? simple date de publication ?) : faute de certitude, on se
-      // limite à l'état, seul rendu que `ctx.status` garantit exploitable —
-      // à enrichir une fois la forme confirmée sur une instance réelle.
-      blocks.push(
-        listRow({
-          primary: ctx.t('notes.section_report_card'),
-          trailing: ctx.entity(REPORT)?.state,
-        })
-      );
+      // Forme confirmée sur la source de l'intégration (`_report_attributes`) :
+      // `subjects[]` porte `name`, `student_average`, `class_average`,
+      // `coefficient` et `comments`, et l'attribut de premier niveau
+      // `comments` porte l'appréciation générale. L'état vaut le nombre de
+      // matières, ou rien quand le bulletin n'est pas publié — c'est
+      // `ctx.status` qui l'écarte alors, sans que la carte ait à le savoir.
+      blocks.push(html`<div class="title">${ctx.t('notes.section_report_card')}</div>`);
+      const general = listAttr<unknown>(ctx.attr(REPORT, 'comments'))
+        .filter((line): line is string => typeof line === 'string' && line.trim() !== '')
+        .join('\n');
+      if (general) blocks.push(listRow({ primary: general }));
+      for (const s of listAttr<ReportSubject>(ctx.attr(REPORT, 'subjects'))) {
+        const parts = [
+          s.class_average != null
+            ? `${ctx.t('notes.class')} ${formatGrade(s.class_average, undefined, ctx.language)}`
+            : '',
+          s.coefficient != null
+            ? ctx.t('notes.coefficient', { value: s.coefficient.toLocaleString(ctx.language) })
+            : '',
+          // L'appréciation du professeur, telle qu'il l'a écrite.
+          listAttr<unknown>(s.comments)
+            .filter((line): line is string => typeof line === 'string' && line.trim() !== '')
+            .join('\n'),
+        ].filter(Boolean);
+        blocks.push(
+          listRow({
+            primary: s.name ?? '—',
+            secondary: parts.length > 0 ? parts.join(' · ') : undefined,
+            trailing: formatGrade(s.student_average, undefined, ctx.language),
+          })
+        );
+      }
     }
 
     // La période en cours est une information transverse, pas une section :

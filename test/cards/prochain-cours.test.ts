@@ -267,6 +267,37 @@ describe('carte prochain-cours', () => {
     // Le cours affiché reste celui d'après : la pastille ajoute un repère,
     // elle ne se substitue jamais au contenu de la carte.
     expect(t).toContain('Mathématiques');
+    // Et un intitulé sépare les deux. Sans lui, la pastille surplombe la
+    // ligne du cours SUIVANT et on lit « Cours en ce moment / Mathématiques »
+    // comme si Mathématiques était le cours en train de se dérouler —
+    // constaté sur une instance réelle.
+    const titres = Array.from(el.shadowRoot?.querySelectorAll('.title') ?? []).map(
+      (n) => n.textContent
+    );
+    expect(titres).toContain('Prochain cours');
+  });
+
+  it("ne pose pas d’intitulé « Prochain cours » quand aucun cours n’est en train de se dérouler", async () => {
+    // Sans pastille, il n'y a aucune ambiguïté à lever : l'intitulé ne serait
+    // qu'une redite du nom de la carte.
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant' },
+      makeHass([
+        {
+          key: 'sensor:next_lesson',
+          entity_id: 'sensor.abc_prochain_cours',
+          device: 'dev_enfant',
+          state: '2026-09-08T08:30:00+02:00',
+          attributes: { subject: 'Mathématiques' },
+        },
+      ])
+    );
+    const titres = Array.from(el.shadowRoot?.querySelectorAll('.title') ?? []).map(
+      (n) => n.textContent
+    );
+    expect(titres).not.toContain('Prochain cours');
+    expect(text(el)).toContain('Mathématiques');
   });
 
   it("n'affiche aucune notice de journée quand binary_sensor:lessons_canceled est absent", async () => {
