@@ -29,9 +29,27 @@ describe("garde : aucun identifiant d'entité en dur", () => {
   const HARDCODED =
     /\b(sensor|binary_sensor|calendar|todo|button|event|image)\.[a-z0-9_]{2,}/;
 
+  /**
+   * Les deux appels de service autorisés ont la forme `domaine.service`, que la
+   * règle ci-dessus ne sait pas distinguer d'un identifiant d'entité. Ce sont
+   * pourtant deux choses opposées : un identifiant d'entité varie d'une
+   * installation à l'autre — c'est tout l'objet de cette garde — alors qu'un nom
+   * de service est fixe et fait partie du contrat de Home Assistant.
+   *
+   * On les retire donc du texte avant de chercher, plutôt que de contorsionner
+   * le code appelant pour esquiver la règle : une garde qui force à écrire
+   * `'todo.' + 'update_item'` ne protège plus rien, elle déplace le problème là
+   * où plus personne ne le lit. La liste reste volontairement fermée et
+   * identique à `AllowedCall` (src/core/types.ts) : tout autre couple
+   * `domaine.service` continue d'être signalé.
+   */
+  const ALLOWED_CALLS = ['todo.update_item', 'pronote_ng.refresh'];
+  const withoutAllowedCalls = (body: string): string =>
+    ALLOWED_CALLS.reduce((acc, call) => acc.split(call).join(''), body);
+
   it('src/ ne contient aucun identifiant complet', () => {
     for (const [file, body] of read(walk('src', ['.ts', '.json']))) {
-      const hit = body.match(HARDCODED);
+      const hit = withoutAllowedCalls(body).match(HARDCODED);
       expect(hit, `${file} contient « ${hit?.[0]} »`).toBeNull();
     }
   });
