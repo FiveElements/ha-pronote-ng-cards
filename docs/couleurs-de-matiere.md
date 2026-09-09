@@ -1,25 +1,41 @@
 # Les couleurs de matière
 
-Quatre cartes savent colorer une matière : [Vue journée](cartes/journee.md),
-[Emploi du temps](cartes/emploi-du-temps.md), [Devoirs](cartes/devoirs.md) et
-[Notes](cartes/notes.md). Elles partagent une seule option, `subject_colors`,
-et exactement les mêmes règles. Cette page les décrit une fois pour toutes.
+**Six cartes** savent colorer une matière : [Vue journée](cartes/journee.md),
+[Emploi du temps](cartes/emploi-du-temps.md), [Devoirs](cartes/devoirs.md),
+[Notes](cartes/notes.md), [Prochain cours](cartes/prochain-cours.md) et
+[Évaluations](cartes/evaluations.md). Elles partagent une seule option,
+`subject_colors`, et exactement les mêmes règles. Cette page les décrit une
+fois pour toutes.
 
-## Sans table, il n'y a aucune couleur
+## La couleur vient du serveur, et ça vient de changer
 
-C'est la première chose à savoir, et elle explique la plupart des surprises :
-**tant que vous n'écrivez pas de table, aucune matière n'est colorée nulle
-part.**
+C'est la première chose à savoir, et elle explique la plupart des surprises.
+**Depuis la version 0.0.13 de l'intégration, vous n'avez plus rien à écrire
+pour voir les couleurs de votre établissement** — celles que l'élève connaît
+déjà de l'interface officielle de PRONOTE.
 
-Ce n'est pas un réglage à trouver. Un créneau publié par l'intégration porte
-quatorze champs — la matière, les professeurs, la salle, le début, la fin, le
-statut, l'annulation, le contrôle, la sortie, la retenue, la dispense, le mémo
-et la marque de fin déduite — et **aucun n'est une couleur**. Le champ n'est pas
-vide : il est absent. L'intégration décode pourtant la couleur que votre
-établissement associe à chaque matière, sur quatre chemins de sa passerelle,
-mais elle ne l'expose sur aucune entité.
+Cette page a longtemps dit l'inverse, et pour une bonne raison : c'était vrai.
+L'intégration décodait la couleur sur quatre chemins de sa passerelle et ne
+l'exposait sur **aucune** entité — la chaîne était cassée au dernier mètre.
+Elle est réparée.
 
-Votre table est donc, aujourd'hui, la seule source de couleur.
+Mais elle ne l'est pas partout, et le détail décide de ce que vous avez à
+écrire :
+
+| ce qui porte une matière | couleur du serveur | comment on le sait |
+| --- | --- | --- |
+| créneaux d'emploi du temps | **oui** | mesuré, 27 sur 27 |
+| devoirs | **oui** | mesuré, 12 sur 12 |
+| moyennes par matière | publiée, jamais observée | l'intégration pose bien la clé (vérifié deux fois dans son code) ; personne n'a encore vu la valeur, la liste étant vide |
+| prochain cours | **non** | mesuré : la clé est absente des attributs |
+| évaluations | **non** | lu dans le code de l'intégration, liste vide à la mesure |
+| notes individuelles, bulletin | jamais | PRONOTE colore la matière, pas la note |
+
+La distinction entre « mesuré » et « lu dans le code » n'est pas de la
+coquetterie. Les deux premières lignes ont été vérifiées sur une instance
+réelle ; les deux du milieu ne peuvent pas l'être tant que les listes sont
+vides. Une page qui rangerait les six ensemble vous ferait retirer une table
+qui sert peut-être encore.
 
 ## Écrire la table
 
@@ -42,20 +58,35 @@ dans le formulaire ensuite.
 
 La couleur d'une matière se prend dans cet ordre :
 
-1. **la couleur publiée par le serveur.** Depuis la version 0.0.13 de
-   l'intégration, elle arrive sur les créneaux, les devoirs et les moyennes
-   par matière — mesuré, pas annoncé. Elle n'arrive **pas encore** sur le
-   prochain cours ni sur les évaluations ;
+1. **la couleur publiée par le serveur**, selon le tableau ci-dessus ;
 2. **sinon votre table** ;
 3. **sinon rien.**
 
 **Le rang 1 gagne, et il rend votre table muette sans vous le dire.** Si vous
 aviez écrit une table pour compenser l'absence de couleur, elle ne s'applique
-plus qu'aux matières que le serveur ne colore pas — donc, sur la plupart des
-établissements, à aucune. Le bloc reste dans votre YAML et ne fait plus rien :
-c'est le genre de configuration qui trompe celui qui l'édite. Retirez-la des
-cartes où le serveur fournit la couleur, gardez-la sur le prochain cours et
-les évaluations.
+plus qu'aux matières que le serveur ne colore pas — donc, sur l'emploi du
+temps et les devoirs d'un établissement qui colore tout, à aucune. Le bloc
+reste dans votre YAML et ne fait plus rien : c'est le genre de configuration
+qui trompe celui qui l'édite, et il trompe dans les deux sens — vous ne voyez
+pas que votre table a cessé de servir, et vous ne voyez pas pourquoi la
+couleur a changé.
+
+Ce qu'il y a à faire, et ce qu'il ne faut **pas** faire :
+
+- **l'emploi du temps et les devoirs** : la table ne sert plus qu'aux matières
+  que votre établissement laisse sans couleur, et à remplacer une teinte qui
+  vous déplaît. Vous pouvez la retirer ;
+- **le prochain cours et les évaluations** : gardez-la. C'est le seul moyen
+  d'y obtenir un accent, puisque le serveur ne colore pas ces deux entités ;
+- **les notes** : ne la retirez pas encore, et la raison mérite d'être
+  précise. Ce n'est pas l'intégration qui est en doute — elle pose la clé sur
+  les moyennes par matière comme sur les deux autres paliers. C'est le
+  **serveur** : sur ce palier-là il n'écrit pas la couleur sous le même nom de
+  champ que sur les créneaux et les devoirs, et personne n'a encore pu
+  observer un bulletin non vide pour vérifier qu'il l'écrit tout court. La
+  carte ne colore que les moyennes ; retirer la table sur une déduction la
+  laisserait entièrement grise, sans un mot. Retirez-la le jour où vous voyez
+  les moyennes colorées sans elle.
 
 **Où la couleur se place, carte par carte.** Le placement n'est pas uniforme,
 et ce n'est pas un oubli :
@@ -87,7 +118,9 @@ ses vraies couleurs, elles contrediraient l'habitude prise.
 
 ## Hexadécimal strict, et rien d'autre
 
-Seules deux formes sont acceptées : `#1e88e5` et `#f80`.
+Quatre formes sont acceptées, le `#` étant facultatif : `#1e88e5`, `1e88e5`,
+`#f80` et `f80`. Le dièse est ajouté s'il manque, et rien d'autre n'est
+normalisé — ni la casse, ni la forme à trois chiffres.
 
 `red`, `rgb(30, 136, 229)` et `var(--primary-color)` sont **refusés sans un
 mot** : la ligne s'affiche simplement sans couleur, et aucun message ne vous dit
@@ -132,12 +165,27 @@ un tableau de bord en mode stockage, qui est enregistré en JSON. Elles ne
 fonctionneraient que sur un tableau de bord en mode YAML, et se perdraient au
 premier passage par l'éditeur.
 
-**Deux cartes affichent une matière sans avoir l'option** :
-[Prochain cours](cartes/prochain-cours.md) et
-[Évaluations](cartes/evaluations.md).
+**Cette page a affirmé que deux cartes affichaient une matière sans avoir
+l'option** — le prochain cours et les évaluations. C'était faux : les six
+cartes ont l'option et la traitent à l'identique. L'erreur avait le pire
+effet possible, puisque ces deux-là sont précisément celles où la table reste
+indispensable : elle décourageait le seul usage encore valable.
 
-## Le jour où l'intégration publiera la couleur
+## Ce que cette page a promis, et qui ne s'est pas produit
 
-Le rang 1 prendra le dessus **tout seul**. Votre table deviendra le repli des
-matières que le serveur ne colore pas : il n'y aura rien à défaire, rien à
-retirer, et rien à réécrire.
+Elle annonçait, sous le titre « le jour où l'intégration publiera la
+couleur » : « le rang 1 prendra le dessus tout seul, il n'y aura rien à
+défaire, rien à retirer, et rien à réécrire ».
+
+Ce jour est arrivé, et la promesse était fausse. **Il y a quelque chose à
+retirer** : une table écrite pour compenser l'absence du champ est devenue
+inerte le jour où le champ est arrivé, silencieusement, en restant dans le
+YAML. C'est le seul point de cette page qui vaille un avertissement, et il est
+en tête de la section [Les trois rangs](#les-trois-rangs).
+
+La promesse est conservée ici plutôt que supprimée, parce que l'effacer
+laisserait croire que personne ne s'est trompé. Ce qui l'a rendue fausse est
+identifiable : elle raisonnait sur le mécanisme — le rang 1 bat bien le rang 2
+tout seul, c'est exact — et non sur ce qu'un utilisateur a dans son fichier.
+Un mécanisme correct peut laisser derrière lui une configuration qui ne
+correspond plus à rien.

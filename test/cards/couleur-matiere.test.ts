@@ -16,23 +16,36 @@ import { mountCard } from '../fixtures/mount';
  * la même façon sur l'emploi du temps, les devoirs et les moyennes. Trois
  * tests dispersés dans trois fichiers auraient laissé la divergence passer.
  *
- * Le **placement** est transverse lui aussi, depuis la décision « la
- * gouttière à gauche, partout » : les cinq cartes montées ici, qui portent une
- * matière
- * bordent la ligne du même côté, avec la même variable CSS. Ce fichier a
- * porté l'exigence inverse pour les devoirs — un filet séparateur posé APRES
- * l'intitulé — et les tests qui l'affirmaient ont été renversés plutôt que
- * supprimés, pour que la trace de la décision reste lisible.
+ * Le **placement** est transverse sur les cinq cartes montées ici : elles
+ * bordent la ligne du même côté, avec la même variable CSS. Mais « la
+ * gouttière à gauche, partout » n'est plus vrai du dépôt entier — la vue
+ * journée, qui n'est pas montée dans ce fichier, pose son filet ENTRE l'heure
+ * et la matière depuis la version 0.0.20. Elle n'appelle pas `listRow`, donc
+ * aucun test d'ici ne la contraint, et ce commentaire a affirmé le contraire
+ * pendant une version.
+ *
+ * Ce qui reste réellement partagé par les six, c'est la **résolution** : la
+ * valeur passe partout par `subjectAccent` puis par la propriété
+ * personnalisée `--pronote-subject-color`. C'est le filtrage qui est
+ * l'invariant, pas le placement.
+ *
+ * Ce fichier a aussi porté l'exigence inverse pour les devoirs — un filet
+ * séparateur posé APRES l'intitulé — et les tests qui l'affirmaient ont été
+ * renversés plutôt que supprimés, pour que la trace de la décision reste
+ * lisible.
  *
  * **Les couleurs de ces fixtures sont inventées**, comme toutes les valeurs du
  * dépôt. Un établissement réel choisit les siennes.
  *
  * Ce que ces tests ne peuvent pas vérifier : que l'intégration publie
- * réellement `background_color`. Elle décode le champ sur les quatre chemins
- * de sa passerelle et ne l'expose sur aucune entité au moment où ces tests
- * sont écrits (voir `test/fixtures/NON-RENDU.md`, niveau 3). Les cartes lisent
- * donc un champ qui n'arrive pas encore — d'où le test « sans couleur », qui
- * est aujourd'hui le cas réel de toute installation.
+ * réellement `background_color`. Elle le publie depuis sa version 0.0.13 —
+ * mesuré sur une instance, 27 créneaux sur 27 et 12 devoirs sur 12, voir
+ * `test/fixtures/FORMES.md` — mais aucun test de ce dépôt ne peut l'établir :
+ * une fixture qui pose le champ prouve seulement que la carte le lit.
+ *
+ * D'où l'intérêt du test « sans couleur », qui n'est **plus** le cas réel
+ * d'une installation sur ces deux paliers. Il l'est encore sur le prochain
+ * cours et les évaluations, que l'intégration ne colore pas.
  */
 
 declare global {
@@ -173,7 +186,6 @@ const deuxDevoirs = (): ReturnType<typeof makeHass> =>
 
 const monter = async (): Promise<HTMLElement> =>
   mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant', filter: 'todo' }, deuxDevoirs());
-
 
 describe('code couleur des matières — emploi du temps', () => {
   it('reprend la couleur de chaque créneau', async () => {
@@ -385,7 +397,6 @@ describe('code couleur des matières — moyennes par matière', () => {
     expect(el.shadowRoot?.textContent).toContain('14,2');
   });
 });
-
 
 describe('code couleur des matières — la table de l’utilisateur', () => {
   /**

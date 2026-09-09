@@ -87,7 +87,6 @@ export function subjectColor(value: unknown): string | undefined {
   return trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
 }
 
-
 /**
  * La couleur d'une matière, en **trois rangs**, dans cet ordre.
  *
@@ -96,11 +95,23 @@ export function subjectColor(value: unknown): string | undefined {
  * 3. sinon `undefined` — à l'appelant de choisir entre pas de gouttière et une
  *    gouttière réservée mais transparente (voir `RowOptions.accent`).
  *
- * Le rang 2 existe parce que le rang 1 ne produit rien aujourd'hui :
- * l'intégration décode la couleur de matière sur les quatre chemins de sa
- * passerelle et ne l'expose sur aucune entité. La table est donc ce qui colore
- * les cartes maintenant, et elle restera le repli des matières que le serveur
- * ne colore pas le jour où il les publiera — rien à supprimer à ce moment-là.
+ * Le rang 1 produit depuis la version 0.0.13 de l'intégration : la couleur
+ * arrive sur les créneaux d'emploi du temps et sur les devoirs — mesuré 27 sur
+ * 27 et 12 sur 12 — et elle est attendue sur les moyennes par matière, palier
+ * qu'aucune mesure n'a encore pu observer, la liste étant vide. Deux entités
+ * ne la portent pas : le prochain cours (mesuré, la clé est absente de ses
+ * attributs) et les évaluations (`_evaluations_attributes` construit ses
+ * éléments en ligne, et le modèle amont ne porte pas le champ).
+ *
+ * Le rang 2 reste donc la seule source de couleur sur ces deux entités-là.
+ *
+ * **Et le rang 1 rend le rang 2 muet sans le dire.** Une table écrite pour
+ * compenser l'absence du champ est devenue inerte le jour où le champ est
+ * arrivé, en restant dans le YAML de l'utilisateur. Une version antérieure de
+ * ce commentaire promettait « rien à supprimer à ce moment-là » : c'était faux,
+ * et l'erreur est instructive parce qu'elle raisonnait juste sur le mécanisme.
+ * Le rang 1 bat bien le rang 2 tout seul — mais un mécanisme correct peut
+ * laisser derrière lui une configuration qui ne correspond plus à rien.
  *
  * **Jamais de couleur dérivée du libellé par hachage.** C'est le rang qui
  * n'existe pas, et délibérément : une couleur déclarée est assumée et

@@ -139,8 +139,14 @@ disponible.
 Ni les cartes ni la documentation n'y ont accès : la passerelle décode ces
 champs et le capteur ne les expose pas dans `lessons`.
 
-Sur un créneau : `background_color` (depuis `CouleurFond`), `subject_id`,
-`groups`, `virtual_classrooms`, `num`, `place`, `duration`.
+Sur un créneau : `groups`, `virtual_classrooms`, `num`, `place`, `duration`.
+
+`background_color` et `subject_id` **ont quitté ce niveau** le 9 septembre
+2026 : la version 0.0.13 de l'intégration les publie tous les deux sur les
+créneaux, et `background_color` aussi sur les devoirs et les moyennes par
+matière. Ils sont laissés mentionnés ici parce qu'un lecteur qui a connu la
+liste précédente doit pouvoir constater le changement plutôt que se demander
+s'il a mal lu.
 
 Sur une punition, trois champs du modèle que `_punishment_dict`
 (`sensor.py:629`) n'expose pas : `given_at`, `during_lesson` et
@@ -163,23 +169,35 @@ aplatie **avant** d'atteindre le moindre objet de transfert, et parce que
 l'ancienne carte l'affichait — c'est une régression, pas un manque.
 
 Ce n'est pas un manque des cartes. C'est une demande à porter côté
-intégration — `background_color` en particulier, parce qu'une couleur venue
-du serveur ne tombe pas sous l'interdiction des couleurs en dur, qui vise
-les couleurs écrites dans le code d'une carte.
+intégration.
 
-**Correction de portée, mesurée depuis :** le protocole envoie une couleur de
-matière sur **trois** familles, pas une. La passerelle la décode quatre fois —
-`CouleurFond` sur les créneaux (deux chemins de décodage) et sur les devoirs,
-`couleur` en minuscules sur les moyennes par matière — et le capteur n'en
-publie aucune : `sensor.py` ne contient pas une seule occurrence de couleur.
-Les notes individuelles, elles, n'en portent pas côté protocole.
+**La couleur de matière : résolu, et voici comment.** Ce document a porté
+pendant des semaines le constat suivant, qui était exact : le protocole envoie
+une couleur sur **trois** familles, la passerelle la décode quatre fois —
+`CouleurFond` sur les créneaux (deux chemins) et sur les devoirs, `couleur` en
+minuscules sur les moyennes par matière — et `sensor.py` ne contenait **pas une
+seule occurrence** de couleur. La chaîne était cassée au dernier mètre.
 
-**Ce point est traité côté carte.** L'emploi du temps, les devoirs et les
-moyennes par matière lisent `background_color` et le rendent en accent de
-gouttière ; rien ne change à l'écran tant que l'intégration ne publie pas le
-champ. C'est le seul poste de ce document où le travail de carte est fait avant
-la donnée, et il n'y a pas de raison d'attendre : la lecture est écrite, testée
-et sans effet en son absence.
+Trois lignes l'ont réparée, une par palier, et **sans une requête PRONOTE de
+plus** : les valeurs étaient déjà dans les instantanés, simplement pas
+recopiées dans les attributs. C'est la leçon à garder de ce poste — un champ
+« non publié » n'est pas forcément un champ à collecter, et vérifier de quel
+côté la chaîne se coupe coûte moins cher que de supposer.
+
+**Ce que le pari côté carte a rapporté.** L'emploi du temps, les devoirs et les
+moyennes par matière lisaient `background_color` avant que la donnée existe. Le
+jour où elle est arrivée, l'accent est apparu sans qu'une ligne de carte
+change. C'était le seul poste de ce document où le travail de carte précédait
+la donnée, et le pari a tenu.
+
+**Ce qu'il a coûté, en revanche, et qui n'était pas prévu :** le rang 1 bat la
+table `subject_colors` de l'utilisateur, donc une table écrite pour compenser
+l'absence du champ est devenue inerte le jour de son arrivée — silencieusement,
+en restant dans le YAML. Le pari était bon ; ce qui manquait, c'est d'avoir
+prévu la migration de ceux qui avaient contourné le manque.
+
+Restent hors de portée le prochain cours (clé absente de ses attributs,
+mesuré) et les évaluations (le modèle amont ne porte pas le champ).
 
 ## Priorités, si l'on décide de combler
 
