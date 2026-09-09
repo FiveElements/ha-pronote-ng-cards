@@ -73,6 +73,45 @@ dont les listes sont vides sur l'instance de référence.
 | `homework_overdue.count`, `.items` | non | le bandeau ne dit pas **combien** de devoirs sont en retard |
 | `calendar:homework.end_time`, `.location`, `.description` | non | sans usage clair |
 
+### Notes et moyennes — la famille auditée clé par clé
+
+Cette famille a produit **trois** défauts de clé supposée (`grade` au lieu de
+`value`, `average` au lieu de `student`, plus une erreur de contrat trouvée par
+un pair). Le mécanisme a été nommé : les clés y décrivent des **rôles** —
+l'élève, la classe, le minimum — là où l'intuition attend la notion mesurée.
+Une clé devinée y est donc *plausible* et fausse, ce qui est le pire cas : rien
+ne casse, une valeur manque.
+
+Les huit constructeurs ont donc été relus un à un dans `sensor.py`, chaque clé
+lue confrontée à chaque clé publiée. **Aucun quatrième défaut.** Les clés de
+`_grade_dict` (475), `_average_dict` (494), `_period_attributes` (521),
+`_report_attributes` (554), `_latest_grade_attributes` (458),
+`_current_period_attributes` (948), `_periods_attributes` (977) et
+`_evaluations_attributes` (911) correspondent toutes à ce que les cartes
+lisent.
+
+Ce que l'audit a trouvé à la place, ce sont des champs publiés et non lus :
+
+| champ | lu ? | conséquence |
+| --- | --- | --- |
+| `items[].is_bonus` de `sensor:grades` | **non** | **une note de bonus s'affiche comme une note ordinaire.** Même nature que l'exclusion rendue comme une retenue : deux choses de portée différente présentées à l'identique |
+| `items[].is_optional` | **non** | une note facultative, qui peut ne pas compter, est présentée comme une note qui compte |
+| `items[].comment` | **non** | le commentaire du professeur sur la note |
+| `items[].min` / `.max` de `sensor:grades` | non | le minimum et le maximum de la classe sur ce devoir |
+| `items[].min` / `.max` de `sensor:averages` | non | idem sur la moyenne de la matière |
+| `items[].subject_id` de `sensor:averages` | non | sans usage d'affichage |
+| `subjects[].id` / `.teachers` du bulletin | non | sans conséquence |
+| `items[].domain` de `sensor:evaluations` | non | le domaine d'acquisition |
+| `sensor:periods` en entier | **non** | déjà compté au niveau 1 |
+
+**Et un défaut qui n'est pas de mon côté.** `_period_attributes`
+(`sensor.py:521-526`) publie `"out_of": 20` — un littéral, jamais lu depuis les
+données. La carte notes met donc en forme la moyenne générale en « /20 » quelle
+que soit l'échelle réelle de l'établissement. Sur un établissement qui note sur
+10, l'affichage serait faux sans que rien ne le signale. Signalé côté
+intégration ; aucune carte ne peut le corriger, `out_of` étant la seule source
+disponible.
+
 ### Cantine
 
 | champ | lu ? | conséquence |
