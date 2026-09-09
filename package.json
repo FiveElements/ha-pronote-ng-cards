@@ -1,11 +1,13 @@
 {
   "name": "ha-pronote-ng-cards",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": true,
   "type": "module",
   "description": "Cartes Lovelace pour l'intégration Home Assistant Pronote NG",
   "license": "MIT",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "vite build",
     "test": "vitest run",
