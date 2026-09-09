@@ -257,6 +257,10 @@ agendas.
 identifiants d'entité : ils sont dérivés du nom de l'appareil, donc propres à
 votre installation.
 
+ 👉 **[L'agenda natif de Home Assistant](https://fiveelements.github.io/ha-pronote-ng-cards/ha-calendar/)**
+détaille chaque option, ce que contiennent les trois agendas, deux tableaux de
+bord complets, et la seule chose qui surprend : **jusqu'où l'agenda sait**.
+
  ### La carte Liste de tâches, pour les devoirs
 
 ```yaml
