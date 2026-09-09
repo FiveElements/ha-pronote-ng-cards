@@ -123,6 +123,8 @@ Une clé absente rend **le chemin lui-même** — une chaîne manquante doit êt
 
 `test/fixtures/hass.ts` fabrique un `hass` synthétique : `makeHass(entities, language)` crée `dev_enfant` (avec `via_device_id: 'dev_compte'`) et `dev_compte`. `EntitySpec.unloaded` simule une entité au registre mais sans état.
 
+**`test/fixtures/FORMES.md` porte les formes réelles** — noms d'attributs, types, unités, listes imbriquées, et ce qui n'a pas pu être vérifié sur instance. Prenez-y la forme avant d'écrire une fixture : les trois défauts les plus coûteux de ce dépôt venaient d'une fixture qui répétait l'hypothèse du code au lieu de la contredire.
+
 `test/fixtures/mount.ts` monte une carte : `mountCard(tagName, config, hass)` plus `text(el)`. Chaque fichier de test augmente `HTMLElementTagNameMap` avec sa balise — c'est ce qui évite les conversions `as` dans les tests.
 
 Toujours passer `device_id: 'dev_enfant'` dans les configurations montées, y compris pour tester le cas « entité introuvable ». Sans lui, la carte affiche « choisissez un enfant » et le test valide autre chose que ce qu'il annonce.
