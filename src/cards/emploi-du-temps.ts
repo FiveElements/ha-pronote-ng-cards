@@ -42,6 +42,16 @@ const KEYS: Record<NonNullable<Config['range']>, EntityKey> = {
 
 const keyFor = (c: Config): EntityKey => KEYS[c.range ?? 'today'];
 
+/**
+ * Deux capteurs binaires optionnels, indépendants du créneau : ils signalent
+ * qu'un contrôle ou une sortie existe quelque part dans la journée, pas quel
+ * créneau précis. Contrairement à `binary_sensor:in_class` (délibérément
+ * absent de cette carte — voir le rapport), rien ici ne fait doublon avec un
+ * calcul déjà posé sur les horodatages des créneaux.
+ */
+const TEST_TODAY: EntityKey = 'binary_sensor:test_today';
+const OUTING_TODAY: EntityKey = 'binary_sensor:outing_today';
+
 /** `teachers` arrive tantôt en tableau, tantôt en chaîne selon la version de l'intégration. */
 const teachersOf = (value: unknown): string =>
   Array.isArray(value)
@@ -74,7 +84,7 @@ export const SPEC: CardSpec<Config> = {
   size: 8,
   stub: { range: 'today', show_rooms: true },
   requires: (c) => [keyFor(c)],
-  optional: () => [],
+  optional: () => [TEST_TODAY, OUTING_TODAY],
   schema: (_config: Config, t?: Translate) => [
     {
       name: 'range',
@@ -123,6 +133,31 @@ export const SPEC: CardSpec<Config> = {
     const lang = ctx.language;
     const tz = ctx.timeZone;
     const out: TemplateResult[] = [];
+
+    // Pastille de tête de journée : `test_today` et `outing_today` sont
+    // optionnels et ne disent rien tant qu'ils ne sont pas résolus — jamais
+    // de pastille « pas de contrôle » ou « pas de sortie ». Seul `'on'`
+    // déclenche l'affichage ; une entité résolue mais à `'off'` reste muette,
+    // comme une entité absente.
+    //
+    // Et UNIQUEMENT en mode journée. Ces deux capteurs ne décrivent
+    // qu'aujourd'hui : posés en tête d'une vue « demain », ils décriraient le
+    // mauvais jour ; en tête d'une semaine, ils affirmeraient sans dire quel
+    // jour. Les cours portent déjà leurs propres attributs `test` et `outing`,
+    // qui situent l'information au bon créneau dans tous les modes — la
+    // pastille de tête n'est qu'un résumé, et un résumé faux vaut moins que
+    // pas de résumé.
+    if ((c.range ?? 'today') === 'today') {
+      const dayBadges: TemplateResult[] = [];
+      if (ctx.entity(TEST_TODAY)?.state === 'on') {
+        dayBadges.push(chip(ctx.t('emploi_du_temps.test'), 'warn'));
+      }
+      if (ctx.entity(OUTING_TODAY)?.state === 'on') {
+        dayBadges.push(chip(ctx.t('emploi_du_temps.outing')));
+      }
+      if (dayBadges.length > 0) out.push(html`<div class="row">${dayBadges}</div>`);
+    }
+
     let currentDay = '';
     const now = (parseTimestamp(testClock.now) ?? new Date()).getTime();
 

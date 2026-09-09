@@ -1,16 +1,18 @@
 import { html } from 'lit';
 import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
-import { formatRelative, formatTime, parseTimestamp } from '../core/format';
+import { formatDayLabel, formatRelative, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 
 interface Config extends PronoteCardConfig {
   show_wake_up?: boolean;
   show_end_of_day?: boolean;
+  show_next_test?: boolean;
 }
 
 const NEXT: EntityKey = 'sensor:next_lesson';
 const WAKE: EntityKey = 'sensor:next_wake_up';
 const END: EntityKey = 'sensor:end_of_lessons';
+const TEST: EntityKey = 'sensor:next_test';
 
 /** `teachers` arrive tantôt en tableau, tantôt en chaîne selon la version de l'intégration. */
 const teachersOf = (value: unknown): string => {
@@ -26,10 +28,15 @@ export const SPEC: CardSpec<Config> = {
   scope: 'child',
   size: 2,
   requires: () => [NEXT],
-  optional: (c) => [...(c.show_wake_up ? [WAKE] : []), ...(c.show_end_of_day ? [END] : [])],
+  optional: (c) => [
+    ...(c.show_wake_up ? [WAKE] : []),
+    ...(c.show_end_of_day ? [END] : []),
+    ...(c.show_next_test ? [TEST] : []),
+  ],
   schema: () => [
     { name: 'show_wake_up', selector: { boolean: {} } },
     { name: 'show_end_of_day', selector: { boolean: {} } },
+    { name: 'show_next_test', selector: { boolean: {} } },
   ],
   // Le rendu affiche `formatRelative` (« dans 30 min »), calculé sur
   // Date.now() : sans repeint périodique, ce texte resterait figé pendant des
@@ -91,6 +98,24 @@ export const SPEC: CardSpec<Config> = {
             primary: ctx.t('prochain_cours.end_of_day', {
               time: formatTime(ctx.entity(END)?.state, lang, tz),
             }),
+          })
+        : ''}
+      ${ctx.config.show_next_test && ctx.status(TEST) === 'ok'
+        ? listRow({
+            // Contrairement à `wake_up`/`end_of_day`, un contrôle n'a aucune
+            // raison de tomber le jour même : le jour et l'heure comptent
+            // tous les deux, d'où `formatDayLabel` en plus de `formatTime`
+            // (mêmes outils — ctx.language, ctx.timeZone — que les deux
+            // autres lignes). L'intégration ne documente aucun attribut de
+            // matière sur cette entité : mieux vaut une ligne juste
+            // qu'une ligne enrichie d'une donnée supposée.
+            primary: ctx.t('prochain_cours.next_test'),
+            secondary: [
+              formatDayLabel(ctx.entity(TEST)?.state, lang, tz),
+              formatTime(ctx.entity(TEST)?.state, lang, tz),
+            ]
+              .filter(Boolean)
+              .join(' · '),
           })
         : ''}
     `;

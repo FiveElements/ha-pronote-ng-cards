@@ -137,6 +137,132 @@ describe('carte emploi-du-temps', () => {
     expect(text(el)).toContain('contrôle');
   });
 
+  // Les créneaux ci-dessous ne portent volontairement ni `test` ni `outing` :
+  // la carte pose déjà une pastille par créneau à partir de ces champs (voir
+  // le test « signale les contrôles » ci-dessus), et ce n'est pas ce que ces
+  // quatre tests visent. Ici, on vérifie la pastille de tête de journée,
+  // posée depuis les capteurs binaires optionnels `test_today`/`outing_today`
+  // — un signal distinct, qui porte sur la journée entière et non sur un
+  // créneau précis.
+  const plainLessons = [
+    {
+      subject: 'Maths',
+      start: '2026-09-08T08:00:00+02:00',
+      end: '2026-09-08T09:00:00+02:00',
+    },
+  ];
+
+  const dayWithFlags = (flags: { test?: string; outing?: string }) =>
+    makeHass([
+      {
+        key: 'sensor:lessons_today',
+        entity_id: 'sensor.abc_cours_du_jour',
+        device: 'dev_enfant',
+        state: '1',
+        attributes: { lessons: plainLessons },
+      },
+      ...(flags.test === undefined
+        ? []
+        : [
+            {
+              key: 'binary_sensor:test_today',
+              entity_id: 'binary_sensor.abc_controle_du_jour',
+              device: 'dev_enfant' as const,
+              state: flags.test,
+            },
+          ]),
+      ...(flags.outing === undefined
+        ? []
+        : [
+            {
+              key: 'binary_sensor:outing_today',
+              entity_id: 'binary_sensor.abc_sortie_du_jour',
+              device: 'dev_enfant' as const,
+              state: flags.outing,
+            },
+          ]),
+    ]);
+
+  it('n’affiche aucune pastille de tête de journée quand `test_today` et `outing_today` sont absents, mais affiche bien la journée', async () => {
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      dayWithFlags({})
+    );
+    const t = text(el);
+    expect(t).not.toContain('contrôle');
+    expect(t).not.toContain('sortie');
+    // Assertion positive : la journée s'affiche toujours, ce n'est pas
+    // l'absence des deux capteurs qui efface la carte.
+    expect(t).toContain('Maths');
+    expect(t).toContain('08:00');
+  });
+
+  it('signale un contrôle en tête de journée quand `test_today` vaut `on`', async () => {
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      dayWithFlags({ test: 'on' })
+    );
+    const t = text(el);
+    expect(t).toContain('contrôle');
+    expect(t).toContain('Maths');
+  });
+
+  it('signale une sortie en tête de journée quand `outing_today` vaut `on`', async () => {
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      dayWithFlags({ outing: 'on' })
+    );
+    const t = text(el);
+    expect(t).toContain('sortie');
+    expect(t).toContain('Maths');
+  });
+
+  it('n’affiche aucune pastille de tête de journée quand les deux capteurs valent `off`', async () => {
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      dayWithFlags({ test: 'off', outing: 'off' })
+    );
+    const t = text(el);
+    expect(t).not.toContain('contrôle');
+    expect(t).not.toContain('sortie');
+    expect(t).toContain('Maths');
+  });
+
+  it('ne pose aucune pastille de tête en mode semaine, même avec `test_today` à `on`', async () => {
+    // `test_today` ne décrit qu'aujourd'hui. Posée en tête d'une semaine, la
+    // pastille affirmerait sans dire quel jour ; posée en tête d'une vue
+    // « demain », elle décrirait carrément le mauvais jour. Les créneaux
+    // portent déjà leurs propres attributs `test` et `outing`, qui situent
+    // l'information au bon endroit dans tous les modes.
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant', range: 'week' },
+      makeHass([
+        {
+          key: 'sensor:timetable_week',
+          entity_id: 'sensor.abc_emploi_du_temps_de_la_semaine',
+          device: 'dev_enfant',
+          state: '1',
+          attributes: { lessons: plainLessons },
+        },
+        {
+          key: 'binary_sensor:test_today',
+          entity_id: 'binary_sensor.abc_controle_du_jour',
+          device: 'dev_enfant',
+          state: 'on',
+        },
+      ])
+    );
+    const t = text(el);
+    expect(t).not.toContain('contrôle');
+    // Assertion positive : c'est bien la pastille qui disparaît, pas la carte.
+    expect(t).toContain('Maths');
+  });
+
   it('dit « aucun cours » sur une liste vide', async () => {
     const el = await mountCard(
       'pronote-ng-emploi-du-temps',

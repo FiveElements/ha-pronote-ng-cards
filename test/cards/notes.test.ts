@@ -215,4 +215,143 @@ describe('carte notes', () => {
     // Ce test échoue si quelqu'un réintroduit l'option sans traiter le fond.
     expect(SPEC.schema({ type: 'x' }).map((f) => f.name)).not.toContain('period');
   });
+
+  it('affiche la période en cours quand elle est résolue', async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:overall_average',
+        entity_id: 'sensor.abc_moyenne_generale',
+        device: 'dev_enfant',
+        state: '13.5',
+        attributes: { out_of: 20 },
+      },
+      {
+        key: 'sensor:current_period',
+        entity_id: 'sensor.abc_periode',
+        device: 'dev_enfant',
+        state: 'Trimestre 1',
+      },
+    ]);
+    const el = await mountCard(
+      'pronote-ng-notes',
+      { device_id: 'dev_enfant', sections: ['average'] },
+      hass
+    );
+    const t = text(el);
+    expect(t).toContain('Trimestre 1');
+    expect(t).toContain('13,5');
+  });
+
+  it("ne montre rien pour la période quand `sensor:current_period` est indisponible", async () => {
+    // La spec (§5.1) est explicite : la période devient *indisponible*
+    // plutôt que fausse quand l'intégration ne peut pas la déterminer —
+    // aucun repli ne doit se glisser à sa place.
+    const hass = makeHass([
+      {
+        key: 'sensor:overall_average',
+        entity_id: 'sensor.abc_moyenne_generale',
+        device: 'dev_enfant',
+        state: '13.5',
+        attributes: { out_of: 20 },
+      },
+      {
+        key: 'sensor:current_period',
+        entity_id: 'sensor.abc_periode',
+        device: 'dev_enfant',
+        state: 'unavailable',
+      },
+    ]);
+    const el = await mountCard(
+      'pronote-ng-notes',
+      { device_id: 'dev_enfant', sections: ['average'] },
+      hass
+    );
+    const t = text(el);
+    expect(t).not.toContain('Période');
+    // Assertion positive : le reste de la carte s'affiche normalement.
+    expect(t).toContain('13,5');
+  });
+
+  it('affiche le bulletin quand la section est explicitement choisie', async () => {
+    const hass = makeHass([
+      // `sensor:report_card` est optionnelle : au moins une des clés
+      // `requiresAny` doit être résolue pour que la carte rende quoi que ce
+      // soit, bulletin compris.
+      {
+        key: 'sensor:overall_average',
+        entity_id: 'sensor.abc_moyenne_generale',
+        device: 'dev_enfant',
+        state: '13.5',
+        attributes: { out_of: 20 },
+      },
+      {
+        key: 'sensor:report_card',
+        entity_id: 'sensor.abc_bulletin',
+        device: 'dev_enfant',
+        state: 'Publié',
+      },
+    ]);
+    const el = await mountCard(
+      'pronote-ng-notes',
+      { device_id: 'dev_enfant', sections: ['report_card'] },
+      hass
+    );
+    const t = text(el);
+    expect(t).toContain('Bulletin');
+    expect(t).toContain('Publié');
+  });
+
+  it('ne montre pas le bulletin dans les sections par défaut', async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:overall_average',
+        entity_id: 'sensor.abc_moyenne_generale',
+        device: 'dev_enfant',
+        state: '13.5',
+        attributes: { out_of: 20 },
+      },
+      {
+        key: 'sensor:report_card',
+        entity_id: 'sensor.abc_bulletin',
+        device: 'dev_enfant',
+        state: 'Publié',
+      },
+    ]);
+    // Aucune section précisée : `sectionsOf` retombe sur les trois valeurs
+    // par défaut, qui n'incluent pas le bulletin.
+    const el = await mountCard('pronote-ng-notes', { device_id: 'dev_enfant' }, hass);
+    const t = text(el);
+    expect(t).not.toContain('Bulletin');
+    // Assertion positive : les sections par défaut restent bien rendues.
+    expect(t).toContain('13,5');
+  });
+
+  it('nomme la ligne du motif « Dernière note » quand la matière est absente', async () => {
+    // Régression : cette ligne retombait sur `notes.name` (« Notes »), le nom
+    // de la carte — un libellé trompeur plutôt qu'un motif de note.
+    const hass = makeHass([
+      {
+        key: 'sensor:latest_grade',
+        entity_id: 'sensor.abc_derniere_note',
+        device: 'dev_enfant',
+        state: 'unknown',
+        attributes: { status: 'Non rendu' },
+      },
+      {
+        key: 'sensor:grades',
+        entity_id: 'sensor.abc_notes',
+        device: 'dev_enfant',
+        state: '0',
+        attributes: { items: [] },
+      },
+    ]);
+    const el = await mountCard(
+      'pronote-ng-notes',
+      { device_id: 'dev_enfant', sections: ['latest'] },
+      hass
+    );
+    const t = text(el);
+    expect(t).toContain('Dernière note');
+    expect(t).toContain('Non rendu');
+  });
 });

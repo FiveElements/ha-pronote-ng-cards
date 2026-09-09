@@ -27,7 +27,9 @@
     "wake_up": "Sveglia alle {time}",
     "end_of_day": "Fine delle lezioni alle {time}",
     "show_wake_up": "Mostra l'orario della sveglia",
-    "show_end_of_day": "Mostra la fine delle lezioni"
+    "show_end_of_day": "Mostra la fine delle lezioni",
+    "next_test": "Prossima verifica",
+    "show_next_test": "Mostra la prossima verifica"
   },
   "menu": {
     "name": "Mensa",
@@ -69,7 +71,10 @@
     "section_average": "Media generale",
     "section_latest": "Ultimi voti",
     "section_subjects": "Per materia",
-    "limit": "Numero massimo di voti"
+    "limit": "Numero massimo di voti",
+    "section_report_card": "Pagella",
+    "period": "Periodo",
+    "latest_grade": "Ultimo voto"
   },
   "emploi_du_temps": {
     "name": "Orario",

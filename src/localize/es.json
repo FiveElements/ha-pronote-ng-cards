@@ -27,7 +27,9 @@
     "wake_up": "Despertar a las {time}",
     "end_of_day": "Fin de las clases a las {time}",
     "show_wake_up": "Mostrar la hora de despertar",
-    "show_end_of_day": "Mostrar el fin de las clases"
+    "show_end_of_day": "Mostrar el fin de las clases",
+    "next_test": "Próximo examen",
+    "show_next_test": "Mostrar el próximo examen"
   },
   "menu": {
     "name": "Comedor",
@@ -69,7 +71,10 @@
     "section_average": "Media general",
     "section_latest": "Últimas notas",
     "section_subjects": "Por asignatura",
-    "limit": "Número máximo de notas"
+    "limit": "Número máximo de notas",
+    "section_report_card": "Boletín",
+    "period": "Periodo",
+    "latest_grade": "Última nota"
   },
   "emploi_du_temps": {
     "name": "Horario",

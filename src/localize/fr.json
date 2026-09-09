@@ -27,7 +27,9 @@
     "wake_up": "Réveil à {time}",
     "end_of_day": "Fin des cours à {time}",
     "show_wake_up": "Afficher l'heure de réveil",
-    "show_end_of_day": "Afficher la fin des cours"
+    "show_end_of_day": "Afficher la fin des cours",
+    "next_test": "Prochain contrôle",
+    "show_next_test": "Afficher le prochain contrôle"
   },
   "menu": {
     "name": "Cantine",
@@ -69,7 +71,10 @@
     "section_average": "Moyenne générale",
     "section_latest": "Dernières notes",
     "section_subjects": "Par matière",
-    "limit": "Nombre maximum de notes"
+    "limit": "Nombre maximum de notes",
+    "section_report_card": "Bulletin",
+    "period": "Période",
+    "latest_grade": "Dernière note"
   },
   "emploi_du_temps": {
     "name": "Emploi du temps",

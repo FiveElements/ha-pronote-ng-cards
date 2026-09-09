@@ -4,7 +4,7 @@ import { formatGrade } from '../core/format';
 import { emptyState, listRow } from '../core/ui/parts';
 import { latestFirst, listAttr } from '../core/list';
 
-type Section = 'average' | 'latest' | 'subjects';
+type Section = 'average' | 'latest' | 'subjects' | 'report_card';
 
 interface Config extends PronoteCardConfig {
   sections?: Section[];
@@ -33,6 +33,8 @@ const GRADES: EntityKey = 'sensor:grades';
 const AVERAGES: EntityKey = 'sensor:averages';
 const CLASS: EntityKey = 'sensor:class_average';
 const LATEST: EntityKey = 'sensor:latest_grade';
+const PERIOD: EntityKey = 'sensor:current_period';
+const REPORT: EntityKey = 'sensor:report_card';
 
 const sectionsOf = (c: Config): Section[] =>
   c.sections && c.sections.length > 0 ? c.sections : ['average', 'latest', 'subjects'];
@@ -47,7 +49,7 @@ export const SPEC: CardSpec<Config> = {
   stub: { sections: ['average', 'latest', 'subjects'] },
   requires: () => [],
   requiresAny: () => [OVERALL, GRADES, AVERAGES],
-  optional: () => [CLASS, LATEST],
+  optional: () => [CLASS, LATEST, PERIOD, REPORT],
   schema: (_config: Config, t?: Translate) => {
     const tr = t ?? ((path: string) => path);
     return [
@@ -60,6 +62,7 @@ export const SPEC: CardSpec<Config> = {
               { value: 'average', label: tr('notes.section_average') },
               { value: 'latest', label: tr('notes.section_latest') },
               { value: 'subjects', label: tr('notes.section_subjects') },
+              { value: 'report_card', label: tr('notes.section_report_card') },
             ],
           },
         },
@@ -111,7 +114,10 @@ export const SPEC: CardSpec<Config> = {
       if (ctx.status(LATEST) === 'unavailable' && latestStatus) {
         blocks.push(
           listRow({
-            primary: ctx.attr<string>(LATEST, 'subject') ?? ctx.t('notes.name'),
+            // `notes.name` est le nom de la carte, pas le motif d'une note :
+            // un libellé trompeur en repli. `notes.latest_grade` nomme
+            // vraiment la ligne quand la matière elle-même est absente.
+            primary: ctx.attr<string>(LATEST, 'subject') ?? ctx.t('notes.latest_grade'),
             trailing: latestStatus,
           })
         );
@@ -151,12 +157,39 @@ export const SPEC: CardSpec<Config> = {
       }
     }
 
+    if (wanted.includes('report_card') && ctx.status(REPORT) === 'ok') {
+      // La forme des attributs de `sensor:report_card` n'a pas été vérifiée
+      // sur une instance PRONOTE réelle (liste de matières ? appréciation
+      // générale ? simple date de publication ?) : faute de certitude, on se
+      // limite à l'état, seul rendu que `ctx.status` garantit exploitable —
+      // à enrichir une fois la forme confirmée sur une instance réelle.
+      blocks.push(
+        listRow({
+          primary: ctx.t('notes.section_report_card'),
+          trailing: ctx.entity(REPORT)?.state,
+        })
+      );
+    }
+
+    // La période en cours est une information transverse, pas une section :
+    // elle s'affiche dès que résolue et exploitable, quelles que soient les
+    // sections choisies, et ne compte pas dans le calcul du vide ci-dessous.
+    // `current_period` devient *indisponible* plutôt que faux quand
+    // l'intégration ne peut pas la déterminer (spec §5.1) : ne rien afficher
+    // dans ce cas vaut mieux qu'une période fausse.
+    const periodRow =
+      ctx.status(PERIOD) === 'ok'
+        ? listRow({ primary: ctx.t('notes.period'), trailing: ctx.entity(PERIOD)?.state })
+        : undefined;
+
     if (blocks.length === 0) {
       // Une carte configurée sur la seule section « par matière » n'a rien
       // à voir avec des notes : le message générique mentirait.
       const subjectsOnly = wanted.length === 1 && wanted[0] === 'subjects';
-      return emptyState(ctx.t(subjectsOnly ? 'notes.empty_averages' : 'notes.empty'));
+      return html`
+        ${periodRow ?? ''}${emptyState(ctx.t(subjectsOnly ? 'notes.empty_averages' : 'notes.empty'))}
+      `;
     }
-    return html`${blocks}`;
+    return html`${periodRow ?? ''}${blocks}`;
   },
 };

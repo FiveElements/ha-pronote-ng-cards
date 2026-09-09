@@ -140,4 +140,74 @@ describe('carte prochain-cours', () => {
     expect(t).toContain('07:00');
     expect(t).toContain('17:00');
   });
+
+  it("n'affiche aucune ligne de prochain contrôle quand l'option est absente", async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:next_lesson',
+        entity_id: 'sensor.abc_prochain_cours',
+        device: 'dev_enfant',
+        state: '2026-09-08T08:30:00+02:00',
+        attributes: { subject: 'SVT' },
+      },
+      {
+        key: 'sensor:next_test',
+        entity_id: 'sensor.abc_prochain_controle',
+        device: 'dev_enfant',
+        state: '2026-09-15T09:00:00+02:00',
+      },
+    ]);
+    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    expect(text(el)).not.toContain('Prochain contrôle');
+  });
+
+  it("n'affiche aucune ligne de prochain contrôle quand l'option est active mais l'entité introuvable", async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:next_lesson',
+        entity_id: 'sensor.abc_prochain_cours',
+        device: 'dev_enfant',
+        state: '2026-09-08T08:30:00+02:00',
+        attributes: { subject: 'SVT' },
+      },
+    ]);
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant', show_next_test: true },
+      hass
+    );
+    const t = text(el);
+    // L'entité optionnelle absente ne doit jamais produire un message
+    // d'erreur : la ligne est simplement omise (spec « les trois états »).
+    expect(t).not.toContain('Prochain contrôle');
+    expect(t).not.toContain('introuvable');
+    expect(t).toContain('SVT');
+  });
+
+  it('affiche le prochain contrôle avec son jour et son heure quand il est résolu', async () => {
+    const hass = makeHass([
+      {
+        key: 'sensor:next_lesson',
+        entity_id: 'sensor.abc_prochain_cours',
+        device: 'dev_enfant',
+        state: '2026-09-08T08:30:00+02:00',
+        attributes: { subject: 'SVT' },
+      },
+      {
+        key: 'sensor:next_test',
+        entity_id: 'sensor.abc_prochain_controle',
+        device: 'dev_enfant',
+        state: '2026-09-15T09:00:00+02:00',
+      },
+    ]);
+    const el = await mountCard(
+      'pronote-ng-prochain-cours',
+      { device_id: 'dev_enfant', show_next_test: true },
+      hass
+    );
+    const t = text(el);
+    expect(t).toContain('Prochain contrôle');
+    expect(t).toContain('09:00');
+    expect(t).toContain('mardi');
+  });
 });
