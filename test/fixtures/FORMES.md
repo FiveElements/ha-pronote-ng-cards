@@ -66,6 +66,29 @@ sur son site d'appel.
 | `sensor:timetable_tomorrow` | `lessons` |
 | `sensor:timetable_week` | `lessons`, `weeks` (`array<number>`) |
 | `sensor:homework_todo` | `items` (voir plus bas), `next_due` (ISO) |
+
+### Ce que `timetable_week` couvre vraiment
+
+**Toute la semaine PRONOTE courante, jours déjà passés compris** — plus la
+semaine suivante quand le lendemain change de semaine. Relevé dans
+`gateway.timetable` : la fenêtre est `[get_week(today)]`, à laquelle
+`get_week(today + 1 jour)` s'ajoute s'il diffère.
+
+Ce n'est **pas** « à partir d'aujourd'hui », et c'est ce qui rend la navigation
+de la carte vue journée possible vers le passé. Deux conséquences pour une
+fixture :
+
+- le lundi, la veille n'est **pas** dans la fenêtre. Une carte qui déduirait
+  ses bornes de navigation d'un calcul de calendrier proposerait un dimanche
+  dont elle ne sait rien ; les bornes se prennent donc sur les jours
+  réellement présents dans `lessons` ;
+- `lessons` est **dédoublonnée** (`deduplicate_lessons`), et `lessons_today`
+  est un simple filtre de jour sur la même liste. Les deux capteurs ne peuvent
+  pas se contredire sur un même jour — une fixture qui les ferait diverger
+  testerait une situation impossible.
+
+`weeks` porte les numéros de semaine PRONOTE effectivement demandés : un ou
+deux éléments, jamais zéro quand l'état est exploitable.
 | `sensor:homework`, `sensor:homework_tomorrow` | `items` |
 | `calendar:homework` | `message`, `start_time`, `end_time`, `location`, `description`, `all_day` |
 | `sensor:absences` | `items` (voir plus bas) |

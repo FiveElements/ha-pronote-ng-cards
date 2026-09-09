@@ -10,20 +10,43 @@ import { subjectColor } from '../core/subject-color';
  * La journée en grille : une colonne d'horaires, un filet de couleur, la
  * matière.
  *
- * C'est un portage d'apparence de l'ancienne carte `lovelace-pronote`, sur la
- * **journée courante uniquement** — pas de sélecteur de semaine, pas de
- * défilement jour par jour. La carte emploi du temps couvre déjà ces deux
- * besoins, et deux cartes qui font la même chose autrement sont deux cartes
- * qu'on maintient mal.
+ * C'est un portage d'apparence de l'ancienne carte `lovelace-pronote`. Elle
+ * ouvre sur **aujourd'hui**, et deux flèches permettent de parcourir les
+ * autres jours de la semaine déjà collectée. Pas de sélecteur de semaine :
+ * au-delà de la fenêtre collectée il n'y a rien à afficher, et la carte
+ * emploi du temps rend déjà la semaine d'un seul tenant.
  *
  * Cinq éléments constituent le seuil d'acceptation, nommés par l'utilisateur :
  * l'heure de début **et** de fin, le filet de couleur, l'intitulé de matière,
  * le barré avec sa pastille sur un cours annulé, et la zone repas.
  *
  * S'y ajoutent, demandés ensuite : la **salle** et le **professeur** sur
- * chaque créneau, et un **en-tête** portant la date et les bornes de la
- * journée de classe. Tous se désactivent, aucun n'est requis pour que la
- * carte ait un sens.
+ * chaque créneau, un **en-tête** portant la date et les bornes de la journée
+ * de classe, et la **navigation** d'un jour à l'autre. Tous se désactivent,
+ * aucun n'est requis pour que la carte ait un sens.
+ *
+ * ## La navigation ne coûte aucune requête
+ *
+ * C'est la seule raison pour laquelle elle est acceptable ici. `Client.lessons()`
+ * facture à la **semaine** : demander « aujourd'hui » coûte exactement le même
+ * appel que demander la semaine entière, et l'intégration a replié son palier
+ * hebdomadaire dans le palier emploi du temps pour cette raison. Toute la
+ * semaine courante est donc déjà publiée dans l'attribut `lessons` de
+ * `sensor:timetable_week` — changer de jour n'est qu'un filtre sur une liste
+ * qui est en mémoire du navigateur.
+ *
+ * Une flèche ne déclenche donc **jamais** de collecte, et ne peut pas en
+ * déclencher : la carte n'a qu'un seul appel de service à sa disposition et ne
+ * s'en sert pas. Sans le capteur de semaine, les flèches n'apparaissent pas —
+ * plutôt que d'aller chercher un jour qu'il faudrait payer.
+ *
+ * ## La position n'est pas une configuration
+ *
+ * Le jour consulté vit dans `ctx.cursor`, l'état d'interface du socle, jamais
+ * dans le YAML de la carte. Une option `day: -1` afficherait la veille pour
+ * tous les habitants de la maison, en permanence, et l'avant-veille le
+ * lendemain. Un rechargement de page ramène donc sur aujourd'hui, comme une
+ * position de défilement.
  */
 
 interface Config extends PronoteCardConfig {
@@ -54,6 +77,14 @@ interface Config extends PronoteCardConfig {
   show_current?: boolean;
   /** L'en-tête : la date, et les bornes de la journée de classe. */
   show_header?: boolean;
+  /**
+   * Les flèches de navigation d'un jour à l'autre.
+   *
+   * Sans effet quand `sensor:timetable_week` n'est pas résolu : il n'y a alors
+   * aucun autre jour en mémoire, et une flèche qui ne mène nulle part vaut
+   * moins que pas de flèche.
+   */
+  show_nav?: boolean;
 }
 
 /**
@@ -66,6 +97,16 @@ export const testClock: { now?: string } = {};
 
 const LESSONS: EntityKey = 'sensor:lessons_today';
 const IN_CLASS: EntityKey = 'binary_sensor:in_class';
+/**
+ * La semaine collectée — la seule source des autres jours.
+ *
+ * Optionnelle, et le rester : le palier peut être désactivé chez
+ * l'utilisateur, auquel cas la carte reste exactement ce qu'elle était, sur
+ * aujourd'hui. Les créneaux qu'elle porte sortent de la **même** liste
+ * dédoublonnée que ceux d'aujourd'hui, en amont côté intégration : les deux
+ * capteurs ne peuvent pas se contredire sur un même jour.
+ */
+const WEEK: EntityKey = 'sensor:timetable_week';
 
 /** Fenêtre méridienne par défaut, en minutes depuis minuit. */
 const MEAL_FROM = 11 * 60;
@@ -111,6 +152,160 @@ const minutesOfDay = (date: Date, timeZone: string): number => {
   }).format(date);
   const [h, m] = parts.split(':');
   return Number(h) * 60 + Number(m);
+};
+
+/* ---- Les jours ------------------------------------------------------------
+
+   Toute la navigation se fait sur des clés de jour civil `AAAA-MM-JJ`, jamais
+   sur des instants. Deux raisons :
+
+   - un jour civil n'est pas un intervalle de 24 heures. Aux changements
+     d'heure il en fait 23 ou 25, et une arithmétique en millisecondes rate
+     alors le jour visé deux fois par an ;
+   - la comparaison de deux clés se fait par ordre lexicographique, qui
+     coïncide avec l'ordre chronologique sur ce format. C'est ce qui rend les
+     bornes de la fenêtre lisibles en un coup d'oeil.
+
+   L'arithmétique de calendrier passe par `Date.UTC`, qui ne connaît aucun
+   changement d'heure : on manipule des numéros de jour, pas des durées. */
+
+/** La clé de jour civil d'un instant, dans le fuseau de la carte. */
+const dayKeyOf = (date: Date, timeZone: string): string => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const get = (type: string): string => parts.find((part) => part.type === type)?.value ?? '';
+  return `${get('year')}-${get('month')}-${get('day')}`;
+};
+
+const DAY_KEY = /^(\d{4})-(\d{2})-(\d{2})$/;
+const pad2 = (value: number): string => String(value).padStart(2, '0');
+
+/** La clé de jour décalée de `days` jours. */
+const shiftDayKey = (key: string, days: number): string => {
+  const m = DAY_KEY.exec(key);
+  if (!m) return key;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + days));
+  return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+};
+
+/**
+ * Un instant qui tombe bien ce jour-là, dans le fuseau de la carte.
+ *
+ * Sert uniquement à donner une date à afficher pour un jour **sans cours** :
+ * dès qu'un cours existe, son horodatage fait un meilleur ancrage que
+ * n'importe quel calcul.
+ *
+ * Midi UTC comme point de départ, puis vérification : c'est le décalage le
+ * plus robuste, mais pas un décalage sûr. Les fuseaux vont de -12 à +14, donc
+ * midi UTC tombe le lendemain à Kiritimati (+14). On corrige d'un jour dans
+ * l'un ou l'autre sens plutôt que de supposer, parce que se tromper ici
+ * afficherait une date fausse au-dessus de créneaux justes — exactement le
+ * genre d'erreur plausible que ce dépôt s'interdit.
+ */
+const anchorFor = (key: string, timeZone: string): string | undefined => {
+  if (!DAY_KEY.test(key)) return undefined;
+  const m = DAY_KEY.exec(key);
+  if (!m) return undefined;
+  const base = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12);
+  for (const shift of [0, -1, 1]) {
+    const at = new Date(base + shift * 86_400_000);
+    if (dayKeyOf(at, timeZone) === key) return at.toISOString();
+  }
+  return undefined;
+};
+
+/**
+ * Les jours que la fenêtre collectée contient, en ordre croissant.
+ *
+ * Ce sont les bornes de la navigation, et elles viennent des **données**, pas
+ * d'un calcul de semaine. La différence compte un jour sur sept : le lundi, la
+ * veille appartient à la semaine précédente, que personne n'a collectée. Des
+ * bornes calculées laisseraient la flèche active et la carte afficherait
+ * « aucun cours » pour un dimanche dont elle ne sait rien — une affirmation
+ * fausse, et la seule que cette carte pourrait produire.
+ *
+ * Un jour **sans** cours à l'intérieur de la fenêtre reste atteignable, lui,
+ * et doit l'être : « aucun cours mercredi » est une information vraie et
+ * utile, pas un trou à sauter.
+ */
+const daysOf = (lessons: Lesson[], timeZone: string): string[] => {
+  const keys = new Set<string>();
+  for (const lesson of lessons) {
+    const at = parseTimestamp(lesson.start);
+    if (at !== undefined) keys.add(dayKeyOf(at, timeZone));
+  }
+  return sortedBy([...keys], (a, b) => (a < b ? -1 : a > b ? 1 : 0));
+};
+
+/** Le numéro de jour d'une clé, pour compter des jours entre deux dates. */
+const dayNumber = (key: string): number | undefined => {
+  const m = DAY_KEY.exec(key);
+  if (!m) return undefined;
+  return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / 86_400_000;
+};
+
+/**
+ * La destination d'une flèche depuis le jour affiché, ou `undefined` quand il
+ * n'y en a pas — auquel cas la flèche est désactivée.
+ *
+ * Deux comportements, et il faut les deux :
+ *
+ * - **à l'intérieur de la fenêtre**, on avance d'un jour civil, même vers un
+ *   jour sans cours. « Aucun cours mercredi » est une information vraie, et
+ *   c'est souvent celle qu'on venait chercher ;
+ * - **au bord de la fenêtre**, on saute au jour collecté le plus proche dans
+ *   cette direction. Sans ce rattrapage, un dimanche placé devant une semaine
+ *   qui commence le mardi serait un cul-de-sac : la flèche désactivée alors
+ *   que quatre jours sont en mémoire. Le cas n'est pas théorique — un lundi
+ *   férié le produit.
+ */
+const stepTo = (from: string, delta: 1 | -1, days: string[]): string | undefined => {
+  const firstDay = days[0];
+  const lastDay = days[days.length - 1];
+  if (firstDay === undefined || lastDay === undefined) return undefined;
+  const next = shiftDayKey(from, delta);
+  if (next >= firstDay && next <= lastDay) return next;
+  if (delta === 1) return days.find((day) => day > from);
+  const before = days.filter((day) => day < from);
+  return before[before.length - 1];
+};
+
+interface Bounds {
+  first?: string;
+  last?: string;
+}
+
+/**
+ * Les bornes d'une journée, calculées comme l'intégration les calcule.
+ *
+ * Réservé aux jours **autres** qu'aujourd'hui : pour aujourd'hui, les bornes
+ * sont publiées (`first_start`, `last_end`) et un fait publié se lit, il ne se
+ * recalcule pas. Pour les autres jours rien n'est publié, alors on reprend la
+ * formule à l'identique — `min(start)` et `max(end)` sur **tous** les
+ * créneaux, cours annulés compris — pour que l'en-tête veuille dire la même
+ * chose d'un jour à l'autre.
+ */
+const boundsOf = (lessons: Lesson[]): Bounds => {
+  let first: number | undefined;
+  let last: number | undefined;
+  const out: Bounds = {};
+  for (const lesson of lessons) {
+    const start = parseTimestamp(lesson.start)?.getTime();
+    if (start !== undefined && (first === undefined || start < first)) {
+      first = start;
+      out.first = lesson.start;
+    }
+    const end = parseTimestamp(lesson.end)?.getTime();
+    if (end !== undefined && (last === undefined || end > last)) {
+      last = end;
+      out.last = lesson.end;
+    }
+  }
+  return out;
 };
 
 /** La couleur du filet, en trois rangs, ou `undefined` pour l'accent neutre. */
@@ -223,9 +418,16 @@ export const SPEC: CardSpec<Config> = {
   key: 'journee',
   scope: 'child',
   size: 10,
-  stub: { show_meal: true, show_rooms: true, show_teachers: true, show_current: true, show_header: true },
+  stub: {
+    show_meal: true,
+    show_rooms: true,
+    show_teachers: true,
+    show_current: true,
+    show_header: true,
+    show_nav: true,
+  },
   requires: () => [LESSONS],
-  optional: () => [IN_CLASS],
+  optional: () => [IN_CLASS, WEEK],
   // Aucun libellé posé ici : l'éditeur générique les résout sous la racine de
   // catalogue de la carte (`journee.show_meal`, `journee.meal_from`…), et
   // aucune option de cette carte n'est un choix multiple dont les valeurs
@@ -246,6 +448,7 @@ export const SPEC: CardSpec<Config> = {
     { name: 'show_teachers', selector: { boolean: {} } },
     { name: 'show_current', selector: { boolean: {} } },
     { name: 'show_header', selector: { boolean: {} } },
+    { name: 'show_nav', selector: { boolean: {} } },
   ],
   // La mise en avant du cours en cours se calcule sur `Date.now()` : sans
   // repeint périodique, elle désignerait un cours terminé pendant une heure
@@ -254,44 +457,126 @@ export const SPEC: CardSpec<Config> = {
   tickMs: 60_000,
   render(ctx: RenderCtx<Config>) {
     const c = ctx.config;
-    const lessons = listAttr<Lesson>(ctx.attr(LESSONS, 'lessons'));
+    const lang = ctx.language;
+    const tz = ctx.timeZone;
+    const clock = parseTimestamp(testClock.now) ?? new Date();
+    const now = clock.getTime();
+
+    // ---- Quel jour affiche-t-on ? ---------------------------------------
+    //
+    // La fenêtre n'est lue que si le capteur de semaine a un état exploitable.
+    // Il est optionnel : le socle ne l'écarte pas quand il est au registre
+    // sans avoir jamais été collecté, et ses attributs sont alors absents.
+    const weekLessons =
+      ctx.status(WEEK) === 'ok' ? listAttr<Lesson>(ctx.attr(WEEK, 'lessons')) : [];
+    const days = daysOf(weekLessons, tz);
+    const navOn = c.show_nav !== false && days.length > 0;
+    // Un curseur sans fenêtre pour le porter retombe à zéro, plutôt que
+    // d'afficher une journée vide qui aurait l'air d'une journée sans cours.
+    // Le cas se produit : le palier hebdomadaire peut disparaître entre deux
+    // repeints — option retirée, appareil remplacé — pendant qu'on consultait
+    // la veille.
+    const cursor = navOn ? ctx.cursor : 0;
+    const todayKey = dayKeyOf(clock, tz);
+    const dayKey = shiftDayKey(todayKey, cursor);
+
+    // Aujourd'hui se lit sur SON capteur et non sur la fenêtre : c'est lui le
+    // requis, il fonctionne sans le palier hebdomadaire, et il porte des
+    // bornes publiées qu'on n'a pas à recalculer. Les deux capteurs sortent de
+    // la même liste dédoublonnée côté intégration, ils ne peuvent pas se
+    // contredire sur un même jour.
+    const lessons =
+      cursor === 0
+        ? listAttr<Lesson>(ctx.attr(LESSONS, 'lessons'))
+        : weekLessons.filter((lesson) => {
+            const at = parseTimestamp(lesson.start);
+            return at !== undefined && dayKeyOf(at, tz) === dayKey;
+          });
+    const bounds: Bounds =
+      cursor === 0
+        ? {
+            first: ctx.attr<string>(LESSONS, 'first_start'),
+            last: ctx.attr<string>(LESSONS, 'last_end'),
+          }
+        : boundsOf(lessons);
 
     /**
-     * L'en-tête : la date, et les bornes de la journée de classe.
+     * L'en-tête : les flèches, la date, et les bornes de la journée de classe.
      *
-     * Les bornes viennent des attributs `first_start` et `last_end` de
-     * l'intégration, pas d'un calcul de la carte. Deux précisions relevées
-     * dans son module de capteurs :
+     * Les bornes d'aujourd'hui viennent des attributs `first_start` et
+     * `last_end`, pas d'un calcul de la carte. Deux précisions relevées dans
+     * le module de capteurs de l'intégration :
      *
      * - elles portent sur **tous** les créneaux du jour, cours annulés
      *   compris. Un premier cours annulé fixe donc quand même le début de la
      *   journée, ce qui est le bon sens de « journée de classe » : l'élève est
      *   attendu à cette heure-là tant qu'on ne lui a pas dit le contraire ;
      * - `last_end` peut être une heure **déduite**, sans que l'attribut le
-     *   dise. D'où le `≈`, dont l'origine est cherchée dans la liste.
+     *   dise. D'où le « ≈ », dont l'origine est cherchée dans la liste.
      *
-     * La date se prend sur `first_start` quand la journée a des cours, et sur
-     * l'horloge sinon — le capteur est celui d'aujourd'hui, il n'y a pas
-     * d'ambiguïté à lever, et une journée vide mérite quand même sa date.
+     * Les flèches restent visibles quand `show_header` est coupé, avec la
+     * seule date : naviguer sans voir quel jour on regarde n'aurait aucun
+     * sens, et les deux options répondent à des besoins différents — l'une
+     * allège, l'autre déplace.
      */
     const header = ((): TemplateResult | '' => {
-      if (c.show_header === false) return '';
-      const firstStart = ctx.attr<string>(LESSONS, 'first_start');
-      const lastEnd = ctx.attr<string>(LESSONS, 'last_end');
+      const wantBounds = c.show_header !== false;
+      if (!wantBounds && !navOn) return '';
+
+      // La date s'ancre sur un cours dès qu'il y en a un — un horodatage réel
+      // vaut mieux que n'importe quel calcul. Sinon sur l'horloge pour
+      // aujourd'hui, et sur un instant reconstruit pour les autres jours.
       const day = formatDayLabel(
-        firstStart ?? (parseTimestamp(testClock.now) ?? new Date()).toISOString(),
-        ctx.language,
-        ctx.timeZone
+        bounds.first ?? (cursor === 0 ? clock.toISOString() : anchorFor(dayKey, tz)),
+        lang,
+        tz
       );
-      const from = formatTime(firstStart, ctx.language, ctx.timeZone);
-      const to = formatTime(lastEnd, ctx.language, ctx.timeZone);
-      // Ni date ni bornes : rien à mettre dans un en-tête, et un en-tête vide
-      // vaut moins que pas d'en-tête.
-      if (day === '' && from === '' && to === '') return '';
-      const inferred = dayEndIsInferred(lessons, lastEnd);
+      const from = wantBounds ? formatTime(bounds.first, lang, tz) : '';
+      const to = wantBounds ? formatTime(bounds.last, lang, tz) : '';
+      // Ni date, ni bornes, ni flèches : un en-tête vide vaut moins que pas
+      // d'en-tête.
+      if (day === '' && from === '' && to === '' && !navOn) return '';
+      const inferred = dayEndIsInferred(lessons, bounds.last);
+
+      const arrow = (delta: 1 | -1, glyph: string, label: string): TemplateResult => {
+        const target = stepTo(dayKey, delta, days);
+        const targetNumber = target === undefined ? undefined : dayNumber(target);
+        const origin = dayNumber(todayKey);
+        const reachable = targetNumber !== undefined && origin !== undefined;
+        return html`<button
+          class="jour-fleche"
+          ?disabled=${!reachable}
+          aria-label=${label}
+          title=${label}
+          @click=${() => {
+            if (targetNumber !== undefined && origin !== undefined)
+              ctx.setCursor(targetNumber - origin);
+          }}
+        >
+          ${glyph}
+        </button>`;
+      };
+
       return html`
         <div class="jour-entete">
-          <span class="jour-date">${day}</span>
+          <div class="jour-nav">
+            ${navOn ? arrow(-1, '‹', ctx.t('journee.prev_day')) : ''}
+            <span class="jour-date">${day}</span>
+            ${navOn ? arrow(1, '›', ctx.t('journee.next_day')) : ''}
+            <!-- Le retour à aujourd'hui n'apparaît que lorsqu'on n'y est
+                 plus : un bouton qui ne fait rien fatigue plus qu'il
+                 n'aide. -->
+            ${navOn && cursor !== 0
+              ? html`<button
+                  class="jour-retour"
+                  @click=${() => {
+                    ctx.setCursor(0);
+                  }}
+                >
+                  ${ctx.t('journee.today')}
+                </button>`
+              : ''}
+          </div>
           ${from === '' || to === ''
             ? ''
             : html`<span
@@ -306,7 +591,15 @@ export const SPEC: CardSpec<Config> = {
     // L'en-tête survit à la journée vide, et c'est le moment où il sert :
     // « mercredi 9 septembre — aucun cours » se lit mieux que « aucun cours »
     // seul, qui laisse le doute sur le jour dont on parle.
-    if (lessons.length === 0) return html`${header}${emptyState(ctx.t('journee.empty'))}`;
+    //
+    // Et le libellé change avec le jour : « aucun cours aujourd'hui » posé
+    // au-dessus d'un jeudi serait une affirmation fausse. C'est le défaut que
+    // ce dépôt traque, et la navigation venait de le rendre atteignable.
+    if (lessons.length === 0) {
+      return html`${header}${emptyState(
+        ctx.t(cursor === 0 ? 'journee.empty' : 'journee.empty_day')
+      )}`;
+    }
 
     // Tri sur l'instant réel : deux créneaux à décalages horaires mixtes ne se
     // comparent pas correctement chaîne à chaîne.
@@ -316,10 +609,7 @@ export const SPEC: CardSpec<Config> = {
         (parseTimestamp(a.start)?.getTime() ?? 0) - (parseTimestamp(b.start)?.getTime() ?? 0)
     );
 
-    const lang = ctx.language;
-    const tz = ctx.timeZone;
     const { slots, mealInferred } = withMeals(sorted, c, tz);
-    const now = (parseTimestamp(testClock.now) ?? new Date()).getTime();
 
     // `binary_sensor:in_class` a un droit de VETO, jamais celui de désigner :
     // il dit SI un cours a lieu, les horodatages disent LEQUEL. À `off`, aucun

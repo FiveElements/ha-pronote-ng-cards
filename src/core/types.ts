@@ -81,6 +81,25 @@ export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
   refreshCoolingDown: boolean;
   /** Vrai si le dernier `refresh` a échoué (rejet du service). Remis à faux au prochain appel. */
   refreshFailed: boolean;
+  /**
+   * Curseur de navigation local à cette carte. Un entier, que la carte
+   * interprète comme elle veut ; le socle ne garantit que deux choses : il
+   * survit aux repeints, et il **retombe à zéro à chaque `setConfig`**.
+   *
+   * Volontairement hors de la configuration, et c'est tout l'intérêt. Un
+   * `day: -1` posé dans le YAML d'un tableau de bord y resterait : la carte
+   * afficherait la veille pour tout le monde, en permanence, et le lendemain
+   * l'avant-veille. Ce curseur est un état d'interface — il vit dans
+   * l'instance de l'élément, pas dans le document du tableau de bord, donc il
+   * disparaît au rechargement de la page comme la position d'un défilement.
+   *
+   * Un entier et non un dictionnaire ouvert : un fourre-tout invite à y
+   * ranger des données, alors qu'une carte ne doit rien détenir que le
+   * registre ne porte déjà.
+   */
+  cursor: number;
+  /** Déplace le curseur et repeint. N'écrit rien dans la configuration. */
+  setCursor(value: number): void;
 }
 
 export interface CardSpec<C extends PronoteCardConfig = PronoteCardConfig> {

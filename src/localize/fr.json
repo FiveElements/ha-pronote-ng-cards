@@ -173,6 +173,11 @@
     "show_rooms": "Afficher les salles",
     "show_current": "Mettre en avant le cours en cours",
     "show_teachers": "Afficher les professeurs",
-    "show_header": "Afficher la date et les bornes de la journée"
+    "show_header": "Afficher la date et les bornes de la journée",
+    "prev_day": "Jour précédent",
+    "next_day": "Jour suivant",
+    "today": "Aujourd'hui",
+    "empty_day": "Aucun cours ce jour-là.",
+    "show_nav": "Flèches de navigation d'un jour à l'autre"
   }
 }

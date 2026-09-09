@@ -5,10 +5,10 @@ classe en en-tête, puis une colonne d'horaires, un filet de couleur par
 matière, l'intitulé, la salle, le professeur, et les créneaux sans cours du
 midi.
 
-C'est un portage d'apparence de l'ancienne carte `lovelace-pronote`, sur la
-**journée courante uniquement**. Pour le lendemain ou la semaine, voyez
-[Emploi du temps](emploi-du-temps.md) : deux cartes qui répondent à la même
-question de deux façons sont deux cartes qu'on maintient mal.
+C'est un portage d'apparence de l'ancienne carte `lovelace-pronote`. Elle
+ouvre sur **aujourd'hui**, et deux flèches parcourent les autres jours de la
+semaine déjà collectée. Pour voir la semaine d'un seul tenant, voyez
+[Emploi du temps](emploi-du-temps.md).
 
 ![Aperçu de la carte Vue journée](../assets/cartes/journee.svg)
 
@@ -22,6 +22,7 @@ device_id: <appareil de l'enfant>
 show_meal: true
 show_rooms: true
 show_teachers: true
+show_nav: true
 ```
 
 ## Options
@@ -36,15 +37,70 @@ show_teachers: true
 | `show_teachers` | `true` | Affiche le ou les professeurs. |
 | `show_current` | `true` | Met en avant le cours en cours. |
 | `show_header` | `true` | Affiche la date et les bornes de la journée. |
+| `show_nav` | `true` | Affiche les flèches de navigation d'un jour à l'autre. |
 | `subject_colors` | — | Table matière → couleur. **En YAML uniquement**, voir ci-dessous. |
 
 Une plage du midi illisible (`meal_from: midi`) est **ignorée** : la plage
 par défaut reprend, plutôt que de faire disparaître la zone repas sur une
 faute de frappe.
 
-**Les six options à bascule figurent dans l'éditeur graphique** de la carte :
+**Les sept options à bascule figurent dans l'éditeur graphique** de la carte :
 aucun YAML n'est nécessaire pour les régler. Seule la table de couleurs
 demande le mode YAML, pour la raison expliquée plus bas.
+
+## La navigation d'un jour à l'autre
+
+```
+‹  mercredi 9 septembre  ›                    08:00 – ≈14:30
+```
+
+Les flèches ne coûtent **aucune requête**, et c'est la seule raison pour
+laquelle elles existent ici. PRONOTE facture son emploi du temps à la
+**semaine** : demander « aujourd'hui » coûte exactement le même appel que
+demander la semaine entière, et l'intégration a replié son palier hebdomadaire
+dans le palier emploi du temps pour cette raison. Toute la semaine courante est
+donc déjà dans un attribut, en mémoire de votre navigateur — changer de jour
+n'est qu'un filtre sur une liste.
+
+Une flèche ne déclenche donc jamais de collecte, et ne peut pas en déclencher :
+une carte de ce dépôt n'a que deux appels de service à sa disposition et
+celle-ci n'en utilise aucun. Votre budget de requêtes ne bouge pas, quel que
+soit le nombre d'aller-retours.
+
+### Ce que les flèches atteignent, et ce qu'elles n'atteignent pas
+
+Elles s'arrêtent aux bornes de la **semaine collectée**, et ces bornes viennent
+des données, non d'un calcul de calendrier. La différence compte un jour sur
+sept : le lundi, la veille appartient à la semaine précédente, que personne n'a
+collectée. La flèche est alors éteinte plutôt que de vous montrer un dimanche
+dont la carte ne sait rien.
+
+À l'intérieur de la fenêtre, en revanche, un jour **sans cours** reste
+atteignable — et il le doit : « aucun cours mercredi » est l'information qu'on
+venait souvent chercher. Le message n'est alors pas le même que pour
+aujourd'hui, parce qu'« aucun cours aujourd'hui » posé au-dessus d'un mercredi
+qu'on n'est pas serait tout simplement faux.
+
+Au bord de la fenêtre, la flèche **saute au jour collecté le plus proche**
+plutôt que d'avancer d'un jour civil dans le vide. Sans ce rattrapage, un
+dimanche placé devant une semaine qui commence le mardi serait un cul-de-sac :
+flèche éteinte alors que quatre jours sont en mémoire. Un lundi férié produit
+exactement cette situation.
+
+### Sans le palier hebdomadaire, pas de flèches
+
+Si `sensor:timetable_week` n'existe pas chez vous — le palier peut être
+désactivé — la carte est exactement ce qu'elle était : aujourd'hui, sans
+flèches. Rien à configurer, rien à retirer.
+
+### Le jour consulté n'est pas une option
+
+Il n'y a **pas** d'option `day:`, et il n'y en aura pas. Un décalage écrit dans
+le YAML d'un tableau de bord y resterait : la carte afficherait la veille pour
+tous les habitants de la maison, en permanence, et l'avant-veille le lendemain.
+La position est un état d'affichage — elle vit dans l'onglet, comme une
+position de défilement, et un rechargement de page ramène sur aujourd'hui. Le
+bouton « Aujourd'hui » apparaît dès qu'on n'y est plus.
 
 ## La salle et le professeur
 
@@ -158,6 +214,7 @@ option de la bibliothèque qui ne s'écrit qu'en YAML :
 type: custom:pronote-ng-journee
 device_id: <appareil de l'enfant>
 show_header: true
+show_nav: true
 show_current: true
 show_rooms: true
 show_teachers: true
@@ -186,7 +243,14 @@ et sans inconvénient dans les deux cas.
 | Clé | Rôle |
 | --- | --- |
 | `sensor:lessons_today` | Requise. Son attribut `lessons` porte toute la journée. |
+| `sensor:timetable_week` | Optionnelle. La semaine collectée : c'est elle qui rend les flèches possibles. |
 | `binary_sensor:in_class` | Optionnelle. **Droit de veto** sur la mise en avant. |
+
+Les créneaux du capteur de semaine sortent de la **même** liste dédoublonnée
+que ceux d'aujourd'hui, en amont côté intégration : les deux capteurs ne
+peuvent pas se contredire sur un même jour. C'est pourquoi aujourd'hui se lit
+toujours sur son propre capteur, avec ses bornes publiées, et les autres jours
+sur la fenêtre.
 
 Le capteur de cours en cours dit **si** un cours a lieu ; les horodatages
 disent **lequel**. À `off`, aucun créneau n'est mis en avant même si
@@ -213,9 +277,20 @@ Le marqueur peut aussi apparaître sur la **zone repas** : le creux commence à
 la fin du cours précédent, donc quand cette fin est déduite, la position du
 repas l'est aussi.
 
+Sur les jours **autres** qu'aujourd'hui, les bornes de l'en-tête sont
+calculées par la carte, faute que l'intégration les publie pour ces jours-là.
+Elle reprend la formule à l'identique — la première heure de début, la dernière
+heure de fin, cours annulés compris — pour que l'en-tête veuille dire la même
+chose d'un jour à l'autre. Le `≈` y suit le même drapeau.
+
 ## Si la carte est vide
 
 « Aucun cours aujourd'hui » : week-end, jour férié, vacances. C'est un état
 normal, distinct de « pas encore collectée ». Un cours **annulé** reste
 visible, barré et marqué : le retirer donnerait l'illusion qu'il n'a jamais
 existé.
+
+Sur un autre jour, le message devient « Aucun cours ce jour-là » — la même
+information, sans l'affirmation fausse. L'en-tête reste et porte la date : c'est
+le moment où il sert le plus, « aucun cours » tout seul laissant le doute sur le
+jour dont on parle.

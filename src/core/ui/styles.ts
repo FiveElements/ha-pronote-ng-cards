@@ -163,6 +163,49 @@ export const sharedStyles = css`
     margin-bottom: 4px;
     border-bottom: 1px solid var(--divider-color);
   }
+  /* Les fleches de navigation. Volontairement discretes : ce ne sont pas des
+     actions, ce sont des deplacements du regard, et elles ne coutent aucune
+     requete -- toute la semaine est deja dans un attribut. Le seul bouton
+     plein du projet est celui du limiteur, qui touche lui au budget de
+     collecte : la difference d'apparence porte cette difference de nature.
+
+     Des boutons et non des liens : au bord de la fenetre collectee, une
+     fleche n'a plus de destination, et seul un bouton sait le dire -- a la
+     souris comme au lecteur d'ecran. */
+  .jour-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+  .jour-fleche {
+    background: none;
+    color: var(--secondary-text-color);
+    padding: 0 6px;
+    font-size: 1.4em;
+    line-height: 1;
+    border-radius: 4px;
+  }
+  .jour-fleche:hover:not(:disabled) {
+    background: var(--secondary-background-color);
+    color: var(--primary-text-color);
+  }
+  /* Prime sur button:disabled, qui peint un fond gris : une fleche eteinte
+     doit s'effacer, pas s'afficher en pave. */
+  .jour-fleche:disabled {
+    background: none;
+    color: var(--disabled-text-color);
+  }
+  .jour-retour {
+    background: none;
+    color: var(--primary-color);
+    padding: 2px 6px;
+    font-size: 0.85em;
+    border-radius: 4px;
+  }
+  .jour-retour:hover {
+    background: var(--secondary-background-color);
+  }
   .jour-date {
     font-weight: 500;
     color: var(--primary-text-color);

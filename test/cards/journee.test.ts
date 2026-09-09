@@ -113,6 +113,96 @@ const jourAvecBornes = (lessons: unknown[], first?: string, last?: string) =>
     },
   ]);
 
+/* ---- La navigation d'un jour à l'autre ---------------------------------
+
+   Toute la semaine collectée vit dans l'attribut `lessons` de
+   `sensor:timetable_week` : changer de jour est un filtre sur une liste déjà
+   en mémoire, jamais une collecte. Les fixtures ci-dessous le reproduisent.
+
+   Les horaires sont tous en milieu de journée, délibérément : un créneau à
+   23:00+02:00 changerait de jour civil selon le fuseau où tourne la suite de
+   tests, et les tests mesureraient alors le fuseau de la machine. */
+
+const cours = (
+  jourDuMois: string,
+  subject: string,
+  from: string,
+  to: string,
+  extra: Record<string, unknown> = {}
+) => ({
+  subject,
+  start: `2026-09-${jourDuMois}T${from}:00+02:00`,
+  end: `2026-09-${jourDuMois}T${to}:00+02:00`,
+  ...extra,
+});
+
+const LUNDI = [cours('07', 'Français', '08:00', '09:00')];
+const MARDI = [
+  cours('08', 'SVT', '10:00', '11:00'),
+  // Fin déduite : l'en-tête d'un autre jour doit porter le « ≈ » lui aussi.
+  cours('08', 'Sport', '14:00', '16:00', { end_inferred: true }),
+];
+const JEUDI = [cours('10', 'Physique', '09:00', '10:00')];
+
+/** Lundi 7 au jeudi 10 septembre 2026. Pas de vendredi : c'est la borne. */
+const SEMAINE = [...LUNDI, ...MARDI, ...JOURNEE, ...JEUDI];
+
+const monterSemaine = (
+  config: Record<string, unknown> = {},
+  jourCourant: unknown[] = JOURNEE,
+  semaine: unknown[] = SEMAINE
+) =>
+  mountCard(
+    'pronote-ng-journee',
+    { device_id: 'dev_enfant', ...config },
+    makeHass([
+      {
+        key: 'sensor:lessons_today',
+        entity_id: 'sensor.abc_cours_du_jour',
+        device: 'dev_enfant',
+        state: String(jourCourant.length),
+        attributes: { lessons: jourCourant },
+      },
+      {
+        key: 'sensor:timetable_week',
+        entity_id: 'sensor.abc_emploi_du_temps_semaine',
+        device: 'dev_enfant',
+        state: String(semaine.length),
+        attributes: { lessons: semaine },
+      },
+    ])
+  );
+
+const fleches = (el: HTMLElement) =>
+  [...(el.shadowRoot?.querySelectorAll('.jour-fleche') ?? [])].map((b) => ({
+    libelle: b.getAttribute('aria-label') ?? '',
+    eteinte: b instanceof HTMLButtonElement ? b.disabled : false,
+  }));
+
+/**
+ * Clique une flèche et attend le repeint.
+ *
+ * `click()` sur un bouton désactivé ne déclenche rien, par le navigateur
+ * lui-même : un test qui clique une flèche éteinte et constate que rien n'a
+ * bougé mesure donc bien le `disabled`, pas une coïncidence.
+ */
+type Carte = HTMLElementTagNameMap['pronote-ng-journee'];
+
+const cliquer = async (el: Carte, index: number) => {
+  const boutons = [...(el.shadowRoot?.querySelectorAll('.jour-fleche') ?? [])];
+  const b = boutons[index];
+  if (!(b instanceof HTMLButtonElement)) throw new Error(`flèche absente : ${index}`);
+  b.click();
+  await el.updateComplete;
+};
+
+const revenir = async (el: Carte) => {
+  const b = el.shadowRoot?.querySelector('.jour-retour');
+  if (!(b instanceof HTMLButtonElement)) throw new Error('bouton « aujourd’hui » absent');
+  b.click();
+  await el.updateComplete;
+};
+
 describe('carte vue journée — les cinq éléments requis', () => {
   it('affiche l’heure de début ET de fin, en colonne à deux lignes', async () => {
     const el = await monter({});
@@ -499,5 +589,156 @@ describe('carte vue journée — l’en-tête de journée', () => {
     );
     expect(entete(el)).toBeUndefined();
     expect(lignes(el).length).toBeGreaterThan(0);
+  });
+});
+
+
+describe('carte vue journée — la navigation d’un jour à l’autre', () => {
+  beforeEach(() => {
+    // Mercredi, en plein cours d'histoire.
+    testClock.now = '2026-09-09T09:30:00+02:00';
+  });
+
+  it('n’affiche aucune flèche sans le capteur de semaine', async () => {
+    // Sans lui il n'y a aucun autre jour en mémoire, et aller le chercher
+    // coûterait une requête. Une flèche qui ne mène nulle part vaut moins que
+    // pas de flèche.
+    const el = await monter({});
+    expect(fleches(el)).toHaveLength(0);
+    // Assertion positive appariée : la carte rend bien sa journée par ailleurs.
+    expect(lignes(el).length).toBeGreaterThan(0);
+  });
+
+  it('affiche deux flèches actives au milieu de la fenêtre collectée', async () => {
+    const el = await monterSemaine();
+    const f = fleches(el);
+    expect(f).toHaveLength(2);
+    expect(f.map((x) => x.eteinte)).toEqual([false, false]);
+    expect(f[0]?.libelle).toBe('Jour précédent');
+    expect(f[1]?.libelle).toBe('Jour suivant');
+  });
+
+  it('recule d’un jour et affiche la veille', async () => {
+    const el = await monterSemaine();
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    await cliquer(el, 0);
+    expect(entete(el)?.date).toBe('mardi 8 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['SVT', 'Repas', 'Sport']);
+  });
+
+  it('avance d’un jour et affiche le lendemain', async () => {
+    const el = await monterSemaine();
+    await cliquer(el, 1);
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Physique']);
+  });
+
+  it('recalcule les bornes de la journée pour un autre jour, « ≈ » compris', async () => {
+    // Rien n'est publié pour les autres jours : la carte reprend la formule de
+    // l'intégration — min(début), max(fin) sur tous les créneaux — pour que
+    // l'en-tête veuille dire la même chose d'un jour à l'autre. Et le « ≈ »
+    // suit le drapeau du créneau qui porte cette fin.
+    const el = await monterSemaine();
+    await cliquer(el, 0);
+    expect(entete(el)?.bornes).toBe('10:00 – ≈16:00');
+    expect(entete(el)?.infobulle).not.toBe('');
+  });
+
+  it('éteint la flèche du passé sur le premier jour collecté', async () => {
+    testClock.now = '2026-09-07T09:00:00+02:00';
+    const el = await monterSemaine({}, LUNDI);
+    const f = fleches(el);
+    expect(f[0]?.eteinte).toBe(true);
+    expect(f[1]?.eteinte).toBe(false);
+    // La flèche éteinte ne bouge rien : le navigateur ne délivre pas le clic.
+    await cliquer(el, 0);
+    expect(entete(el)?.date).toBe('lundi 7 septembre');
+  });
+
+  it('éteint la flèche du futur sur le dernier jour collecté', async () => {
+    testClock.now = '2026-09-10T09:30:00+02:00';
+    const el = await monterSemaine({}, JEUDI);
+    const f = fleches(el);
+    expect(f[0]?.eteinte).toBe(false);
+    expect(f[1]?.eteinte).toBe(true);
+  });
+
+  it('atteint un jour SANS cours à l’intérieur de la fenêtre, et ne dit pas « aujourd’hui »', async () => {
+    // « Aucun cours mercredi » est une information vraie et utile : le jour
+    // vide n'est pas un trou à sauter. Mais « aucun cours AUJOURD'HUI » posé
+    // au-dessus d'un mercredi qu'on n'est pas serait une affirmation fausse,
+    // et c'est exactement le défaut que ce dépôt existe pour éviter.
+    testClock.now = '2026-09-08T12:00:00+02:00';
+    const el = await monterSemaine({}, MARDI, [...LUNDI, ...MARDI, ...JEUDI]);
+    await cliquer(el, 1);
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    expect(text(el)).toContain('Aucun cours ce jour-là');
+    expect(text(el)).not.toContain("aujourd'hui");
+    expect(lignes(el)).toHaveLength(0);
+  });
+
+  it('saute au jour collecté le plus proche depuis un bord de fenêtre', async () => {
+    // Dimanche, devant une semaine qui commence le mardi : avancer d'un jour
+    // civil mènerait à un lundi hors fenêtre, donc à une flèche éteinte et à
+    // un cul-de-sac — alors que deux jours sont en mémoire. Un lundi férié
+    // produit exactement cette situation.
+    testClock.now = '2026-09-06T12:00:00+02:00';
+    const el = await monterSemaine({}, [], [...MARDI, ...JEUDI]);
+    const f = fleches(el);
+    expect(f[0]?.eteinte).toBe(true);
+    expect(f[1]?.eteinte).toBe(false);
+    await cliquer(el, 1);
+    expect(entete(el)?.date).toBe('mardi 8 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['SVT', 'Repas', 'Sport']);
+  });
+
+  it('ne propose le retour à aujourd’hui que lorsqu’on n’y est plus', async () => {
+    const el = await monterSemaine();
+    expect(el.shadowRoot?.querySelector('.jour-retour')).toBeNull();
+    await cliquer(el, 1);
+    expect(el.shadowRoot?.querySelector('.jour-retour')).not.toBeNull();
+    await revenir(el);
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    expect(el.shadowRoot?.querySelector('.jour-retour')).toBeNull();
+  });
+
+  it('ne met jamais un cours d’un autre jour « en cours »', async () => {
+    // Les horodatages sont absolus : un créneau de jeudi ne peut pas contenir
+    // l'instant présent. Le test fixe la propriété plutôt que de la déduire —
+    // c'est elle qui garantit qu'on ne fera jamais croire à un parent que son
+    // enfant est en physique un mercredi.
+    const el = await monterSemaine();
+    expect(lignes(el).filter((x) => x.courant)).toHaveLength(1);
+    await cliquer(el, 1);
+    expect(lignes(el).filter((x) => x.courant)).toHaveLength(0);
+  });
+
+  it('retombe sur aujourd’hui quand la configuration change', async () => {
+    // La position consultée est un état d'interface, pas une donnée de la
+    // carte : elle ne doit pas survivre à une carte qui n'est plus la même.
+    const el = await monterSemaine();
+    await cliquer(el, 1);
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+    el.setConfig({ type: 'custom:pronote-ng-journee', device_id: 'dev_enfant', show_meal: false });
+    await el.updateComplete;
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+  });
+
+  it('se désactive sur demande, sans emporter l’en-tête', async () => {
+    const el = await monterSemaine({ show_nav: false });
+    expect(fleches(el)).toHaveLength(0);
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+  });
+
+  it('garde les flèches et la date quand l’en-tête est coupé, sans les bornes', async () => {
+    // Naviguer sans voir quel jour on regarde n'aurait aucun sens : les deux
+    // options répondent à des besoins différents, l'une allège, l'autre
+    // déplace.
+    const el = await monterSemaine({ show_header: false });
+    expect(fleches(el)).toHaveLength(2);
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    expect(entete(el)?.bornes).toBe('');
+    await cliquer(el, 1);
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
   });
 });

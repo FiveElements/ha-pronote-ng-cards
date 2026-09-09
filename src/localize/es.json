@@ -173,6 +173,11 @@
     "show_rooms": "Mostrar las aulas",
     "show_current": "Destacar la clase en curso",
     "show_teachers": "Mostrar los profesores",
-    "show_header": "Mostrar la fecha y los límites del día"
+    "show_header": "Mostrar la fecha y los límites del día",
+    "prev_day": "Día anterior",
+    "next_day": "Día siguiente",
+    "today": "Hoy",
+    "empty_day": "Ninguna clase ese día.",
+    "show_nav": "Flechas de navegación entre días"
   }
 }

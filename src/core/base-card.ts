@@ -123,6 +123,10 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
     // de Date.now() sans qu'aucune propriété réactive ne change (compte à
     // rebours, créneau en cours, bouton grisé du limiteur).
     @state() private tick = 0;
+    // Curseur de navigation local (voir RenderCtx.cursor). Dans l'instance de
+    // l'élément et jamais dans la configuration : une position de consultation
+    // écrite dans le tableau de bord y resterait pour tout le monde.
+    @state() private cursor = 0;
     private tickTimer?: ReturnType<typeof setInterval>;
 
     private resolved = new Map<EntityKey, string>();
@@ -163,6 +167,10 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
         throw new Error(this.t('common.bad_config'));
       }
       this.config = config;
+      // La configuration a changé : la carte n'est plus celle qu'on
+      // consultait, et un curseur hérité de l'ancienne afficherait un jour
+      // qui n'a rien à voir avec la nouvelle.
+      this.cursor = 0;
     }
 
     getCardSize(): number {
@@ -222,7 +230,8 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
         changed.has('config') ||
         changed.has('refreshedAt') ||
         changed.has('refreshFailed') ||
-        changed.has('tick')
+        changed.has('tick') ||
+        changed.has('cursor')
       ) {
         return true;
       }
@@ -390,6 +399,13 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
           Date.now() - Math.max(this.refreshedAt, readGuard(config.device_id)) <
           REFRESH_COOLDOWN_MS,
         refreshFailed: this.refreshFailed,
+        cursor: this.cursor,
+        setCursor: (value: number) => {
+          // `Math.trunc` et non une confiance dans l'appelant : le curseur
+          // sert d'index de jour, et un flottant produirait une date
+          // fractionnaire — donc un libellé de date faux, pas une erreur.
+          this.cursor = Number.isFinite(value) ? Math.trunc(value) : 0;
+        },
       };
     }
   }

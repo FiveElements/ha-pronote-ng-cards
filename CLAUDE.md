@@ -105,6 +105,8 @@ Une carte ne touche jamais `hass` directement pour lire une entité. Elle passe 
 
 `ctx.hass` est une `HassView` — un `HomeAssistant` **sans** `callService`. La restriction est une garantie de type, pas une convention.
 
+`ctx.cursor` / `ctx.setCursor` sont le **seul** état d'interface du socle : un entier, propre à l'instance de l'élément, remis à zéro à chaque `setConfig`. La carte vue journée s'en sert comme décalage en jours. Ce qui compte est ce qu'il n'est pas : une option de configuration. Une position de consultation écrite dans le YAML d'un tableau de bord y resterait — la carte afficherait la veille pour tous les habitants de la maison, en permanence, et l'avant-veille le lendemain. Si une carte a besoin de retenir davantage qu'un entier, la question à poser d'abord est ce que le registre porte déjà.
+
 ### Rendu piloté par le temps
 
 `shouldUpdate` ne repeint que sur changement de configuration, de registre, ou d'état d'une entité résolue — un objet `hass` neuf à chaque évènement de la maison déclencherait sinon un balayage complet du registre, multiplié par le nombre de cartes de la vue.
