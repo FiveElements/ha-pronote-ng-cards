@@ -49,6 +49,7 @@ const keyFor = (c: Config): EntityKey => KEYS[c.range ?? 'today'];
  * absent de cette carte — voir le rapport), rien ici ne fait doublon avec un
  * calcul déjà posé sur les horodatages des créneaux.
  */
+const IN_CLASS: EntityKey = 'binary_sensor:in_class';
 const TEST_TODAY: EntityKey = 'binary_sensor:test_today';
 const OUTING_TODAY: EntityKey = 'binary_sensor:outing_today';
 
@@ -84,7 +85,7 @@ export const SPEC: CardSpec<Config> = {
   size: 8,
   stub: { range: 'today', show_rooms: true },
   requires: (c) => [keyFor(c)],
-  optional: () => [TEST_TODAY, OUTING_TODAY],
+  optional: () => [IN_CLASS, TEST_TODAY, OUTING_TODAY],
   schema: (_config: Config, t?: Translate) => [
     {
       name: 'range',
@@ -161,6 +162,20 @@ export const SPEC: CardSpec<Config> = {
     let currentDay = '';
     const now = (parseTimestamp(testClock.now) ?? new Date()).getTime();
 
+    // `binary_sensor:in_class` dit SI un cours est en cours ; les horodatages
+    // des créneaux disent LEQUEL. Aucune des deux sources ne remplace l'autre,
+    // et les faire concourir sur la même question produirait tôt ou tard deux
+    // réponses contradictoires. On leur donne donc des rôles distincts : le
+    // capteur a un droit de VETO, jamais celui de désigner.
+    //
+    // À `off`, aucun créneau n'est surligné même si l'horloge le suggère — le
+    // capteur voit des choses que l'attribut `lessons` ne porte pas : jour
+    // banalisé, cours déplacé après la collecte, élève dispensé. À `on` sans
+    // créneau correspondant, la carte ne fabrique rien : elle ne sait pas
+    // lequel, elle se tait. Absent ou non résolu, le comportement est
+    // exactement celui d'avant.
+    const notInClass = ctx.status(IN_CLASS) === 'ok' && ctx.entity(IN_CLASS)?.state === 'off';
+
     for (const l of sorted) {
       // En mode semaine, un intertitre par jour.
       if (c.range === 'week') {
@@ -177,7 +192,12 @@ export const SPEC: CardSpec<Config> = {
       const start = parseTimestamp(l.start)?.getTime();
       const end = parseTimestamp(l.end)?.getTime();
       const current =
-        !canceled && start !== undefined && end !== undefined && now >= start && now < end;
+        !notInClass &&
+        !canceled &&
+        start !== undefined &&
+        end !== undefined &&
+        now >= start &&
+        now < end;
 
       const badges: TemplateResult[] = [];
       if (current) badges.push(chip(ctx.t('emploi_du_temps.current'), 'ok'));

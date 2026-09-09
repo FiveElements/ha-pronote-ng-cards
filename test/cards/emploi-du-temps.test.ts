@@ -315,6 +315,65 @@ describe('carte emploi-du-temps', () => {
     expect(text(el)).toContain('en cours');
   });
 
+  // `binary_sensor:in_class` a un droit de veto sur le surlignage, jamais
+  // celui de désigner un créneau : le capteur sait SI un cours a lieu, les
+  // horodatages savent LEQUEL.
+  const dayWithInClass = (state: string) =>
+    makeHass([
+      {
+        key: 'sensor:lessons_today',
+        entity_id: 'sensor.abc_cours_du_jour',
+        device: 'dev_enfant',
+        state: '3',
+        attributes: { lessons },
+      },
+      {
+        key: 'binary_sensor:in_class',
+        entity_id: 'binary_sensor.abc_en_cours',
+        device: 'dev_enfant',
+        state,
+      },
+    ]);
+
+  it('ne surligne aucun créneau quand `in_class` vaut `off`, même à une heure de cours', async () => {
+    testClock.now = '2026-09-08T08:30:00+02:00';
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      dayWithInClass('off')
+    );
+    const t = text(el);
+    expect(t).not.toContain('en cours');
+    // Assertion positive : c'est le surlignage qui tombe, pas la journée.
+    expect(t).toContain('Maths');
+  });
+
+  it('surligne normalement quand `in_class` vaut `on`', async () => {
+    testClock.now = '2026-09-08T08:30:00+02:00';
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      dayWithInClass('on')
+    );
+    const t = text(el);
+    expect(t).toContain('en cours');
+    expect(t).toContain('Maths');
+  });
+
+  it('ne fabrique aucun surlignage quand `in_class` vaut `on` hors de tout créneau', async () => {
+    testClock.now = '2026-09-08T18:00:00+02:00';
+    const el = await mountCard(
+      'pronote-ng-emploi-du-temps',
+      { device_id: 'dev_enfant' },
+      dayWithInClass('on')
+    );
+    const t = text(el);
+    // Le capteur dit qu'un cours a lieu, mais aucun créneau ne le porte : la
+    // carte se tait plutôt que de désigner au hasard.
+    expect(t).not.toContain('en cours');
+    expect(t).toContain('Maths');
+  });
+
   it('ne marque aucun créneau hors des heures de cours, tout en affichant bien les cours du jour', async () => {
     testClock.now = '2026-09-08T18:00:00+02:00';
     const el = await mountCard(
