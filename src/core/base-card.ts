@@ -383,7 +383,16 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
           try {
             await callService(
               'pronote_ng.refresh',
-              tier ? { tier } : {},
+              // `tiers`, au pluriel, et une LISTE. Verifie dans le depot de
+              // l'integration : `services.py` declare
+              // `vol.Optional(ATTR_TIERS)` avec `ATTR_TIERS = "tiers"`, et le
+              // schema n'a pas d'`extra=` — voluptuous refuse donc toute cle
+              // inconnue. La carte envoyait `tier` : tout rafraichissement
+              // avec un palier configure etait rejete par la validation, sans
+              // qu'aucune requete ne parte. `cv.ensure_list` accepterait un
+              // scalaire, mais `services.yaml` declare le champ
+              // `multiple: true` : la liste est la forme du contrat.
+              tier ? { tiers: [tier] } : {},
               config.device_id ? { device_id: config.device_id } : undefined
             );
           } catch {

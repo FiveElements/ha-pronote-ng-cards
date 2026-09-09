@@ -231,10 +231,16 @@ describe('carte limiteur', () => {
     const button = el.shadowRoot?.querySelector('button');
     button?.click();
     await el.updateComplete;
+    // La forme est celle du service, pas celle de l'option de la carte :
+    // l'option s'appelle `refresh_tier` au singulier, le champ du service
+    // s'appelle `tiers` et prend une liste. Ce test a longtemps gele la
+    // MAUVAISE forme, et c'est pour ca qu'il n'a rien vu : un test qui
+    // recopie l'hypothese du code au lieu de la contredire ne protege de
+    // rien. La forme se verifie dans `services.py` de l'integration.
     expect(spy).toHaveBeenCalledWith(
       'pronote_ng',
       'refresh',
-      { tier: 'marks' },
+      { tiers: ['marks'] },
       { device_id: 'dev_enfant' }
     );
   });
