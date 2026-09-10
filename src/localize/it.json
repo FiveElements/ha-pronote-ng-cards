@@ -81,7 +81,9 @@
     "attachments_one": "Allegato",
     "attachments_many": "Allegati",
     "attachment_open": "Aprire l'allegato",
-    "attachment_not_openable": "Questo file non ha un indirizzo durevole: PRONOTE non consente di aprirlo da Home Assistant.",
+    "attachment_not_openable": "Gli allegati non sottolineati sono file: PRONOTE non consente di aprirli da Home Assistant.",
+    "enonce_deplier": "Mostra il testo completo",
+    "enonce_replier": "Comprimi il testo",
     "show_attachments": "Mostrare gli allegati",
     "next_due": "Prossima scadenza"
   },

@@ -42,12 +42,14 @@ export const sharedStyles = css`
 
   /* L'enonce repliable, quand la carte devoirs recoit max_lines.
 
-     La coupe porte sur un element INTERIEUR au summary, pas sur le summary
-     lui-meme : Chrome ramene le display d'un summary a flow-root, la coupe
-     se fait alors mais SANS points de suspension -- donc une troncature
-     invisible, qui est exactement le defaut qu'on veut eviter sur un enonce
-     de devoir. Mesure du 10 septembre 2026 dans le navigateur, capture a
-     l'appui : sur un span interieur, les points de suspension sont peints.
+     La coupe porte sur un span INTERIEUR, jamais sur l'element qui porte la
+     classe enonce. Deux mesures du 10 septembre 2026 l'imposent, et elles
+     disent la meme chose de deux endroits : Chrome ramene a flow-root le
+     display d'un summary, et aussi celui d'un enfant direct de details
+     ferme. La coupe se fait alors mais SANS points de suspension -- donc une
+     troncature invisible, exactement le defaut qu'on veut eviter sur un
+     enonce de devoir. Sur un span interieur, les points sont peints, capture
+     a l'appui.
 
      Ce sont eux qui portent l'honnetete de ce dispositif. Ils n'apparaissent
      QUE si le texte deborde vraiment, la ou un chevron pose par nous aurait
@@ -59,19 +61,47 @@ export const sharedStyles = css`
      Le nombre de lignes arrive par une propriete personnalisee, posee en
      attribut style par la carte. C'est un entier tronque par elle, jamais
      une chaine de serveur. */
-  .row .secondary .enonce > .enonce-tete {
-    display: block;
-    list-style: none;
-    cursor: pointer;
-  }
-  .row .secondary .enonce > .enonce-tete::-webkit-details-marker {
-    display: none;
-  }
-  .row .secondary .enonce:not([open]) > .enonce-tete > .enonce-corps {
+  .row .secondary .enonce:not(.deplie) > .enonce-corps {
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: var(--pronote-max-lines, 3);
     overflow: hidden;
+  }
+  /* La bascule. C'etait un summary de details, et le navigateur retenait
+     l'etat pour nous -- mais tout l'enonce vivait alors DANS le summary,
+     donc il devenait le nom accessible d'un bouton. Mesure du 10 septembre
+     2026 : 269 caracteres de nom, et zero caractere hors du summary, donc
+     un lecteur d'ecran entendait l'enonce entier comme un libelle de bouton
+     puis se voyait proposer de deplier quelque chose de vide.
+
+     Maintenant l'enonce est du texte et la bascule est un bouton court. Le
+     texte n'est jamais coupe pour un lecteur d'ecran : la coupe est faite
+     par overflow, qui n'ote rien de l'arbre d'accessibilite.
+
+     Deux libelles rendus, un seul visible : ecrire le libelle a la main sur
+     un clic serait ecrase au prochain rendu de Lit, alors qu'une classe
+     posee sur un element a attributs statiques survit. */
+  .row .secondary .enonce-bascule {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    margin-top: 2px;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: var(--primary-color);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .row .secondary .enonce-bascule:hover,
+  .row .secondary .enonce-bascule:focus-visible {
+    text-decoration-thickness: 2px;
+  }
+  .row .secondary .enonce:not(.deplie) .enonce-replier,
+  .row .secondary .enonce.deplie .enonce-deplier {
+    display: none;
   }
   /* Les pieces jointes d'un devoir, sous l'enonce, en PASTILLES.
 

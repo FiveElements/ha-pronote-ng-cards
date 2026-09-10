@@ -223,6 +223,43 @@ const emptyFor = (c: Config): string =>
       : 'devoirs.empty_todo';
 
 /** Clé de jour calendaire (AAAA-MM-JJ) dans le fuseau donné : compare des jours, pas des instants. */
+/**
+ * Une échéance PRONOTE est un **jour**, pas un instant, et la distinction a
+ * coûté un défaut mesuré.
+ *
+ * `new Date('2026-09-10')` rend minuit **UTC**. Reprojeté dans un fuseau à
+ * décalage négatif, ce minuit recule d'un jour : mesuré, la même échéance
+ * s'affichait `10/09` à Paris et à la Réunion, et `09/09` à la Martinique, à
+ * Cayenne et à Tahiti — donc **tout devoir dû aujourd'hui y était déclaré en
+ * retard**. Trois départements et régions français où PRONOTE tourne, et deux
+ * des quatre catalogues du dépôt visent des régions concernées.
+ *
+ * La correction ne consiste pas à décaler l'instant — midi UTC, la ruse
+ * habituelle, casse encore à UTC+14 — mais à ne pas fabriquer d'instant du
+ * tout quand la valeur est déjà un jour. `dayKey` produit du `AAAA-MM-JJ`,
+ * exactement la forme de `due`, donc les deux se comparent en chaînes.
+ */
+const DATE_SEULE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Le jour d'une échéance, sans passer par un instant si c'est déjà un jour. */
+const dueDayKey = (value: string | undefined, timeZone: string): string | undefined => {
+  const brut = value?.trim();
+  if (brut === undefined || brut === '') return undefined;
+  if (DATE_SEULE.test(brut)) return brut;
+  const d = parseTimestamp(brut);
+  return d === undefined ? undefined : dayKey(d, timeZone);
+};
+
+/**
+ * Le libellé d'une échéance, mis en forme dans le bon fuseau.
+ *
+ * Une date seule est mise en forme **en UTC** : elle vaut minuit UTC, donc
+ * c'est le seul fuseau où la lire redonne le jour écrit. Une valeur qui porte
+ * une heure est un vrai instant et suit le fuseau d'affichage.
+ */
+const dueLabelOf = (value: string, language: string, timeZone: string): string =>
+  formatDayLabel(value, language, DATE_SEULE.test(value.trim()) ? 'UTC' : timeZone);
+
 const dayKey = (d: Date, timeZone: string): string =>
   new Intl.DateTimeFormat('en-CA', {
     timeZone,
@@ -257,10 +294,43 @@ const dayKey = (d: Date, timeZone: string): string =>
  */
 const dueOrder = (h: Homework): number => parseTimestamp(h.due)?.getTime() ?? Infinity;
 
+/**
+ * Déplie ou replie l'énoncé du devoir dont on a cliqué la bascule.
+ *
+ * Une classe posée à la main sur un élément à attributs statiques, et non un
+ * état de la carte. `RenderCtx` n'offre qu'un entier de curseur, et une
+ * position de consultation écrite dans la configuration resterait dans le
+ * YAML du tableau de bord. Lit ne réécrit pas les attributs sans liaison, donc
+ * la classe survit aux rendus suivants — c'est ce que le navigateur faisait
+ * pour nous avec `details`, avant qu'on découvre le coût de ce dispositif
+ * pour un lecteur d'écran.
+ *
+ * `aria-expanded` est mis à jour ici pour la même raison : posé en attribut
+ * statique dans le gabarit, il n'est plus touché par les rendus.
+ */
+const basculeEnonce = (event: Event): void => {
+  const bouton = event.currentTarget;
+  if (!(bouton instanceof HTMLElement)) return;
+  const bloc = bouton.closest('.enonce');
+  if (!(bloc instanceof HTMLElement)) return;
+  bouton.setAttribute('aria-expanded', String(bloc.classList.toggle('deplie')));
+};
+
+/**
+ * L'horloge, pour les tests seulement — même sillon que les cartes journée et
+ * emploi du temps.
+ *
+ * Sans lui, « en retard » se compare à l'heure réelle et ne se teste pas : le
+ * décalage de fuseau qui déclarait en retard tout devoir dû aujourd'hui était
+ * donc **hors de portée de la suite**, et c'est ce qui l'a laissé passer.
+ */
+export const testClock: { now?: string } = {};
+
 const isOverdue = (h: Homework, timeZone: string): boolean => {
   if (h.done === true) return false;
-  const d = parseTimestamp(h.due);
-  return d !== undefined && dayKey(d, timeZone) < dayKey(new Date(), timeZone);
+  const jour = dueDayKey(h.due, timeZone);
+  const now = parseTimestamp(testClock.now) ?? new Date();
+  return jour !== undefined && jour < dayKey(now, timeZone);
 };
 
 /**
@@ -457,13 +527,27 @@ const piecesOf = (h: Homework): Attachment[] => {
   for (const lien of liens) {
     if (lien.name !== undefined && lien.url !== undefined) adresseDe.set(lien.name, lien.url);
   }
-  const nommees = new Set(noms.map((piece) => piece.name));
+  // Seuls les noms DEFINIS entrent dans l'ensemble. Le construire sur le
+  // champ optionnel y faisait entrer `undefined` des qu'une piece n'avait pas
+  // de nom, et la boucle de rattrapage ecartait alors TOUT lien sans nom --
+  // c'est-a-dire exactement le cas que le commentaire ci-dessus declare
+  // eviter. Le trou etait inatteignable avec les donnees mesurees, ou les
+  // deux listes portent toujours le nom des deux cotes ; il n'en etait pas
+  // moins une contradiction entre le code et sa propre promesse.
+  const nommees = new Set(
+    noms.map((piece) => piece.name).filter((nom): nom is string => nom !== undefined)
+  );
   const out = noms.map((piece) => {
     const url = piece.name === undefined ? undefined : adresseDe.get(piece.name);
     return url === undefined || piece.name === undefined ? piece : { name: piece.name, url };
   });
   for (const lien of liens) {
-    if (!nommees.has(lien.name)) out.push(lien);
+    if (lien.name !== undefined && nommees.has(lien.name)) continue;
+    // Un lien anonyme ne peut jamais avoir ete rapproche : la table est
+    // indexee par nom. On le garde, sans le doubler s'il pointe la ou une
+    // piece pointe deja.
+    if (lien.name === undefined && out.some((piece) => piece.url === lien.url)) continue;
+    out.push(lien);
   }
   return out;
 };
@@ -532,7 +616,7 @@ const groupOf = (
       by === 'subject'
         ? (h.subject ?? '—')
         : h.due
-          ? formatDayLabel(h.due, language, timeZone) || '—'
+          ? dueLabelOf(h.due, language, timeZone) || '—'
           : '—';
     let g = index.get(label);
     if (!g) {
@@ -676,14 +760,6 @@ export const SPEC: CardSpec<Config> = {
       });
     })();
 
-    // `nextDue` survit à l'état vide, et c'est le moment où il sert le plus :
-    // rien à rendre dans la fenêtre choisie, mais une échéance existe plus
-    // loin. Le rendre après un retour anticipé le jetterait — le défaut exact
-    // qui a déjà été corrigé sur deux autres cartes de ce projet.
-    if (raw.length === 0) {
-      return html`${nextDue}${emptyState(ctx.t(emptyFor(ctx.config)))}`;
-    }
-
     const maxLines = maxLinesOf(ctx.config.max_lines);
     const by = ctx.config.group_by ?? 'date';
     /**
@@ -757,6 +833,30 @@ export const SPEC: CardSpec<Config> = {
       : '';
 
     /**
+     * L'état vide, **après** le bandeau de retard et la prochaine échéance.
+     *
+     * Le retour était placé avant le calcul du bandeau, donc une liste vide
+     * l'effaçait — et avec le filtre « pour demain » la carte affichait
+     * « Rien à rendre demain » au-dessus de quatre devoirs en retard. C'est
+     * la configuration d'un vendredi soir, d'un week-end ou d'un jour férié :
+     * pas un cas de coin, mais le cas le plus fréquent de ce filtre.
+     *
+     * **Une fausse mise en sécurité est le pire genre de défaut** pour une
+     * carte dont tout l'objet est de dire ce qui reste à faire. Et le
+     * commentaire de `nextDue` disait déjà pourquoi : ces deux éléments ne
+     * dépendent pas de la liste affichée, et c'est vide qu'ils servent le
+     * plus. Le raisonnement était juste et n'avait été appliqué qu'à la
+     * prochaine échéance.
+     *
+     * Le chemin voisin de `limit: 0` gardait le bandeau, lui : les deux
+     * chemins « zéro ligne » se contredisaient, ce qui aurait dû suffire à
+     * signaler qu'un des deux avait tort.
+     */
+    if (raw.length === 0) {
+      return html`${overdueBanner}${nextDue}${emptyState(ctx.t(emptyFor(ctx.config)))}`;
+    }
+
+    /**
      * `limit: 0` : la liste n'est pas vide, c'est l'affichage qui est à zéro.
      *
      * Sans cette garde la carte rendait une **coquille** : ni titre, ni ligne,
@@ -808,20 +908,55 @@ export const SPEC: CardSpec<Config> = {
       // plus fréquent et non un cas de coin. Groupée par matière, la date est
       // au contraire la seule chose qui situe le devoir : elle reste.
       const dueLabel =
-        by === 'date' ? '' : h.due ? formatDayLabel(h.due, ctx.language, ctx.timeZone) : '';
+        by === 'date' ? '' : h.due ? dueLabelOf(h.due, ctx.language, ctx.timeZone) : '';
       // La couleur de matière est une gouttière à gauche, comme sur les cinq
       // autres cartes qui portent une matière. Voir `RowOptions.accent` pour
       // ses trois valeurs, et la règle `.row.empile` de `styles.ts` pour les
       // deux dispositifs que ce placement a annulés.
       const accent = subjectAccent(h.background_color, h.subject, ctx.config.subject_colors);
-      const enonce = h.description_text ?? plainText(h.description);
+      // `description_text` vide retombe sur le HTML, et ce n'est pas un
+      // raffinement : `??` ne se replie que sur l'absence, alors que
+      // `plainText` traite déjà la chaîne vide comme une absence. Un devoir
+      // publiant `description_text: ''` à côté d'un `description` lisible
+      // rendait donc la matière et **rien** en dessous.
+      const publie = typeof h.description_text === 'string' ? h.description_text : '';
+      const enonce = publie.trim() === '' ? plainText(h.description) : publie;
       const replie = maxLines > 0 && lignesEstimees(enonce) > maxLines;
       const pieces = piecesOf(h);
       const piecesOn = ctx.config.show_attachments !== false && pieces.length > 0;
+      /**
+       * L'énoncé replié : du **texte**, et une bascule à côté.
+       *
+       * C'était un `details` dont le `summary` contenait tout l'énoncé, et le
+       * navigateur retenait l'état sans qu'on ait rien à stocker. Mesuré le
+       * 10 septembre 2026 : **269 caractères de nom accessible** et **zéro**
+       * caractère hors du `summary`. Un lecteur d'écran entendait donc
+       * l'énoncé entier comme le libellé d'un bouton, suivi de « replié »,
+       * puis déplier ne lui révélait rien : l'affordance mentait sur sa
+       * nature.
+       *
+       * Le texte redevient du texte. Il n'est jamais perdu pour un lecteur
+       * d'écran — la coupe est faite par `overflow`, qui n'ôte rien de l'arbre
+       * d'accessibilité — donc la bascule ne lui apporte rien et n'a pas à se
+       * faire passer pour ce qu'elle n'est pas : c'est un contrôle visuel, au
+       * libellé court, dont `aria-expanded` dit honnêtement l'état.
+       *
+       * Les deux libellés sont rendus et un seul est visible. Écrire le texte
+       * du bouton à la main sur un clic serait écrasé au prochain rendu.
+       */
       const enonceRendu = replie
-        ? html`<details class="enonce" style="--pronote-max-lines: ${maxLines}">
-            <summary class="enonce-tete"><span class="enonce-corps">${enonce}</span></summary>
-          </details>`
+        ? html`<span class="enonce" style="--pronote-max-lines: ${maxLines}"
+            ><span class="enonce-corps">${enonce}</span
+            ><button
+              type="button"
+              class="enonce-bascule"
+              aria-expanded="false"
+              @click=${basculeEnonce}
+            >
+              <span class="enonce-deplier">${ctx.t('devoirs.enonce_deplier')}</span
+              ><span class="enonce-replier">${ctx.t('devoirs.enonce_replier')}</span>
+            </button></span
+          >`
         : enonce;
       /**
        * L'énoncé, puis les pièces jointes — **hors** du bloc repliable.
@@ -883,21 +1018,19 @@ export const SPEC: CardSpec<Config> = {
                       // etre une ancre. Les deux portent la meme classe, donc
                       // le meme style, sans dupliquer la regle.
                       //
-                      // L'infobulle de la pastille muette repond a une
-                      // question posee par le proprietaire : << les liens sur
-                      // les fichiers ne fonctionnent pas >>. Ils ne
-                      // fonctionneront jamais, et une pastille qui se tait
-                      // laisse croire a une panne. Elle dit donc pourquoi,
-                      // au survol, sans rien promettre : un `title` n'est pas
-                      // une cible de clic.
+                      // La raison pour laquelle un fichier ne s'ouvre pas
+                      // etait posee en `title` sur cette pastille. Retiree :
+                      // il n'y a pas de survol au doigt, et un `span` n'est
+                      // pas focalisable, donc le dispositif ne repondait qu'a
+                      // la souris -- sur telephone, qui est la cible de ce
+                      // projet, les cinq pastilles muettes restaient
+                      // inexpliquees. La phrase est desormais rendue UNE
+                      // fois sous le groupe, en texte, quand au moins une
+                      // piece n'est pas ouvrable.
                       return html`<span class="devoirs-piece" role="listitem"
                         >${
                           piece.url === undefined
-                            ? html`<span
-                                class="chip"
-                                title=${ctx.t('devoirs.attachment_not_openable')}
-                                >${libelle}</span
-                              >`
+                            ? html`<span class="chip">${libelle}</span>`
                             : html`<a
                                 class="chip chip-lien"
                                 href=${piece.url}
@@ -953,16 +1086,51 @@ export const SPEC: CardSpec<Config> = {
       `;
     };
 
+    /**
+     * Une note, **une seule fois par carte**, quand au moins une pièce
+     * affichée ne s'ouvre pas.
+     *
+     * La même phrase était posée en `title` sur chaque pastille muette. Elle
+     * ne répondait qu'à la souris : il n'y a pas de survol au doigt, et un
+     * `span` n'est pas focalisable. Sur téléphone — la cible de ce projet —
+     * cinq pastilles sur huit restaient donc inexpliquées, ce qui est
+     * exactement la conclusion que l'infobulle devait empêcher.
+     *
+     * Une fois par carte et non par devoir : l'information se lit une fois.
+     * Répétée sous chaque devoir porteur, elle coûterait plusieurs lignes
+     * pour rien.
+     *
+     * Elle nomme le repère visuel — le soulignement — plutôt que de décrire
+     * une catégorie que le lecteur ne peut pas distinguer autrement.
+     */
+    const noteFichiers =
+      ctx.config.show_attachments !== false &&
+      limited.some((h) => piecesOf(h).some((piece) => piece.url === undefined))
+        ? html`<div class="notice">${ctx.t('devoirs.attachment_not_openable')}</div>`
+        : '';
+
     const groups = groupOf(limited, by, ctx.timeZone, ctx.language);
     const out: (TemplateResult | string)[] = [overdueBanner, nextDue];
     for (const g of groups) {
-      out.push(html`<div class="title">${g.label}</div>`);
+      // `role="heading"` et un niveau : sans ça, les sept intertitres d'une
+      // carte groupée par jour étaient sept `div` de texte nu, et un lecteur
+      // d'écran ne pouvait pas sauter d'un jour au suivant — il traversait les
+      // vingt énoncés en linéaire. Mesuré : sept intertitres, zéro titre.
+      //
+      // Niveau 3, parce que le titre de la carte est le niveau au-dessus et
+      // qu'une vue Home Assistant porte déjà son propre titre. Un `h3` réel
+      // aurait été préférable, mais la classe `title` porte les styles
+      // d'en-tête de carte : changer la balise ici sans toucher à la feuille
+      // partagée aurait donné des marges de titre HTML par-dessus. Le rôle
+      // règle la sémantique sans rien changer à la peinture.
+      out.push(html`<div class="title" role="heading" aria-level="3">${g.label}</div>`);
       // Les lignes d'un jour ne sont plus enveloppées. L'enveloppe existait
       // pour leur faire partager une colonne de matière de largeur unique ;
       // il n'y a plus de colonne de matière, la matière titre son bloc.
       out.push(html`${g.items.map((h) => rowFor(h))}`);
     }
 
+    out.push(noteFichiers);
     return html`${out}`;
   },
 };

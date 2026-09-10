@@ -189,7 +189,8 @@ lessons[]   id, subject, subject_id, background_color, teachers, classroom,
             memo, end_inferred
 
 items[] de sensor:homework*
-            id, subject, description, description_text, due, done, attachments
+            id, subject, description, description_text, due, done,
+            background_color, attachments, attachment_links
 
 items[] de sensor:absences
             id, from_date, to_date, justified, hours, days, reasons
@@ -201,6 +202,15 @@ subjects[] de sensor:report_card
 
 `description` est du **HTML** ; `description_text` est le même énoncé en texte
 simple, avec de vrais retours à la ligne. Lisez `description_text` d'abord.
+
+`due` est une **date seule** (`AAAA-MM-JJ`), pas un horodatage. La
+distinction n'est pas théorique : `new Date('2026-09-10')` rend minuit **UTC**,
+et reprojeté dans un fuseau à décalage négatif ce minuit recule d'un jour —
+mesuré, la même échéance s'affichait le 10 à Paris et le 9 à la Martinique, à
+Cayenne et à Tahiti, où **tout devoir dû aujourd'hui était donc déclaré en
+retard**. Une date seule se compare et se met en forme comme un jour, jamais
+comme un instant. Le champ était nommé dans le tableau ci-dessus sans être
+typé, et c'est ce silence qui a laissé passer l'hypothèse.
 
 `attachments` est une liste de **chaînes** — des **noms**, jamais des
 adresses — et les adresses vivent dans une **seconde** liste sur le même

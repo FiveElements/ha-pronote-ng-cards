@@ -69,10 +69,16 @@ une moitié cachée.
 - **Le repli se signale tout seul.** Les points de suspension sont peints par
   le navigateur, et **seulement quand le texte déborde vraiment**. Un énoncé
   qui tient déjà dans le nombre de lignes demandé n'est pas replié du tout.
-- **Un clic ou une touche déplie**, et referme. C'est un bloc `details`
-  natif, donc il s'annonce comme tel à un lecteur d'écran.
+- **Un bouton court déplie**, et referme. « Déplier l'énoncé », pas
+  l'énoncé lui-même : c'était un bloc `details` dont le résumé contenait tout
+  le texte, et un lecteur d'écran annonçait donc **269 caractères comme
+  libellé d'un bouton**, puis proposait de déplier quelque chose de vide.
+  Mesuré le 10 septembre 2026.
 - **Le texte entier reste dans la page** pendant qu'il est replié. Une
-  recherche dans le navigateur le trouve ; seule la peinture est coupée.
+  recherche dans le navigateur le trouve, et un lecteur d'écran le lit en
+  entier : la coupe est faite par `overflow`, qui n'ôte rien de l'arbre
+  d'accessibilité. Le bouton n'apporte donc rien à qui écoute la carte — il
+  ne lui promet rien non plus.
 
 L'option est vide par défaut : sans elle, rien ne change.
 
@@ -189,6 +195,15 @@ vous pouvez donc le voir alors qu'aucune ligne visible n'est en retard. C'est
 voulu, et c'est même le seul endroit où l'information vous parvient dans ce
 filtre.
 
+**Y compris quand la fenêtre est vide**, et cette page a affirmé le contraire
+en pratique pendant plusieurs versions. Le message « Rien à rendre demain »
+était rendu **avant** que le bandeau soit calculé, donc un vendredi soir, un
+week-end ou un jour férié la carte annonçait qu'il n'y avait rien à faire
+au-dessus de quatre devoirs en retard. C'était le pire défaut de cette carte
+— une **fausse mise en sécurité** — et il est corrigé depuis le 10 septembre
+2026. Le bandeau et la prochaine échéance ne dépendent pas de la liste
+affichée : c'est vide qu'ils servent le plus.
+
 Il annonce **combien** : « 4 en retard », et non le seul mot. Le chiffre vient
 de l'attribut `count` du capteur, que la carte jetait jusqu'au 10 septembre
 2026. Sur une intégration antérieure à cet attribut, le bandeau garde le
@@ -285,12 +300,18 @@ Ce compte est une propriété des devoirs de la quinzaine, **pas de votre
 établissement** : une semaine sans lien n'ouvrira aucune pastille, et ce n'est
 pas une panne. La pastille muette est le cas courant, pas le cas dégradé.
 
-Une pastille qui ne s'ouvre pas **dit pourquoi au survol**. Sans ça, elle
-ressemble à une panne de la carte, et c'est exactement la conclusion qu'en a
-tirée le propriétaire la première fois : « les liens sur les fichiers ne
-fonctionnent pas ». La phrase est dans l'infobulle et non sous la pastille,
-parce qu'on ne la lit qu'une fois et qu'elle coûterait cinq lignes sur huit
-pièces.
+**Une phrase en bas de carte dit pourquoi**, une seule fois, dès qu'au moins
+une pièce affichée ne s'ouvre pas. Sans ça la carte ressemble à une panne, et
+c'est exactement la conclusion qu'en a tirée le propriétaire : « les liens sur
+les fichiers ne fonctionnent pas ».
+
+Cette phrase a d'abord été posée en **infobulle** sur chaque pastille muette,
+et cette page présentait le dispositif comme acquis. Il ne l'était pas : il
+n'y a pas de survol au doigt, et une pastille sans lien n'est pas
+focalisable au clavier. Sur téléphone — qui est la cible de ce projet —
+l'explication était donc **invisible**, et les cinq pastilles muettes de la
+vue par défaut restaient inexpliquées. Une fois par carte plutôt que sous
+chaque devoir : l'information se lit une fois.
 
 Si vous comptez les ancres et qu'il vous en manque une, vérifiez d'abord quel
 capteur la carte lit. Un devoir **coché fait** sort de la liste à faire par

@@ -1,9 +1,10 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { defineCard } from '../../src/core/registry';
-import { SPEC } from '../../src/cards/devoirs';
+import { SPEC, testClock } from '../../src/cards/devoirs';
 import { makeHass } from '../fixtures/hass';
 import { mountCard, text } from '../fixtures/mount';
 import type { MountableElement } from '../fixtures/mount';
+import type { HomeAssistant } from '../../src/core/ha-types';
 
 declare global {
   interface HTMLElementTagNameMap {
@@ -94,9 +95,22 @@ const unDevoir = (description_text: string) => [
   { id: 'h1', subject: 'Maths', description_text, due: '2099-01-01', done: false },
 ];
 
-/** Le bloc repliable de l'enonce, s'il a ete emis. */
+/**
+ * Le bloc repliable de l'enonce, s'il a ete emis.
+ *
+ * C'etait un `details` dont le `summary` portait tout l'enonce, donc le nom
+ * accessible d'un bouton faisait 269 caracteres et deplier ne revelait rien.
+ * C'est desormais du texte plus une bascule ; le nom du lecteur ne change
+ * pas, pour que les tests qui portent sur le REPLI restent lisibles.
+ */
 const details = (el: HTMLElement & MountableElement): HTMLElement | null =>
-  el.shadowRoot?.querySelector('details.enonce') ?? null;
+  el.shadowRoot?.querySelector('.enonce') ?? null;
+
+/** La bascule qui deplie l'enonce, s'il y en a une. */
+const bascule = (el: HTMLElement & MountableElement): HTMLButtonElement | null => {
+  const n = el.shadowRoot?.querySelector('.enonce-bascule');
+  return n instanceof HTMLButtonElement ? n : null;
+};
 
 /** Le groupe des pieces jointes d'un devoir, s'il a ete emis. */
 const piecesJointes = (el: HTMLElement & MountableElement): HTMLElement | null =>
@@ -168,6 +182,18 @@ const liensPieces = (el: HTMLElement & MountableElement): HTMLAnchorElement[] =>
     }
     return out;
   };
+
+/**
+ * Le même `hass`, vu depuis un autre fuseau.
+ *
+ * `config.time_zone` et non `locale.time_zone` : la seconde est une
+ * préférence (`'local'` ou `'server'`), pas un identifiant IANA — c'est la
+ * forme réelle, et la confondre a déjà vidé deux cartes sur une instance.
+ */
+const dansLeFuseau = (hass: HomeAssistant, timeZone: string): HomeAssistant => ({
+  ...hass,
+  config: { ...hass.config, time_zone: timeZone },
+});
 
 /** Un devoir dont on choisit les DEUX listes : les noms, et les ouvrables. */
 const devoirDeuxListes = (attachments: unknown[], attachment_links: unknown[]) => [
@@ -986,7 +1012,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
       { device_id: 'dev_enfant', max_lines: 2 },
       hw({ items: unDevoir(ENONCE_LONG) }, '1')
     );
-    const corps = el.shadowRoot?.querySelector('.enonce > .enonce-tete > .enonce-corps');
+    const corps = el.shadowRoot?.querySelector('.enonce > .enonce-corps');
     expect(corps?.textContent).toBe(ENONCE_LONG);
   });
 
@@ -1072,7 +1098,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
       )
     );
     // Un seul repli pour deux devoirs.
-    expect(el.shadowRoot?.querySelectorAll('details.enonce').length).toBe(1);
+    expect(el.shadowRoot?.querySelectorAll('.enonce').length).toBe(1);
     // Et les deux énoncés sont là.
     expect(text(el)).toContain(ENONCE_LONG);
     expect(text(el)).toContain(ENONCE_COURT);
@@ -1687,18 +1713,18 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
     expect(el.shadowRoot?.innerHTML).not.toContain('javascript:');
   });
 
-  it('dit pourquoi une pièce ne s’ouvre pas, au lieu de se taire', async () => {
+  it('dit UNE FOIS par carte pourquoi certaines pièces ne s’ouvrent pas', async () => {
     /**
      * Répond à une phrase du propriétaire : « les liens sur les fichiers ne
      * fonctionnent pas ». Ils ne fonctionneront jamais — l'adresse d'un
      * fichier PRONOTE est un artefact de session — et une pastille qui se
-     * tait laisse croire à une panne de la carte. Elle porte donc la raison
-     * au survol.
+     * tait laisse croire à une panne de la carte.
      *
-     * Sur un `title` et non dans le texte visible : écrire la phrase sous
-     * chaque fichier coûterait cinq lignes sur huit pièces, pour une
-     * information qu'on ne lit qu'une fois. Et un `title` n'est pas une cible
-     * de clic, donc il n'invite à rien.
+     * La phrase était d'abord un `title` sur chaque pastille muette. Elle ne
+     * répondait qu'à la souris : pas de survol au doigt, et un `span` n'est
+     * pas focalisable. Elle est donc rendue en texte, **une seule fois par
+     * carte** — répétée sous chaque devoir porteur elle coûterait plusieurs
+     * lignes pour une information qu'on lit une fois.
      */
     const el = await mountCard(
       'pronote-ng-devoirs',
@@ -1715,11 +1741,15 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
     );
     const muette = pastillesPieces(el).find((n) => n.tagName === 'SPAN');
     expect(muette?.textContent?.trim()).toBe('fichier.pdf');
-    expect(muette?.getAttribute('title')).toContain('adresse durable');
-    // L'ancre, elle, ne porte pas cette phrase : elle s'ouvre.
+    // La note est rendue une fois, et nomme le repere visuel.
+    const notes = Array.from(el.shadowRoot?.querySelectorAll('.notice') ?? []);
+    expect(notes.length).toBe(1);
+    expect(notes[0]?.textContent).toContain('soulign');
+    // Aucune infobulle : elle ne repondait qu'a la souris.
+    expect(muette?.hasAttribute('title')).toBe(false);
     const ancre = liensPieces(el)[0];
     expect(ancre?.textContent?.trim()).toBe('Lien');
-    expect(ancre?.getAttribute('title')).toBeNull();
+    expect(ancre?.hasAttribute('title')).toBe(false);
   });
 
   it('ouvre les deux homonymes, et c’est la faiblesse assumée du contrat', async () => {
@@ -1874,5 +1904,387 @@ describe('carte devoirs — l’ordre à l’intérieur d’un groupe de matièr
       'Örjan',
       'Zoologie',
     ]);
+  });
+});
+
+describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', () => {
+  // L'horloge figée est une variable de module : la laisser posée fausserait
+  // tous les tests suivants, y compris ceux des autres blocs.
+  afterEach(() => {
+    delete testClock.now;
+  });
+
+  /**
+   * Cinq défauts trouvés en montant la carte sur des combinaisons de données
+   * que la suite ne combinait pas — jamais en relisant le code. Les
+   * quatre-vingt-quatre tests d'alors étaient verts pendant les cinq, et le
+   * lint et `tsc` aussi. C'est la raison d'être de ce bloc : chaque cas y
+   * combine ce qui n'était testé que séparément.
+   */
+
+  /** Le capteur de retard à `on`, plus un capteur de fenêtre vide. */
+  const videPlusRetard = (count: number, etat: 'on' | 'off') =>
+    hw({ items: [] }, '0', [
+      {
+        key: 'binary_sensor:homework_overdue',
+        entity_id: 'binary_sensor.abc_devoirs_en_retard',
+        device: 'dev_enfant',
+        state: etat,
+        attributes: { count },
+      },
+      {
+        key: 'sensor:homework_tomorrow',
+        entity_id: 'sensor.abc_devoirs_demain',
+        device: 'dev_enfant',
+        state: '0',
+        attributes: { items: [] },
+      },
+    ]);
+
+  // --- 1. le bandeau de retard et la liste vide ---
+
+  it('garde le bandeau de retard quand la fenêtre est vide', async () => {
+    /**
+     * Le pire défaut de la carte, et une **fausse mise en sécurité** : le
+     * retour de l'état vide était placé avant le calcul du bandeau, donc avec
+     * le filtre « pour demain » la carte affichait « Rien à rendre demain »
+     * au-dessus de quatre devoirs en retard. Vendredi soir, week-end, jour
+     * férié : le cas le plus fréquent de ce filtre, pas un cas de coin.
+     *
+     * Deux tests s'en approchaient et manquaient chacun une moitié : l'un
+     * montait un calendrier sans capteur de retard, l'autre montait les deux
+     * mais sous `limit: 0`, c'est-à-dire le chemin qui gardait le bandeau.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', filter: 'tomorrow' },
+      videPlusRetard(4, 'on')
+    );
+    expect(pastilles(el)).toEqual(['4 en retard']);
+    // Et le message de vide reste : les deux disent des choses différentes.
+    expect(text(el)).toContain('Rien à rendre demain');
+  });
+
+  it('n’invente pas de bandeau quand le capteur de retard est à l’arrêt', async () => {
+    // Appariement négatif : le bandeau suit l'état du capteur, il n'est pas
+    // une décoration de l'état vide.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', filter: 'tomorrow' },
+      videPlusRetard(0, 'off')
+    );
+    expect(pastilles(el)).toEqual([]);
+    expect(text(el)).toContain('Rien à rendre demain');
+  });
+
+  // --- 2. un lien sans nom n'est plus jete ---
+
+  it('garde un lien sans nom quand une autre pièce n’a pas de nom non plus', async () => {
+    /**
+     * Le rapprochement des deux listes se fait par le nom. L'ensemble des
+     * noms était construit sur un champ optionnel, donc `undefined` y entrait
+     * dès qu'une pièce était anonyme — et la boucle de rattrapage écartait
+     * alors **tout** lien sans nom, c'est-à-dire exactement ce que le
+     * commentaire de la fonction déclare éviter.
+     *
+     * Une pièce est anonyme quand son adresse ne porte pas de nom de
+     * fichier : le chemin d'une pièce PRONOTE finit sans nom.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({
+        items: [
+          {
+            id: 'h1',
+            subject: 'Maths',
+            description_text: 'X',
+            due: '2099-01-01',
+            attachments: ['https://demo.example.invalid/pj/JETON/link?Session=1'],
+            attachment_links: [{ url: 'https://demo.example.invalid/autre/link?Session=1' }],
+          },
+        ],
+      })
+    );
+    expect(elementsPieces(el).length).toBe(2);
+    expect(liensPieces(el).map((n) => n.getAttribute('href'))).toContain(
+      'https://demo.example.invalid/autre/link?Session=1'
+    );
+  });
+
+  it('ne double pas une pièce anonyme qui pointe déjà la même adresse', async () => {
+    // La contrepartie : garder l'orphelin ne doit pas fabriquer deux
+    // pastilles pour un seul document.
+    const meme = 'https://demo.example.invalid/pj/JETON/link?Session=1';
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({
+        items: [
+          {
+            id: 'h1',
+            subject: 'Maths',
+            description_text: 'X',
+            due: '2099-01-01',
+            attachments: [meme],
+            attachment_links: [{ url: meme }],
+          },
+        ],
+      })
+    );
+    expect(elementsPieces(el).length).toBe(1);
+  });
+
+  // --- 3. une echeance est un jour, pas un instant ---
+
+  it('ne décale pas une échéance dans un fuseau à décalage négatif', async () => {
+    /**
+     * `new Date('2026-09-10')` rend minuit **UTC**. Reprojeté à la Martinique,
+     * à Cayenne ou à Tahiti, ce minuit recule d'un jour : l'échéance
+     * s'affichait la veille et **tout devoir dû aujourd'hui était déclaré en
+     * retard**. Trois territoires français où PRONOTE tourne.
+     *
+     * Le fuseau se pose sur `config.time_zone` parce que `locale.time_zone`
+     * vaut `'server'` dans la fixture — la forme réelle, et non un
+     * identifiant IANA.
+     */
+    const hass = dansLeFuseau(
+      hw({
+        items: [{ id: 'h1', subject: 'Maths', description_text: 'X', due: '2026-09-10' }],
+      }),
+      'America/Martinique'
+    );
+    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    const t = titres(el);
+    expect(t.length).toBe(1);
+    expect(t[0]).toContain('10');
+    expect(t[0]).not.toContain('9 septembre');
+  });
+
+  it('ne déclare pas en retard un devoir dû aujourd’hui, fuseau négatif compris', async () => {
+    /**
+     * Le cœur du défaut, et ce que mon premier test ne couvrait pas : il
+     * n'assérait que l'intitulé de groupe, qui passe par la mise en forme,
+     * alors que « en retard » passe par la comparaison de jours. Retirer le
+     * court-circuit de date seule ne le faisait donc pas tomber.
+     *
+     * L'horloge est figée : midi UTC le 10 vaut huit heures du matin le 10 à
+     * la Martinique. Un devoir dû le 10 n'est donc pas en retard — alors que
+     * `new Date('2026-09-10')` reprojeté là-bas donnait le 9, strictement
+     * antérieur, donc **en retard**.
+     */
+    testClock.now = '2026-09-10T12:00:00Z';
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      dansLeFuseau(
+        hw({
+          items: [
+            { id: 'h1', subject: 'Maths', description_text: 'Pour aujourd hui', due: '2026-09-10' },
+          ],
+        }),
+        'America/Martinique'
+      )
+    );
+    expect(pastilles(el)).toEqual([]);
+    // Appariement positif : la ligne est bien rendue, elle n'est simplement
+    // pas en retard.
+    expect(text(el)).toContain('Pour aujourd hui');
+  });
+
+  it('déclare bien en retard la veille, dans le même fuseau', async () => {
+    // Le contrepoids du précédent : la correction ne doit pas avoir éteint la
+    // notion de retard, seulement l'avoir recalée d'un jour.
+    testClock.now = '2026-09-10T12:00:00Z';
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      dansLeFuseau(
+        hw({
+          items: [{ id: 'h1', subject: 'Maths', description_text: 'La veille', due: '2026-09-09' }],
+        }),
+        'America/Martinique'
+      )
+    );
+    expect(pastilles(el)).toEqual(['en retard']);
+  });
+
+  it('respecte le fuseau quand l’échéance porte une heure', async () => {
+    // Appariement : une valeur qui EST un instant doit suivre le fuseau
+    // d'affichage. Le correctif ne doit pas figer tout en UTC.
+    const hass = dansLeFuseau(
+      hw({
+        items: [
+          {
+            id: 'h1',
+            subject: 'Maths',
+            description_text: 'X',
+            // 00h30 UTC le 11 vaut le 10 à la Martinique.
+            due: '2026-09-11T00:30:00Z',
+          },
+        ],
+      }),
+      'America/Martinique'
+    );
+    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    expect(titres(el)[0]).toContain('10');
+  });
+
+  // --- 4. la frontiere du repli ---
+
+  it('ne replie pas un énoncé qui occupe EXACTEMENT le nombre de lignes demandé', async () => {
+    /**
+     * La borne n'avait aucune garde : passer `>` en `>=` dans la condition de
+     * repli ne faisait tomber aucun des quatre-vingt-quatre tests, parce
+     * qu'aucune fixture n'atteignait jamais l'égalité — 3 contre 2, 1 contre
+     * 3, 6 contre 3, 1 contre 2. Sous la mutation, un énoncé entier se
+     * repliait quand même : un bloc dépliable sans rien à déplier, et sans
+     * points de suspension pour le dire.
+     */
+    const troisLignes = 'Un.\nDeux.\nTrois.';
+    const juste = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 3 },
+      hw({ items: [{ id: 'h1', subject: 'Maths', description_text: troisLignes }] })
+    );
+    expect(details(juste)).toBeNull();
+    // Appariement positif : le texte est bien rendu, non replié.
+    expect(text(juste)).toContain('Trois.');
+
+    const uneDePlus = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 3 },
+      hw({
+        items: [{ id: 'h1', subject: 'Maths', description_text: troisLignes + '\nQuatre.' }],
+      })
+    );
+    expect(details(uneDePlus)).not.toBeNull();
+  });
+
+  // --- 5. le repli ne se fait plus passer pour un contenu cache ---
+
+  it('sort l’énoncé du contrôle et donne à la bascule un libellé court', async () => {
+    /**
+     * L'énoncé vivait dans le `summary` d'un `details` : mesuré sur
+     * l'instance, **269 caractères de nom accessible** et **zéro** caractère
+     * hors du `summary`. Un lecteur d'écran entendait donc l'énoncé entier
+     * comme un libellé de bouton, puis se voyait proposer de déplier quelque
+     * chose de vide.
+     */
+    const long = 'Phrase de vingt caractères et quelques, répétée. '.repeat(12);
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 2 },
+      hw({ items: [{ id: 'h1', subject: 'Maths', description_text: long }] })
+    );
+    const b = bascule(el);
+    expect(b).not.toBeNull();
+    // Le libellé du bouton est court, et ce n'est pas l'énoncé.
+    const nom = (b?.textContent ?? '').trim();
+    expect(nom.length).toBeLessThan(40);
+    expect(nom).not.toContain('répétée');
+    // L'énoncé est du texte, hors du bouton.
+    const corps = el.shadowRoot?.querySelector('.enonce > .enonce-corps');
+    expect(corps?.textContent).toContain('répétée');
+    expect(b?.contains(corps ?? null)).toBe(false);
+    expect(b?.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('n’émet aucune bascule quand rien n’est replié', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 5 },
+      hw({ items: [{ id: 'h1', subject: 'Maths', description_text: 'Court.' }] })
+    );
+    expect(bascule(el)).toBeNull();
+    expect(text(el)).toContain('Court.');
+  });
+
+  // --- 6. les intertitres sont des titres ---
+
+  it('donne aux intertitres de groupe une sémantique de titre', async () => {
+    /**
+     * Sept intertitres, zéro titre : un lecteur d'écran ne pouvait pas sauter
+     * d'un jour au suivant et traversait les vingt énoncés en linéaire.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({
+        items: [
+          { id: 'h1', subject: 'Maths', description_text: 'A', due: '2026-09-09' },
+          { id: 'h2', subject: 'Anglais', description_text: 'B', due: '2026-09-10' },
+        ],
+      })
+    );
+    const entetes = Array.from(el.shadowRoot?.querySelectorAll('[role="heading"]') ?? []);
+    expect(entetes.length).toBe(2);
+    expect(entetes.every((n) => n.getAttribute('aria-level') === '3')).toBe(true);
+    // Appariement : ce sont bien les intertitres, pas autre chose.
+    expect(entetes.every((n) => n.classList.contains('title'))).toBe(true);
+  });
+
+  // --- 7. un enonce publie vide retombe sur le HTML ---
+
+  it('retombe sur le HTML quand `description_text` est vide', async () => {
+    /**
+     * `??` ne se replie que sur l'absence, alors que `plainText` traite déjà
+     * la chaîne vide comme une absence. Un devoir publiant les deux champs,
+     * le premier vide, rendait la matière et **rien** en dessous — alors que
+     * l'énoncé existait et était lisible.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({
+        items: [
+          {
+            id: 'h1',
+            subject: 'Maths',
+            description_text: '   ',
+            description: '<div>Exercice 12 page 40</div>',
+          },
+        ],
+      })
+    );
+    expect(text(el)).toContain('Exercice 12 page 40');
+  });
+
+  // --- 8. la note des fichiers, une fois par carte ---
+
+  it('ne rend la note des fichiers qu’une fois, même sur plusieurs devoirs', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({
+        items: [
+          { id: 'h1', subject: 'Maths', description_text: 'A', attachments: ['a.pdf'] },
+          { id: 'h2', subject: 'Anglais', description_text: 'B', attachments: ['b.pdf'] },
+          { id: 'h3', subject: 'Histoire', description_text: 'C', attachments: ['c.pdf'] },
+        ],
+      })
+    );
+    expect(el.shadowRoot?.querySelectorAll('.notice').length).toBe(1);
+  });
+
+  it('se tait quand toutes les pièces s’ouvrent', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({
+        items: [
+          {
+            id: 'h1',
+            subject: 'Maths',
+            description_text: 'A',
+            attachments: ['a.pdf'],
+            attachment_links: [{ name: 'a.pdf', url: 'https://demo.example.invalid/a.pdf' }],
+          },
+        ],
+      })
+    );
+    expect(el.shadowRoot?.querySelectorAll('.notice').length).toBe(0);
+    // Appariement positif : la pièce est bien rendue, et ouvrable.
+    expect(liensPieces(el).length).toBe(1);
   });
 });
