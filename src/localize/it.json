@@ -195,6 +195,10 @@
     "auto_advance_after": "Ritardo dopo l'ultima lezione, in minuti",
     "auto_advance_after_helper": "Trenta minuti per impostazione predefinita. Zero avanza al suono della campanella.",
     "rest_day": "Prossimo giorno di lezione",
-    "room": "Aula {room}"
+    "room": "Aula {room}",
+    "day_offset": "Giorno mostrato, in giorni da oggi",
+    "day_offset_helper": "Zero mostra oggi, 1 domani, -1 ieri. Più schede con scostamenti diversi formano una finestra scorrevole. Ogni giorno diverso da oggi si legge nella settimana raccolta.",
+    "card_day": "Giorno della scheda",
+    "out_of_window": "Questo giorno non è nella settimana raccolta: la scheda non sa cosa contiene. Avvicini lo scostamento o attivi il livello settimanale nelle opzioni dell'integrazione."
   }
 }

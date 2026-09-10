@@ -195,6 +195,10 @@
     "auto_advance_after": "Délai après le dernier cours, en minutes",
     "auto_advance_after_helper": "Trente minutes par défaut. Zéro avance à la sonnerie.",
     "rest_day": "Prochain jour de cours",
-    "room": "Salle {room}"
+    "room": "Salle {room}",
+    "day_offset": "Jour affiché, en jours depuis aujourd'hui",
+    "day_offset_helper": "Zéro affiche aujourd'hui, 1 demain, -1 la veille. Plusieurs cartes avec des décalages différents forment une fenêtre glissante. Tout jour autre qu'aujourd'hui se lit dans la semaine collectée.",
+    "card_day": "Jour de la carte",
+    "out_of_window": "Ce jour n'est pas dans la semaine collectée : la carte ne sait pas ce qu'il contient. Rapprochez le décalage, ou activez le palier hebdomadaire dans les options de l'intégration."
   }
 }

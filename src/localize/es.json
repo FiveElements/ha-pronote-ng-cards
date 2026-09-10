@@ -195,6 +195,10 @@
     "auto_advance_after": "Retardo tras la última clase, en minutos",
     "auto_advance_after_helper": "Treinta minutos por defecto. Cero avanza al timbre.",
     "rest_day": "Próximo día de clase",
-    "room": "Aula {room}"
+    "room": "Aula {room}",
+    "day_offset": "Día mostrado, en días desde hoy",
+    "day_offset_helper": "Cero muestra hoy, 1 mañana, -1 ayer. Varias tarjetas con desplazamientos distintos forman una ventana deslizante. Cualquier día que no sea hoy se lee en la semana recopilada.",
+    "card_day": "Día de la tarjeta",
+    "out_of_window": "Este día no está en la semana recopilada: la tarjeta no sabe qué contiene. Acerque el desplazamiento o active el nivel semanal en las opciones de la integración."
   }
 }

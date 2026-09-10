@@ -1118,3 +1118,132 @@ describe('carte vue journée — l’avance au prochain jour de cours', () => {
     }
   });
 });
+
+describe('carte vue journée — day_offset, la fenêtre glissante', () => {
+  /**
+   * Demandé par le propriétaire le 10 septembre 2026 : plusieurs cartes côte
+   * à côte, chacune sur son jour. Le curseur ne peut pas servir ça — il est
+   * par instance et remis à zéro à chaque `setConfig` — donc l'origine de la
+   * carte devient une option.
+   *
+   * La composition mesurée ici est : jour de repos, puis `day_offset`, puis le
+   * curseur. Tous ces cas sont un mercredi 9, avec la semaine du lundi 7 au
+   * jeudi 10 en mémoire.
+   */
+  beforeEach(() => {
+    testClock.now = '2026-09-09T09:30:00+02:00';
+  });
+
+  it('affiche aujourd’hui sans l’option, et le même jour avec zéro', async () => {
+    // La compatibilité est la première exigence : aucune configuration
+    // existante ne doit bouger. Les deux montages doivent donc être
+    // indiscernables.
+    expect(entete(await monterSemaine())?.date).toBe('mercredi 9 septembre');
+    expect(entete(await monterSemaine({ day_offset: 0 }))?.date).toBe('mercredi 9 septembre');
+  });
+
+  it('affiche le lendemain avec 1, et ses cours à lui', async () => {
+    const el = await monterSemaine({ day_offset: 1 });
+    expect(entete(el)?.date).toBe('jeudi 10 septembre');
+    // Appariement positif : une date juste au-dessus des cours de la veille
+    // serait plausible ET fausse, ce qui est le défaut que ce dépôt traque.
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Physique']);
+  });
+
+  it('affiche la veille avec -1', async () => {
+    const el = await monterSemaine({ day_offset: -1 });
+    expect(entete(el)?.date).toBe('mardi 8 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['SVT', 'Repas', 'Sport']);
+  });
+
+  it('laisse deux cartes du même tableau de bord indépendantes', async () => {
+    // C'est l'objectif : aujourd'hui, demain et après-demain sur la même vue.
+    // Deux instances partagent le même `hass` et ne doivent pas partager leur
+    // jour.
+    const aujourdhui = await monterSemaine({ day_offset: 0 });
+    const demain = await monterSemaine({ day_offset: 1 });
+    expect(entete(aujourdhui)?.date).toBe('mercredi 9 septembre');
+    expect(entete(demain)?.date).toBe('jeudi 10 septembre');
+    // Et naviguer dans l'une ne déplace pas l'autre.
+    await cliquer(demain, 0);
+    expect(entete(demain)?.date).toBe('mercredi 9 septembre');
+    expect(entete(aujourdhui)?.date).toBe('mercredi 9 septembre');
+  });
+
+  it('fait partir les flèches du jour calculé et non d’aujourd’hui', async () => {
+    // Le discriminant : depuis une carte « demain » (jeudi 10), reculer mène
+    // à mercredi. Si les flèches partaient d'aujourd'hui, elles mèneraient à
+    // mardi — et `day_offset` serait annulé au premier clic.
+    const el = await monterSemaine({ day_offset: 1 });
+    await cliquer(el, 0);
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Maths', 'Histoire', 'Repas', 'Anglais']);
+  });
+
+  it('ramène au jour de la carte, pas à aujourd’hui', async () => {
+    const el = await monterSemaine({ day_offset: -1 });
+    await cliquer(el, 1);
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    await revenir(el);
+    expect(entete(el)?.date).toBe('mardi 8 septembre');
+  });
+
+  it('nomme le bouton de retour d’après l’origine de la carte', async () => {
+    // « Aujourd'hui » sur une carte qui ramène à mardi serait faux, et
+    // « Prochain jour de cours » ne décrit que l'avance automatique.
+    const el = await monterSemaine({ day_offset: -1 });
+    await cliquer(el, 1);
+    expect(el.shadowRoot?.querySelector('.jour-retour')?.textContent?.trim()).toBe(
+      'Jour de la carte'
+    );
+  });
+
+  it('dit que le jour n’est pas collecté plutôt qu’il est sans cours', async () => {
+    // La seule affirmation fausse que cette carte puisse produire, et une
+    // option qui désigne un jour à la main est le chemin le plus court pour
+    // l'atteindre : samedi 12 est hors de la semaine collectée, donc la carte
+    // ne sait RIEN de ce jour-là.
+    const el = await monterSemaine({ day_offset: 3 });
+    expect(text(el)).toContain("Ce jour n'est pas dans la semaine collectée");
+    expect(text(el)).not.toContain('Aucun cours ce jour-là');
+    // L'en-tête reste, et il porte la date demandée : la phrase dit DE QUEL
+    // jour on n'a rien. Sans elle, elle serait vraie et inutilisable.
+    expect(entete(el)?.date).toBe('samedi 12 septembre');
+  });
+
+  it('dit la même chose quand le capteur de semaine n’est pas là', async () => {
+    // Sans la semaine, aucun jour autre qu'aujourd'hui n'est en mémoire. Un
+    // décalage n'a alors rien à afficher, et surtout rien à affirmer.
+    const el = await monter({ day_offset: 1 });
+    expect(text(el)).toContain("Ce jour n'est pas dans la semaine collectée");
+    expect(text(el)).not.toContain('Aucun cours');
+  });
+
+  it('tronque une valeur fractionnaire au lieu de produire une date invalide', async () => {
+    // Le champ vient d'un YAML écrit à la main. `1.7` jour n'existe pas ;
+    // propagé dans un calcul de date il donnerait un libellé faux.
+    expect(entete(await monterSemaine({ day_offset: 1.7 }))?.date).toBe('jeudi 10 septembre');
+  });
+
+  it('retombe sur aujourd’hui quand la valeur n’est pas un nombre', async () => {
+    expect(entete(await monterSemaine({ day_offset: 'demain' }))?.date).toBe(
+      'mercredi 9 septembre'
+    );
+    expect(entete(await monterSemaine({ day_offset: null }))?.date).toBe('mercredi 9 septembre');
+  });
+
+  it('se compose avec l’avance automatique, en glissant AVEC elle', async () => {
+    // 22 h le mercredi : le dernier cours est fini depuis longtemps, donc le
+    // jour de repos a avancé au jeudi. Une carte à `-1` montre alors le
+    // mercredi — aujourd'hui — et pas mardi.
+    //
+    // C'est ce que « depuis le jour de repos » achète : la fenêtre glisse
+    // avec le saut, au lieu qu'une carte saute et que les autres restent.
+    testClock.now = '2026-09-09T22:00:00+02:00';
+    const el = await monterSemaine({ auto_advance: true, day_offset: -1 });
+    expect(entete(el)?.date).toBe('mercredi 9 septembre');
+    // Et c'est bien le capteur du JOUR qui la sert, pas la semaine : la
+    // condition porte sur le jour affiché, pas sur le curseur.
+    expect(lignes(el).map((x) => x.matiere)).toEqual(['Maths', 'Histoire', 'Repas', 'Anglais']);
+  });
+});

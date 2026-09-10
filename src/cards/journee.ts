@@ -40,13 +40,32 @@ import { subjectAccent } from '../core/subject-color';
  * s'en sert pas. Sans le capteur de semaine, les flèches n'apparaissent pas —
  * plutôt que d'aller chercher un jour qu'il faudrait payer.
  *
- * ## La position n'est pas une configuration
+ * ## La position n'est pas une configuration, le décalage en est une
  *
- * Le jour consulté vit dans `ctx.cursor`, l'état d'interface du socle, jamais
- * dans le YAML de la carte. Une option `day: -1` afficherait la veille pour
- * tous les habitants de la maison, en permanence, et l'avant-veille le
- * lendemain. Un rechargement de page ramène donc sur le jour de repos, comme
- * une position de défilement.
+ * Le jour **consulté** vit dans `ctx.cursor`, l'état d'interface du socle, et
+ * jamais dans le YAML : un rechargement de page ramène sur le jour de repos,
+ * comme une position de défilement. Ce paragraphe interdisait aussi une
+ * option de jour, et l'argument qu'il donnait était à moitié faux — il
+ * disait qu'une option `day: -1` afficherait « l'avant-veille le lendemain ».
+ * C'est vrai d'une **date** écrite en dur ; c'est faux d'un **décalage
+ * relatif**, qui est recalculé à chaque repeint et désigne donc toujours la
+ * veille.
+ *
+ * `day_offset` est ce décalage relatif, et il répond à un besoin que le
+ * curseur ne peut pas servir : **plusieurs cartes côte à côte**, chacune sur
+ * son jour, comme une fenêtre glissante sur la semaine. Demandé par le
+ * propriétaire le 10 septembre 2026 avec cet objectif explicite.
+ *
+ * La distinction à garder, parce qu'elle seule justifie que l'un soit dans le
+ * YAML et l'autre pas : le curseur dit **où quelqu'un a navigué**, ce qui est
+ * personnel, momentané et n'a rien à faire dans une configuration partagée ;
+ * `day_offset` dit **de quel jour cette carte parle**, ce qui est une
+ * propriété de la carte et ne se périme jamais.
+ *
+ * Les deux se composent, dans cet ordre : jour de repos, puis `day_offset`
+ * (l'origine **de cette carte**), puis le curseur. Les flèches partent donc
+ * du jour calculé et le bouton de retour ramène à l'origine de la carte, pas
+ * à aujourd'hui.
  *
  * ## Le jour de repos, et pourquoi ce n'est pas toujours aujourd'hui
  *
@@ -141,6 +160,38 @@ interface Config extends PronoteCardConfig {
    * l'option silencieusement inopérante.
    */
   auto_advance_after?: number;
+  /**
+   * Le jour de cette carte, en jours depuis le jour de repos.
+   *
+   * `0` — le défaut — ne change rien : aucune configuration existante ne
+   * bouge. `1` donne le lendemain, `2` le surlendemain, `-1` la veille. Trois
+   * cartes à `0`, `1` et `2` font une fenêtre glissante de trois jours.
+   *
+   * **Depuis le jour de repos et non depuis aujourd'hui**, et ce choix
+   * mérite d'être connu parce qu'il ne se voit que dans un cas. Sans
+   * `auto_advance` les deux sont le même jour, donc `1` est bien demain.
+   * Avec `auto_advance`, le jour de repos avance au prochain jour de cours
+   * une fois la journée finie : la fenêtre glisse alors **avec** lui, et les
+   * trois cartes montrent trois jours de cours consécutifs au lieu d'en
+   * répéter un. Une origine à « aujourd'hui » aurait fait que la carte à `0`
+   * saute et que les autres ne sautent pas — deux cartes sur le même jour, et
+   * un trou.
+   *
+   * Ce que ça exige de l'honnêteté de la carte : tout jour autre
+   * qu'aujourd'hui se lit dans `sensor:timetable_week`. Un décalage qui
+   * pointe hors de la semaine collectée — ou sans ce capteur du tout — ne
+   * doit pas afficher « aucun cours ce jour-là », qui affirmerait quelque
+   * chose d'une date dont la carte ne sait **rien**. Elle dit alors que le
+   * jour n'est pas dans la fenêtre. C'est la seule affirmation fausse que
+   * cette carte puisse produire, et une option qui désigne un jour à la main
+   * est le moyen le plus direct de l'atteindre.
+   *
+   * La valeur vient d'un YAML écrit à la main : elle est tronquée à l'entier
+   * et retombe à zéro si elle n'est pas un nombre fini. Un `NaN` propagé
+   * dans un calcul de date ne produirait pas une erreur mais une date
+   * invalide, donc une carte vide sans raison lisible.
+   */
+  day_offset?: number;
 }
 
 /**
@@ -402,6 +453,21 @@ const autoAdvanceDelay = (value: unknown): number => {
   return minutes * 60_000;
 };
 
+/**
+ * `day_offset`, en entier, ou zéro.
+ *
+ * Même discipline qu'`autoAdvanceDelay` et pour la même raison : ce champ
+ * vient du YAML. `Math.trunc` plutôt qu'une confiance dans l'appelant — un
+ * `1.5` produirait une date fractionnaire, donc un libellé de jour faux
+ * plutôt qu'une erreur. Les chaînes numériques sont acceptées : Home
+ * Assistant en produit selon la voie d'édition.
+ */
+const dayOffsetOf = (value: unknown): number => {
+  const days = typeof value === 'string' ? Number(value.trim()) : value;
+  if (typeof days !== 'number' || !Number.isFinite(days)) return 0;
+  return Math.trunc(days);
+};
+
 /** L'instant de fin le plus tardif d'un jour donné, ou `undefined`. */
 const lastEndOfDay = (key: string, lessons: Lesson[], timeZone: string): number | undefined => {
   let last: number | undefined;
@@ -610,6 +676,14 @@ export const SPEC: CardSpec<Config> = {
       name: 'auto_advance_after',
       selector: { number: { min: 0, max: 720, step: 5, mode: 'box' } },
     },
+    // Les bornes du formulaire ne sont pas celles de l'option : le YAML
+    // accepte n'importe quel entier, et un jour hors fenetre se dit plutot
+    // qu'il ne se refuse. Sept jours de part et d'autre couvrent la semaine
+    // collectee, qui est ce que la carte peut vraiment afficher.
+    {
+      name: 'day_offset',
+      selector: { number: { min: -7, max: 7, step: 1, mode: 'box' } },
+    },
   ],
   // La mise en avant du cours en cours se calcule sur `Date.now()` : sans
   // repeint périodique, elle désignerait un cours terminé pendant une heure
@@ -668,20 +742,29 @@ export const SPEC: CardSpec<Config> = {
           )
         : todayKey;
 
-    // Le curseur est un décalage : il dérive quand le jour de repos bouge sous
-    // lui, à minuit comme à l'heure du saut. Hors de la fenêtre collectée, il
+    // L'origine DE CETTE CARTE : le jour de repos décalé de `day_offset`.
+    // C'est elle, et non le jour de repos, qui sert de zéro au curseur — sans
+    // quoi les flèches d'une carte « demain » repartiraient d'aujourd'hui et
+    // le bouton de retour la ramènerait sur le jour d'une autre carte.
+    const offset = dayOffsetOf(c.day_offset);
+    const originKey = offset === 0 ? baseKey : shiftDayKey(baseKey, offset);
+
+    // Le curseur est un décalage : il dérive quand l'origine bouge sous lui,
+    // à minuit comme à l'heure du saut. Hors de la fenêtre collectée, il
     // ferait afficher « aucun cours ce jour-là » pour une date inconnue de la
-    // carte — alors retour au jour de repos. Au repos (`cursor` nul) on ne
-    // borne rien : un dimanche hors fenêtre est un jour légitime à afficher.
+    // carte — alors retour à l'origine. À l'origine (`cursor` nul) on ne
+    // borne rien ici : un dimanche hors fenêtre est un jour légitime à
+    // afficher, et le cas du décalage est traité plus bas, avec une phrase
+    // plutôt qu'un repli silencieux.
     const first = days[0];
     const last = days[days.length - 1];
-    const wanted = shiftDayKey(baseKey, cursor);
+    const wanted = shiftDayKey(originKey, cursor);
     const drifted =
       cursor !== 0 &&
       first !== undefined &&
       last !== undefined &&
       (wanted < first || wanted > last);
-    const dayKey = drifted ? baseKey : wanted;
+    const dayKey = drifted ? originKey : wanted;
 
     // Aujourd'hui se lit sur SON capteur et non sur la fenêtre : c'est lui le
     // requis, il fonctionne sans le palier hebdomadaire, et il porte des
@@ -758,16 +841,28 @@ export const SPEC: CardSpec<Config> = {
       // Ni date, ni bornes, ni flèches : un en-tête vide vaut moins que pas
       // d'en-tête.
       if (day === '' && from === '' && to === '' && !navOn) return '';
-      const restLabel = baseKey === todayKey ? ctx.t('journee.today') : ctx.t('journee.rest_day');
+      // Le bouton ramène à l'origine de la carte, donc son libellé nomme
+      // cette origine et pas aujourd'hui. Trois cas, dans cet ordre : le jour
+      // se trouve être aujourd'hui, ce qui est le plus clair à dire ; sinon
+      // c'est le prochain jour de cours (avance automatique, sans décalage) ;
+      // sinon c'est le jour propre à cette carte, et rien d'autre ne le
+      // décrit.
+      const restLabel =
+        originKey === todayKey
+          ? ctx.t('journee.today')
+          : offset === 0
+            ? ctx.t('journee.rest_day')
+            : ctx.t('journee.card_day');
       const inferred = dayEndIsInferred(lessons, bounds.last);
 
       const arrow = (delta: 1 | -1, glyph: string, label: string): TemplateResult => {
         const target = stepTo(dayKey, delta, days);
         const targetNumber = target === undefined ? undefined : dayNumber(target);
-        // L'origine est le jour de REPOS, parce que `cursor` compte depuis lui.
-        // Avec `todayKey` ici, une flèche appliquerait le saut automatique une
-        // seconde fois.
-        const origin = dayNumber(baseKey);
+        // L'origine est celle DE LA CARTE, parce que `cursor` compte depuis
+        // elle. Avec `todayKey` ici, une flèche appliquerait le saut
+        // automatique une seconde fois ; avec `baseKey`, elle annulerait
+        // `day_offset` au premier clic.
+        const origin = dayNumber(originKey);
         const reachable = targetNumber !== undefined && origin !== undefined;
         return html`<button
           class="jour-fleche"
@@ -825,6 +920,23 @@ export const SPEC: CardSpec<Config> = {
     // Et le libellé change avec le jour : « aucun cours aujourd'hui » posé
     // au-dessus d'un jeudi serait une affirmation fausse. C'est le défaut que
     // ce dépôt traque, et la navigation venait de le rendre atteignable.
+    // Hors de la fenêtre collectée, la carte ne sait RIEN du jour demandé —
+    // ce n'est pas la même chose qu'un jour sans cours, et les deux se
+    // ressemblent à l'écran. Le cas n'existe que par `day_offset` : le
+    // curseur, lui, est ramené dans la fenêtre plus haut, et un repli
+    // silencieux serait ici le pire choix — deux cartes afficheraient la
+    // même date en laissant croire à deux jours différents.
+    //
+    // L'en-tête est conservé : il porte la date demandée, donc il dit DE QUEL
+    // jour on n'a rien. Sans lui la phrase serait vraie et inutilisable.
+    const outOfWindow =
+      offset !== 0 &&
+      !onToday &&
+      (first === undefined || last === undefined || dayKey < first || dayKey > last);
+    if (outOfWindow) {
+      return html`${header}${emptyState(ctx.t('journee.out_of_window'))}`;
+    }
+
     if (lessons.length === 0) {
       return html`${header}${emptyState(ctx.t(onToday ? 'journee.empty' : 'journee.empty_day'))}`;
     }

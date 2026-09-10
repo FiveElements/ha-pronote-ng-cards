@@ -42,6 +42,7 @@ show_nav: true
 | `show_nav` | `true` | Affiche les flèches de navigation d'un jour à l'autre. |
 | `auto_advance` | `false` | Passe au prochain jour de cours quand la journée est finie. |
 | `auto_advance_after` | `30` | Délai après le dernier cours, en minutes, avant ce saut. |
+| `day_offset` | `0` | Le jour de cette carte, en jours : `1` demain, `-1` la veille. Voir [Plusieurs jours côte à côte](#plusieurs-jours-cote-a-cote). |
 | `subject_colors` | — | Table matière → couleur. **En YAML uniquement**, voir ci-dessous. |
 
 Une plage du midi illisible (`meal_from: midi`) est **ignorée** : la plage
@@ -157,14 +158,85 @@ Si `sensor:timetable_week` n'existe pas chez vous — le palier peut être
 désactivé — la carte est exactement ce qu'elle était : aujourd'hui, sans
 flèches. Rien à configurer, rien à retirer.
 
-### Le jour consulté n'est pas une option
+### Le jour consulté n'est pas une option, le jour de la carte en est une
 
-Il n'y a **pas** d'option `day:`, et il n'y en aura pas. Un décalage écrit dans
-le YAML d'un tableau de bord y resterait : la carte afficherait la veille pour
-tous les habitants de la maison, en permanence, et l'avant-veille le lendemain.
-La position est un état d'affichage — elle vit dans l'onglet, comme une
-position de défilement, et un rechargement de page ramène sur aujourd'hui. Le
-bouton « Aujourd'hui » apparaît dès qu'on n'y est plus.
+**Où vous avez navigué** n'est pas une option et ne le sera pas : c'est un état
+d'affichage, il vit dans l'onglet comme une position de défilement, et un
+rechargement de page ramène au jour de la carte. Le bouton de retour apparaît
+dès qu'on n'y est plus.
+
+**De quel jour la carte parle**, en revanche, est bien une option :
+[`day_offset`](#plusieurs-jours-cote-a-cote).
+
+Cette page affirmait le contraire, et son argument était à moitié faux — il
+disait qu'une option de jour afficherait « l'avant-veille le lendemain ». C'est
+vrai d'une **date** écrite en dur ; c'est faux d'un **décalage**, qui est
+recalculé à chaque affichage et désigne donc toujours la veille. La correction
+a été faite le 10 septembre 2026, quand le décalage a été demandé pour un
+usage que le curseur ne peut pas servir : plusieurs cartes visibles en même
+temps.
+
+La distinction est celle-là, et c'est elle qui décide ce qui va dans le YAML :
+une position de consultation est personnelle et momentanée ; le jour d'une
+carte est une propriété de cette carte, et il ne se périme jamais.
+
+## Plusieurs jours côte à côte
+
+`day_offset` décale le jour d'une carte. `0` — le défaut — affiche
+aujourd'hui, `1` demain, `2` le surlendemain, `-1` la veille. Trois cartes sur
+la même vue font une fenêtre glissante :
+
+```yaml
+type: vertical-stack
+cards:
+  - type: custom:pronote-ng-journee
+    device_id: VOTRE_ENFANT
+    day_offset: 0
+  - type: custom:pronote-ng-journee
+    device_id: VOTRE_ENFANT
+    day_offset: 1
+  - type: custom:pronote-ng-journee
+    device_id: VOTRE_ENFANT
+    day_offset: 2
+```
+
+Chaque carte est indépendante : ses flèches partent de **son** jour, et son
+bouton de retour y ramène. Naviguer dans l'une ne déplace pas les autres.
+
+!!! tip "Coupez l'en-tête ou les flèches si la pile est chargée"
+
+    Trois en-têtes et six flèches sur une même vue font beaucoup. `show_nav:
+    false` garde les dates et retire les flèches ; la date, elle, reste
+    affichée dès que le jour n'est pas aujourd'hui, même avec `show_header:
+    false` — des créneaux de demain sans date au-dessus se lisent comme ceux
+    d'aujourd'hui.
+
+### Le décalage part du jour de repos
+
+Sans `auto_advance`, le jour de repos est aujourd'hui : `1` est donc bien
+demain, et il n'y a rien de plus à savoir.
+
+Avec `auto_advance`, le jour de repos avance au prochain jour de cours une fois
+la journée finie — et la fenêtre glisse **avec** lui. Le mercredi à 22 h, vos
+trois cartes montrent jeudi, vendredi et lundi, au lieu de répéter jeudi deux
+fois. C'est ce que ce choix d'origine achète : si le décalage partait
+d'aujourd'hui, la carte à `0` sauterait et les autres non.
+
+### Un jour hors de la semaine collectée le dit
+
+Tout jour autre qu'aujourd'hui se lit dans `sensor:timetable_week`. Un décalage
+qui pointe au-delà — ou sans ce capteur du tout — affiche **« ce jour n'est
+pas dans la semaine collectée »**, et pas « aucun cours ce jour-là ».
+
+La différence n'est pas de la précision de langage. « Aucun cours » est une
+**affirmation** sur une journée ; la carte n'a pas le droit de la faire sur une
+date dont elle ne sait rien. C'est la seule affirmation fausse que cette carte
+puisse produire, et une option qui désigne un jour à la main est le chemin le
+plus court pour l'atteindre. L'en-tête reste affiché dans ce cas : il porte la
+date demandée, donc la phrase dit de quel jour on n'a rien.
+
+En pratique, la semaine collectée couvre la semaine en cours. Un `day_offset:
+5` un jeudi tombera donc souvent hors fenêtre, et un `-1` un lundi aussi.
 
 ## La salle et le professeur
 

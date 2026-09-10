@@ -195,6 +195,10 @@
     "auto_advance_after": "Atraso após a última aula, em minutos",
     "auto_advance_after_helper": "Trinta minutos por omissão. Zero avança ao toque.",
     "rest_day": "Próximo dia de aulas",
-    "room": "Sala {room}"
+    "room": "Sala {room}",
+    "day_offset": "Dia mostrado, em dias desde hoje",
+    "day_offset_helper": "Zero mostra hoje, 1 amanhã, -1 ontem. Vários cartões com desvios diferentes formam uma janela deslizante. Qualquer dia que não seja hoje lê-se na semana recolhida.",
+    "card_day": "Dia do cartão",
+    "out_of_window": "Este dia não está na semana recolhida: o cartão não sabe o que contém. Aproxime o desvio ou active o nível semanal nas opções da integração."
   }
 }
