@@ -39,6 +39,55 @@ export const sharedStyles = css`
        se collent. */
     white-space: pre-line;
   }
+
+  /* L'enonce repliable, quand la carte devoirs recoit max_lines.
+
+     La coupe porte sur un element INTERIEUR au summary, pas sur le summary
+     lui-meme : Chrome ramene le display d'un summary a flow-root, la coupe
+     se fait alors mais SANS points de suspension -- donc une troncature
+     invisible, qui est exactement le defaut qu'on veut eviter sur un enonce
+     de devoir. Mesure du 10 septembre 2026 dans le navigateur, capture a
+     l'appui : sur un span interieur, les points de suspension sont peints.
+
+     Ce sont eux qui portent l'honnetete de ce dispositif. Ils n'apparaissent
+     QUE si le texte deborde vraiment, la ou un chevron pose par nous aurait
+     annonce du contenu cache sur des enonces courts qui n'en ont pas.
+
+     Le texte entier reste dans le DOM meme replie : un lecteur d'ecran et
+     une recherche dans la page le trouvent, seule la peinture est coupee.
+
+     Le nombre de lignes arrive par une propriete personnalisee, posee en
+     attribut style par la carte. C'est un entier tronque par elle, jamais
+     une chaine de serveur. */
+  .row .secondary .enonce > .enonce-tete {
+    display: block;
+    list-style: none;
+    cursor: pointer;
+  }
+  .row .secondary .enonce > .enonce-tete::-webkit-details-marker {
+    display: none;
+  }
+  .row .secondary .enonce:not([open]) > .enonce-tete > .enonce-corps {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--pronote-max-lines, 3);
+    overflow: hidden;
+  }
+  /* Les noms des pieces jointes d'un devoir, sous l'enonce.
+
+     Du texte, jamais des liens : la carte ne peut pas ouvrir un document, il
+     faudrait un appel de service que le projet interdit au rendu. Pas de
+     sous-lignement ni de couleur d'accent, donc, qui inviteraient a cliquer
+     sur ce qui ne repond pas.
+
+     Ni opacite reduite ni couleur plus pale : la ligne herite deja de la
+     couleur secondaire, et l'assombrir encore aurait pousse le contraste
+     sous le seuil dans un theme sombre. */
+  .row .secondary .devoirs-pieces {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.95em;
+  }
   .row .trailing {
     margin-left: auto;
     color: var(--secondary-text-color);

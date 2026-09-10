@@ -71,6 +71,58 @@ const titres = (el: HTMLElement & MountableElement): string[] =>
     (n) => n.textContent?.trim() ?? ''
   );
 
+/**
+ * La hauteur annoncee, prise sur le `CardSpec` plutot que sur l'element.
+ *
+ * Le parametre est type explicitement plutot que force depuis un objet de
+ * cles libres : `PronoteCardConfig` porte une signature d'index, donc une
+ * assertion aurait retreci un type large vers `Config` sans que rien ne
+ * verifie les valeurs. Ici `filter` est contraint a ses trois valeurs.
+ */
+const taille = (options: {
+  filter?: 'todo' | 'tomorrow' | 'all';
+  limit?: number;
+  max_lines?: number;
+}): number => {
+  const { size } = SPEC;
+  if (typeof size !== 'function') throw new Error('size doit etre une fonction');
+  return size({ type: 'custom:pronote-ng-devoirs', device_id: 'dev_enfant', ...options });
+};
+
+/** Un seul devoir, dont on choisit l'enonce. Echeance lointaine : pas de retard. */
+const unDevoir = (description_text: string) => [
+  { id: 'h1', subject: 'Maths', description_text, due: '2099-01-01', done: false },
+];
+
+/** Le bloc repliable de l'enonce, s'il a ete emis. */
+const details = (el: HTMLElement & MountableElement): HTMLElement | null =>
+  el.shadowRoot?.querySelector('details.enonce') ?? null;
+
+/** La ligne des noms de pieces jointes, si elle a ete emise. */
+const piecesJointes = (el: HTMLElement & MountableElement): HTMLElement | null =>
+  el.shadowRoot?.querySelector('.devoirs-pieces') ?? null;
+
+/**
+ * Un `hass` avec le capteur de retard, dont on choisit les attributs.
+ *
+ * Les devoirs ont une echeance LOINTAINE : aucune ligne n'est donc en retard
+ * d'elle-meme, et toute pastille observee vient du bandeau. Sans ca, une
+ * assertion sur le bandeau mesurerait les deux sources melangees.
+ */
+const avecCapteurRetard = (
+  attributes: Record<string, unknown>,
+  devoirs: unknown[] = [{ id: 'h1', subject: 'Maths', description_text: 'X', due: '2099-01-01' }]
+) =>
+  hw({ items: devoirs }, String(devoirs.length), [
+    {
+      key: 'binary_sensor:homework_overdue',
+      entity_id: 'binary_sensor.abc_devoirs_en_retard',
+      device: 'dev_enfant',
+      state: 'on',
+      attributes,
+    },
+  ]);
+
 describe('carte devoirs', () => {
   // `calendar:homework` porte la prochaine échéance telle que le calendrier la
   // voit. Elle n'est lue que dans ses ATTRIBUTS : récupérer la liste de ses
@@ -731,5 +783,449 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
     );
     expect(text(el)).toContain('Maths');
     expect(el.shadowRoot?.querySelectorAll('.row .trailing').length).toBe(0);
+  });
+});
+
+describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () => {
+  /**
+   * Les deux bouts du même problème : la carte est haute parce que les
+   * énoncés sont longs. `size` doit l'avouer, et `max_lines` permet de la
+   * raccourcir sans rien cacher en silence.
+   *
+   * Ce que ce fichier ne peut PAS mesurer : la coupe elle-même. jsdom
+   * n'applique pas `-webkit-line-clamp` et ne peint pas les points de
+   * suspension. Cette partie a été mesurée dans Chrome le 10 septembre 2026
+   * — 85 pixels sans coupe, 34 à deux lignes, 51 à trois, et les points de
+   * suspension vérifiés à la capture. Ici on vérifie la STRUCTURE émise et
+   * le nombre de lignes transmis, qui sont ce que la carte contrôle.
+   */
+
+  // Plus de 160 caracteres, donc plus de deux lignes a 80 par ligne.
+  const ENONCE_LONG =
+    'Exercices 12 à 18 page 132, puis relire le chapitre entier et préparer ' +
+    'les trois questions de synthèse pour la semaine prochaine sans oublier ' +
+    'le matériel demandé en début de cours.';
+  const ENONCE_COURT = 'Exercices 4 à 7.';
+
+  // --- 4. la hauteur annoncee dit la verite, a l'ordre de grandeur pres. ---
+
+  it('annonce une hauteur du bon ordre de grandeur, et non plus cinq', async () => {
+    // Mesuré le 10 septembre 2026 : 1 376 pixels avec le filtre « à faire »,
+    // soit environ 27 unités de 50 pixels. La valeur figée de 5 annonçait
+    // 250 pixels — un facteur cinq, et la carte la plus haute des onze se
+    // déclarait parmi les plus courtes.
+    const parDefaut = taille({});
+    expect(parDefaut).toBeGreaterThan(20);
+    expect(parDefaut).toBeLessThan(40);
+    // Et surtout : plus la valeur qui mentait.
+    expect(parDefaut).not.toBe(5);
+  });
+
+  it('rend exactement les hauteurs que la documentation publie', async () => {
+    /**
+     * Les autres cas de ce bloc portent sur des ordres et des bornes,
+     * exprès : la formule doit pouvoir être affinée sans casser la suite.
+     * Celui-ci fait l'inverse et épingle des valeurs exactes, pour une
+     * raison précise : **ces quatre nombres sont écrits dans
+     * `docs/tableaux-de-bord.md`**, dans le tableau des hauteurs.
+     *
+     * Son travail n'est donc pas de figer le code, c'est de tomber le jour
+     * où la page devient fausse. Si vous ajustez la formule, ce test vous
+     * dira quelle page corriger — ce qu'aucune borne n'aurait fait.
+     *
+     * Ils ont déjà divergé une fois : la formule était en décimaux et
+     * `max_lines: 3` rendait 27 par erreur de représentation, alors que le
+     * calcul à la main donne 28. Voir le commentaire de `size`.
+     */
+    expect(taille({})).toBe(31);
+    expect(taille({ filter: 'all' })).toBe(40);
+    expect(taille({ filter: 'tomorrow' })).toBe(13);
+    expect(taille({ max_lines: 3 })).toBe(28);
+  });
+
+  it('classe les trois filtres dans l’ordre de leur hauteur réelle', async () => {
+    // C'est le seul usage que Home Assistant fait de `size` : équilibrer des
+    // colonnes. Un classement juste vaut donc plus qu'un nombre exact.
+    const demain = taille({ filter: 'tomorrow' });
+    const aFaire = taille({ filter: 'todo' });
+    const tous = taille({ filter: 'all' });
+    expect(demain).toBeLessThan(aFaire);
+    expect(aFaire).toBeLessThan(tous);
+  });
+
+  it('préfère un limit explicite à son estimation par filtre', async () => {
+    // Un `limit` est exact, là où les nombres par filtre sont des ordres de
+    // grandeur relevés sur une instance.
+    const estime = taille({ filter: 'all' });
+    const borne = taille({ filter: 'all', limit: 3 });
+    expect(borne).toBeLessThan(estime);
+  });
+
+  it('tombe au plancher quand la carte ne rend qu’une phrase', async () => {
+    // `limit: 0` ne rend que le message, le bandeau et la prochaine
+    // échéance : trois unités, pas trente.
+    expect(taille({ limit: 0 })).toBe(3);
+  });
+
+  it('annonce moins haut quand l’énoncé est replié', async () => {
+    const deplie = taille({ filter: 'todo' });
+    const replie = taille({ filter: 'todo', max_lines: 2 });
+    expect(replie).toBeLessThan(deplie);
+  });
+
+  it('ne s’annonce JAMAIS plus haut replié que déplié', async () => {
+    // Le piège de la formule : un `max_lines` généreux ne doit pas faire
+    // gonfler l'estimation au-delà du cas sans repli, puisque replier ne
+    // peut que raccourcir.
+    const deplie = taille({ filter: 'todo' });
+    for (const max_lines of [2, 3, 5, 12, 20]) {
+      expect(taille({ filter: 'todo', max_lines })).toBeLessThanOrEqual(deplie);
+    }
+  });
+
+  // --- 7. l'enonce se replie, et seulement quand il depasse. ---
+
+  it('n’emballe rien sans l’option : les configurations existantes ne bougent pas', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: unDevoir(ENONCE_LONG) }, '1')
+    );
+    expect(details(el)).toBeNull();
+    // Appariement positif : l'énoncé entier est bien rendu, en clair.
+    expect(text(el)).toContain(ENONCE_LONG);
+  });
+
+  it('replie un énoncé qui dépasse, et lui transmet le nombre de lignes', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 2 },
+      hw({ items: unDevoir(ENONCE_LONG) }, '1')
+    );
+    const d = details(el);
+    expect(d).not.toBeNull();
+    expect(d?.getAttribute('style')?.trim()).toBe('--pronote-max-lines: 2');
+    // Le repli est fermé au départ : c'est lui qui raccourcit la carte.
+    expect(d?.hasAttribute('open')).toBe(false);
+  });
+
+  it('garde le texte ENTIER dans le DOM pendant qu’il est replié', async () => {
+    // Le point qui rend le dispositif acceptable : un lecteur d'écran et une
+    // recherche dans la page trouvent tout. Seule la peinture est coupée.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 2 },
+      hw({ items: unDevoir(ENONCE_LONG) }, '1')
+    );
+    const corps = el.shadowRoot?.querySelector('.enonce > .enonce-tete > .enonce-corps');
+    expect(corps?.textContent).toBe(ENONCE_LONG);
+  });
+
+  it('laisse en clair un énoncé qui tient déjà dans les lignes demandées', async () => {
+    // L'honnêteté du dispositif : un bloc dépliable sans rien dedans
+    // s'annonce à un lecteur d'écran comme du contenu caché, et il irait
+    // chercher ce qui n'existe pas.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 3 },
+      hw({ items: unDevoir(ENONCE_COURT) }, '1')
+    );
+    expect(details(el)).toBeNull();
+    expect(text(el)).toContain(ENONCE_COURT);
+  });
+
+  it('compte les retours à la ligne, pas seulement les caractères', async () => {
+    // La forme la plus courante d'un énoncé : une liste courte sur plusieurs
+    // lignes. Soixante caractères en six lignes occupent six lignes, et un
+    // simple compte de caractères les aurait laissés dépliés.
+    const liste = [
+      'Be / Have',
+      'Il y a',
+      'Les couleurs',
+      'Les nombres',
+      'Les jours',
+      'Les mois',
+    ].join('\n');
+    expect(liste.length).toBeLessThan(80);
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 3 },
+      hw({ items: unDevoir(liste) }, '1')
+    );
+    expect(details(el)).not.toBeNull();
+  });
+
+  it('ignore une valeur qui n’est pas un nombre de lignes utilisable', async () => {
+    // Montes en parallele plutot qu'un `await` par tour : la regle de lint
+    // a raison, rien ici ne depend du tour precedent.
+    const montes = await Promise.all(
+      ['trois', null, -2, 0].map((max_lines) =>
+        mountCard(
+          'pronote-ng-devoirs',
+          { device_id: 'dev_enfant', max_lines },
+          hw({ items: unDevoir(ENONCE_LONG) }, '1')
+        )
+      )
+    );
+    for (const el of montes) {
+      expect(details(el)).toBeNull();
+      expect(text(el)).toContain(ENONCE_LONG);
+    }
+  });
+
+  it('tronque une valeur fractionnaire au lieu de la transmettre telle quelle', async () => {
+    // Une fraction dans `-webkit-line-clamp` n'a pas de sens, et le champ
+    // vient d'un YAML écrit à la main.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 2.9 },
+      hw({ items: unDevoir(ENONCE_LONG) }, '1')
+    );
+    // Égalité EXACTE, pas `toContain` : la première version de ce test
+    // cherchait « 2 » dans l'attribut, et « 2.9 » le contient. Mesuré en
+    // retirant le `Math.trunc` : le test passait quand même, donc il ne
+    // mesurait rien.
+    expect(details(el)?.getAttribute('style')?.trim()).toBe('--pronote-max-lines: 2');
+  });
+
+  it('replie chaque devoir séparément, selon SA longueur', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 2 },
+      hw(
+        {
+          items: [
+            { id: 'h1', subject: 'Maths', description_text: ENONCE_LONG, due: '2099-01-01' },
+            { id: 'h2', subject: 'Anglais', description_text: ENONCE_COURT, due: '2099-01-01' },
+          ],
+        },
+        '2'
+      )
+    );
+    // Un seul repli pour deux devoirs.
+    expect(el.shadowRoot?.querySelectorAll('details.enonce').length).toBe(1);
+    // Et les deux énoncés sont là.
+    expect(text(el)).toContain(ENONCE_LONG);
+    expect(text(el)).toContain(ENONCE_COURT);
+  });
+});
+
+describe('carte devoirs — le compte des retards et les pièces jointes', () => {
+  /**
+   * Deux informations que l'intégration publiait et que la carte jetait.
+   * Trouvées en listant les attributs réels plutôt qu'en relisant la carte :
+   * `count` sur le capteur de retard, `attachments` sur chaque devoir.
+   */
+
+  // --- 5. le bandeau dit COMBIEN. ---
+
+  it('annonce le nombre de devoirs en retard au lieu du seul mot', async () => {
+    // Mesuré le 10 septembre 2026 : l'intégration publiait quatre, la carte
+    // n'affichait que « en retard ». Le chiffre est le seul élément qui dise
+    // s'il faut s'en occuper ce soir.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      avecCapteurRetard({ count: 4 })
+    );
+    expect(pastilles(el)).toEqual(['4 en retard']);
+  });
+
+  it('compte au singulier sans changer de forme', async () => {
+    // Les quatre traductions emploient une locution invariable exprès : une
+    // seule forme doit servir tous les comptes.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      avecCapteurRetard({ count: 1 })
+    );
+    expect(pastilles(el)).toEqual(['1 en retard']);
+  });
+
+  it('retombe sur le libellé nu quand l’intégration ne publie pas le compte', async () => {
+    // Une intégration antérieure à l'attribut ne doit pas perdre le bandeau.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      avecCapteurRetard({})
+    );
+    expect(pastilles(el)).toEqual(['en retard']);
+  });
+
+  it('n’écrit jamais « 0 en retard » sur un bandeau rouge', async () => {
+    // Un zéro publié pendant que l'état vaut `on` est une contradiction de
+    // l'intégration. La carte n'a pas à la répéter : elle montre le bandeau,
+    // qui suit l'état, sans le chiffre qui le démentirait.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      avecCapteurRetard({ count: 0 })
+    );
+    expect(pastilles(el)).toEqual(['en retard']);
+    expect(text(el)).not.toContain('0 en retard');
+  });
+
+  it('ignore un compte qui n’est pas un nombre', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      avecCapteurRetard({ count: 'quatre' })
+    );
+    expect(pastilles(el)).toEqual(['en retard']);
+  });
+
+  it('laisse la pastille de LIGNE sans compte : le chiffre est au bandeau', async () => {
+    // Le discriminant. « 4 en retard » sur la ligne d'un devoir dirait que
+    // CE devoir est en retard de quatre, ce qui ne veut rien dire. Le compte
+    // porte sur l'élève, la pastille de ligne sur la date du devoir.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      avecCapteurRetard({ count: 4 }, [
+        { id: 'h1', subject: 'Maths', description_text: 'Passé', due: '2020-01-01', done: false },
+      ])
+    );
+    // Deux pastilles : le bandeau chiffré, puis la ligne au libellé nu.
+    expect(pastilles(el)).toEqual(['4 en retard', 'en retard']);
+  });
+
+  // --- 6. les pieces jointes existent enfin. ---
+
+  const DEUX_PIECES = [
+    {
+      id: 'h1',
+      subject: 'Maths',
+      description_text: 'Exercices 4 à 7.',
+      due: '2099-01-01',
+      attachments: ['fiche-revision.pdf', 'schema.png'],
+    },
+  ];
+
+  it('nomme les pièces jointes d’un devoir', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: DEUX_PIECES }, '1')
+    );
+    const ligne = piecesJointes(el);
+    expect(ligne).not.toBeNull();
+    expect(ligne?.textContent).toContain('Pièces jointes');
+    expect(ligne?.textContent).toContain('fiche-revision.pdf');
+    expect(ligne?.textContent).toContain('schema.png');
+  });
+
+  it('accorde le libellé au nombre de pièces', async () => {
+    const une = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: [{ ...DEUX_PIECES[0], attachments: ['fiche-revision.pdf'] }] }, '1')
+    );
+    expect(piecesJointes(une)?.textContent).toContain('Pièce jointe');
+    expect(piecesJointes(une)?.textContent).not.toContain('Pièces jointes');
+  });
+
+  it('n’affiche aucune ligne quand le devoir n’a pas de pièce', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: [
+            { id: 'h1', subject: 'Maths', description_text: 'Sans pièce', due: '2099-01-01' },
+          ],
+        },
+        '1'
+      )
+    );
+    expect(piecesJointes(el)).toBeNull();
+    // Appariement positif : la ligne du devoir est bien rendue.
+    expect(text(el)).toContain('Sans pièce');
+  });
+
+  it('écarte ce qui n’est pas un nom utilisable', async () => {
+    // Une version future qui passerait à des objets ferait sinon afficher
+    // « [object Object] », et une chaîne vide un séparateur solitaire.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        { items: [{ ...DEUX_PIECES[0], attachments: [{ url: 'x' }, '', '   ', 'vrai.pdf'] }] },
+        '1'
+      )
+    );
+    const ligne = piecesJointes(el);
+    expect(ligne?.textContent).toContain('vrai.pdf');
+    expect(ligne?.textContent).not.toContain('object');
+    // Une seule pièce retenue, donc le singulier.
+    expect(ligne?.textContent).toContain('Pièce jointe');
+  });
+
+  it('n’affiche pas de ligne quand aucune pièce n’est utilisable', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: [{ ...DEUX_PIECES[0], attachments: [{ url: 'x' }, ''] }] }, '1')
+    );
+    expect(piecesJointes(el)).toBeNull();
+    expect(text(el)).toContain('Exercices 4 à 7.');
+  });
+
+  it('se tait quand show_attachments vaut faux', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', show_attachments: false },
+      hw({ items: DEUX_PIECES }, '1')
+    );
+    expect(piecesJointes(el)).toBeNull();
+    expect(text(el)).not.toContain('fiche-revision.pdf');
+    // Appariement positif : le devoir est toujours là.
+    expect(text(el)).toContain('Exercices 4 à 7.');
+  });
+
+  it('garde les pièces jointes VISIBLES quand l’énoncé est replié', async () => {
+    // C'est justement le devoir dont on ne lira que les trois premières
+    // lignes : s'il porte un document, il doit continuer à le dire. La ligne
+    // vit donc hors du bloc dépliable.
+    const long = 'Exercices 12 à 18 page 132, puis relire le chapitre entier et préparer '.repeat(
+      3
+    );
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', max_lines: 2 },
+      hw({ items: [{ ...DEUX_PIECES[0], description_text: long }] }, '1')
+    );
+    expect(details(el)).not.toBeNull();
+    const ligne = piecesJointes(el);
+    expect(ligne).not.toBeNull();
+    // Hors du bloc repliable, et non dedans.
+    expect(details(el)?.contains(ligne)).toBe(false);
+  });
+
+  it('rend la ligne même quand le devoir n’a pas d’énoncé', async () => {
+    // `listRow` teste la présence de `secondary` : un devoir sans énoncé
+    // mais avec une pièce ne doit pas la perdre au passage.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        { items: [{ id: 'h1', subject: 'Maths', due: '2099-01-01', attachments: ['seule.pdf'] }] },
+        '1'
+      )
+    );
+    expect(piecesJointes(el)?.textContent).toContain('seule.pdf');
+  });
+
+  it('ne fait de la pièce jointe ni un lien ni rien de cliquable', async () => {
+    // La carte ne peut pas ouvrir un document : il faudrait un appel de
+    // service, interdit au rendu. Un nom souligné inviterait à cliquer sur
+    // ce qui ne répond pas.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: DEUX_PIECES }, '1')
+    );
+    const ligne = piecesJointes(el);
+    expect(ligne?.querySelectorAll('a, button').length).toBe(0);
+    expect(ligne?.textContent).toContain('fiche-revision.pdf');
   });
 });

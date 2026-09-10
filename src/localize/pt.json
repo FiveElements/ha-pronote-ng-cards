@@ -65,6 +65,7 @@
     "empty_tomorrow": "Nada a entregar amanhã.",
     "empty_all": "Nenhum trabalho de casa previsto.",
     "overdue": "em atraso",
+    "overdue_count": "{count} em atraso",
     "due": "para o dia {date}",
     "filter": "Trabalhos apresentados",
     "filter_todo": "Por fazer",
@@ -75,6 +76,11 @@
     "group_subject": "Disciplina",
     "limit": "Número máximo",
     "limit_zero": "Nenhum trabalho de casa mostrado: a opção de limite está a zero. Remova-a, ou dê-lhe um número.",
+    "max_lines": "Linhas de enunciado antes de dobrar",
+    "max_lines_helper": "Vazio: o enunciado é mostrado por completo. Caso contrário, é dobrado neste número de linhas, com reticências, e um clique desdobra-o. O texto nunca se perde.",
+    "attachments_one": "Anexo:",
+    "attachments_many": "Anexos:",
+    "show_attachments": "Mostrar os anexos",
     "next_due": "Próxima entrega"
   },
   "notes": {

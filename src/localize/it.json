@@ -65,6 +65,7 @@
     "empty_tomorrow": "Niente da consegnare domani.",
     "empty_all": "Nessun compito in programma.",
     "overdue": "in ritardo",
+    "overdue_count": "{count} in ritardo",
     "due": "per il {date}",
     "filter": "Compiti visualizzati",
     "filter_todo": "Da fare",
@@ -75,6 +76,11 @@
     "group_subject": "Materia",
     "limit": "Numero massimo",
     "limit_zero": "Nessun compito mostrato: l'opzione del limite è a zero. La rimuova, o le dia un numero.",
+    "max_lines": "Righe di testo prima della piegatura",
+    "max_lines_helper": "Vuoto: il testo viene mostrato per intero. Altrimenti viene piegato a questo numero di righe, con i puntini di sospensione, e un clic lo dispiega. Il testo non va mai perso.",
+    "attachments_one": "Allegato:",
+    "attachments_many": "Allegati:",
+    "show_attachments": "Mostrare gli allegati",
     "next_due": "Prossima scadenza"
   },
   "notes": {

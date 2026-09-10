@@ -65,6 +65,7 @@
     "empty_tomorrow": "Rien à rendre demain.",
     "empty_all": "Aucun devoir sur l'horizon.",
     "overdue": "en retard",
+    "overdue_count": "{count} en retard",
     "due": "pour le {date}",
     "filter": "Devoirs affichés",
     "filter_todo": "À faire",
@@ -75,6 +76,11 @@
     "group_subject": "Matière",
     "limit": "Nombre maximum",
     "limit_zero": "Aucun devoir affiché : l'option de limite est à zéro. Retirez-la, ou donnez-lui un nombre.",
+    "max_lines": "Lignes d'énoncé avant repli",
+    "max_lines_helper": "Vide : l'énoncé entier s'affiche. Sinon il est replié à ce nombre de lignes, avec des points de suspension, et un clic le déplie. Le texte n'est jamais perdu.",
+    "attachments_one": "Pièce jointe :",
+    "attachments_many": "Pièces jointes :",
+    "show_attachments": "Afficher les pièces jointes",
     "next_due": "Prochaine échéance"
   },
   "notes": {

@@ -33,6 +33,48 @@ interface Config extends PronoteCardConfig {
    * coloration syntaxique de Home Assistant.
    */
   subject_colors?: Record<string, string>;
+  /**
+   * Nombre de lignes d'énoncé avant repli. Absente ou zéro : aucun repli.
+   *
+   * L'énoncé est le **contenu** de cette carte, pas sa décoration : le
+   * tronquer par défaut cacherait la moitié d'un devoir à quelqu'un qui ne
+   * sait pas qu'il y a une moitié cachée. D'où une option, et non un
+   * comportement.
+   *
+   * Ce qui la rend acceptable est que le repli **se signale tout seul** :
+   * `-webkit-line-clamp` peint des points de suspension, et seulement quand
+   * le texte déborde réellement. Le bloc est un `details` : le lecteur le
+   * déplie d'un clic ou d'une touche, et le texte entier reste dans le DOM
+   * pendant qu'il est replié.
+   *
+   * Mesuré le 10 septembre 2026 sur une instance : les énoncés vont jusqu'à
+   * 313 caractères, un seul d'entre eux occupait 161 pixels, et la carte
+   * atteignait 1 376 pixels pour quinze devoirs. C'est ce qui a motivé
+   * l'option, et c'est aussi ce que `size` doit avouer.
+   */
+  max_lines?: number;
+  /**
+   * Afficher les pièces jointes d'un devoir. Vrai par défaut.
+   *
+   * L'intégration publie `attachments` sur chaque devoir, et la carte l'a
+   * ignoré pendant onze versions. Mesuré le 10 septembre 2026 : douze pièces
+   * réparties sur neuf devoirs des vingt, deux au plus par devoir, des
+   * chaînes de treize à trente-neuf caractères dont huit portent une
+   * extension de fichier. Un devoir qui demande d'ouvrir un document ne le
+   * disait donc pas.
+   *
+   * Ce sont des **noms**, pas des liens, et la carte les rend en texte. Elle
+   * ne peut pas les ouvrir de toute façon : il faudrait un appel de service,
+   * que le projet interdit au rendu et que le type refuse à la compilation.
+   *
+   * Si une version future publiait des adresses, elles ne devraient pas pour
+   * autant devenir des liens sans qu'on ait d'abord établi ce qu'elles
+   * donnent à qui les suit. Aucune de celles mesurées n'en contenait, et la
+   * prudence par défaut est celle qui s'applique à l'URL iCal : une adresse
+   * qui ouvre le dossier d'un élève sans demander d'identifiant se traite
+   * comme un mot de passe.
+   */
+  show_attachments?: boolean;
 }
 
 interface Homework {
@@ -57,6 +99,16 @@ interface Homework {
    * `subjectColor` avant d'atteindre un attribut `style`.
    */
   background_color?: unknown;
+  /**
+   * Les pièces jointes du devoir, telles que l'intégration les publie.
+   *
+   * `unknown` et non `string[]` : mesurées comme des chaînes le 10 septembre
+   * 2026 — douze pièces, aucune vide, aucune adresse — mais rien ne l'impose
+   * à l'exécution, et `FORMES.md` retient la leçon inverse : trois des
+   * défauts les plus coûteux de ce dépôt viennent d'une forme supposée.
+   * `attachmentsOf` filtre, plutôt que le type promettre.
+   */
+  attachments?: unknown;
 }
 
 const TODO: EntityKey = 'sensor:homework_todo';
@@ -134,6 +186,62 @@ const isOverdue = (h: Homework, timeZone: string): boolean => {
 const truncate = <T>(items: T[], limit: number | undefined): T[] =>
   limit === undefined || limit < 0 ? items : items.slice(0, limit);
 
+/**
+ * Largeur supposée d'une ligne d'énoncé, en caractères.
+ *
+ * Volontairement **généreuse**. Mesuré dans le navigateur : une carte de 380
+ * pixels tient environ 66 caractères par ligne à la taille de l'énoncé. En
+ * comptant 80, l'estimation ci-dessous sous-évalue le nombre de lignes, donc
+ * la carte replie **moins** souvent qu'il ne faudrait.
+ *
+ * C'est le sens sûr de l'erreur, et c'est pour ça que le chiffre est haut :
+ * ne pas replier un énoncé qui aurait pu l'être rend la carte plus haute,
+ * ce qui se voit et ne trompe personne. Replier un énoncé qui tenait
+ * déjà poserait un bloc dépliable sans rien dedans — annoncé comme tel à
+ * un lecteur d'écran, qui irait chercher un contenu inexistant.
+ *
+ * Aucune mesure du DOM ici, et c'est délibéré : la largeur réelle n'existe
+ * qu'après rendu, et la lire déclencherait un rendu supplémentaire à chaque
+ * évènement de la maison, multiplié par le nombre de devoirs.
+ */
+const CHARS_PAR_LIGNE = 80;
+
+/**
+ * Le nombre de lignes qu'un énoncé occupera, au plus bas.
+ *
+ * Les retours à la ligne comptent : `plainText` en pose de vrais, et
+ * `white-space: pre-line` les rend. Un énoncé de cent caractères sur six
+ * lignes occupe six lignes, pas deux — un simple compte de caractères
+ * l'aurait manqué, et c'est la forme la plus courante d'un énoncé en liste.
+ */
+const lignesEstimees = (texte: string): number =>
+  texte
+    .split('\n')
+    .reduce((total, ligne) => total + Math.max(1, Math.ceil(ligne.length / CHARS_PAR_LIGNE)), 0);
+
+/**
+ * Les pièces jointes utilisables d'un devoir, débarrassées du reste.
+ *
+ * Mesurées comme des chaînes, mais rien ne le garantit à l'exécution : une
+ * version de l'intégration qui passerait à des objets ferait sinon rendre
+ * « [object Object] » à la carte. Tout ce qui n'est pas une chaîne non vide
+ * est écarté, et une liste qui n'en contient aucune n'affiche pas de ligne
+ * — pas de ligne vide annonçant des pièces absentes.
+ */
+const attachmentsOf = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value
+        .filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+        .map((item) => item.trim())
+    : [];
+
+/** `max_lines`, en entier positif, ou zéro pour « pas de repli ». */
+const maxLinesOf = (value: unknown): number => {
+  const lines = typeof value === 'string' ? Number(value.trim()) : value;
+  if (typeof lines !== 'number' || !Number.isFinite(lines)) return 0;
+  return Math.max(0, Math.trunc(lines));
+};
+
 interface Group {
   label: string;
   items: Homework[];
@@ -176,7 +284,58 @@ export const SPEC: CardSpec<Config> = {
   description: 'Les devoirs à faire, avec échéance et matière.',
   key: 'devoirs',
   scope: 'child',
-  size: 5,
+  /**
+   * La hauteur annoncée à Home Assistant, qui s'en sert pour équilibrer les
+   * colonnes d'une vue en maconnerie.
+   *
+   * Elle valait **5** — soit environ 250 pixels — pour une carte mesurée le
+   * 10 septembre 2026 à **1 376 pixels** avec le filtre « à faire » et
+   * **1 647** avec « tous ». Un facteur cinq, et le plus large écart du
+   * dépôt : c'est la carte la plus haute des onze, et elle s'annonçait
+   * comme l'une des plus courtes.
+   *
+   * Ce que cette fonction ne peut pas faire, et qu'il faut savoir avant de
+   * chercher à l'affiner : la hauteur dépend surtout de la LONGUEUR des
+   * énoncés, qui est une donnée et non une configuration. `size` ne reçoit
+   * que la configuration. Les nombres par filtre ci-dessous sont donc des
+   * ordres de grandeur relevés sur une instance, pas des vérités : six
+   * devoirs pour « demain », quinze à faire, vingt en tout. Un `limit`
+   * explicite, lui, est exact et le remplace.
+   *
+   * Rester approximatif et honnête vaut mieux que précis et faux : Home
+   * Assistant n'a besoin que d'un classement entre cartes.
+   */
+  size: (c: Config) => {
+    const devoirs =
+      c.limit !== undefined && c.limit >= 0
+        ? c.limit
+        : c.filter === 'tomorrow'
+          ? 6
+          : c.filter === 'all'
+            ? 20
+            : 15;
+    /**
+     * Le coût d'un devoir, en **centièmes** d'unité.
+     *
+     * Déplié : près de deux unités, soit environ 32 pixels de cadre et de
+     * titre plus dix-sept par ligne d'énoncé, pour une moyenne mesurée à
+     * deux lignes et huit. Replié : ce que ses lignes coûtent, et jamais
+     * plus que déplié — replier ne peut que raccourcir.
+     *
+     * En entiers, et pas en décimaux, parce que la première version l'était
+     * et que ça se voyait : `0.65 + 3 * 0.35` vaut 1.6999999999999997,
+     * donc quinze devoirs donnaient 27.499999999999996 et `Math.round`
+     * rendait **27** là où l'arithmétique exacte dit 27,5 et donc 28. Un
+     * écart d'une unité sans importance en soi, mais qui rendait le résultat
+     * dépendant de l'erreur de représentation : impossible à prédire de
+     * tête, donc impossible à documenter juste. Une session voisine l'a
+     * d'ailleurs calculé à 28 pour sa page, de bonne foi.
+     */
+    const maxLines = maxLinesOf(c.max_lines);
+    const parDevoir = maxLines > 0 ? Math.min(190, 65 + maxLines * 35) : 190;
+    // Le plancher de trois couvre `limit: 0`, qui ne rend qu'une phrase.
+    return Math.max(3, Math.round((200 + devoirs * parDevoir) / 100));
+  },
   stub: { filter: 'todo', group_by: 'date' },
   requires: (c) => [keyFor(c)],
   optional: () => [OVERDUE, TODO_LIST, CALENDAR],
@@ -207,6 +366,12 @@ export const SPEC: CardSpec<Config> = {
       },
     },
     { name: 'limit', selector: { number: { min: 1, max: 50, mode: 'box' } } },
+    // Une borne basse à 2 : replier à une seule ligne ne laisse pas assez
+    // d'énoncé pour reconnaître le devoir. Le zéro du YAML reste accepté par
+    // `maxLinesOf` et vaut « pas de repli », mais le formulaire ne le
+    // propose pas : il a un interrupteur pour ça, l'option vide.
+    { name: 'max_lines', selector: { number: { min: 2, max: 20, step: 1, mode: 'box' } } },
+    { name: 'show_attachments', selector: { boolean: {} } },
   ],
   render(ctx: RenderCtx<Config>) {
     const key = keyFor(ctx.config);
@@ -252,6 +417,7 @@ export const SPEC: CardSpec<Config> = {
       return html`${nextDue}${emptyState(ctx.t(emptyFor(ctx.config)))}`;
     }
 
+    const maxLines = maxLinesOf(ctx.config.max_lines);
     const by = ctx.config.group_by ?? 'date';
     const sorted = sortedBy(raw, (a, b) =>
       by === 'subject'
@@ -263,11 +429,37 @@ export const SPEC: CardSpec<Config> = {
     const limited = truncate(sorted, ctx.config.limit);
 
     const overdueOn = ctx.entity(OVERDUE)?.state === 'on';
+    /**
+     * Le nombre de devoirs en retard, que l'intégration publie et que cette
+     * carte jetait.
+     *
+     * « en retard » tout court laissait le lecteur sans le seul chiffre qui
+     * dise s'il faut s'en occuper ce soir. Il compte d'autant plus avec le
+     * filtre « pour demain » : le bandeau est alors le seul endroit d'où
+     * l'information arrive, aucune ligne visible ne portant de retard.
+     *
+     * Le repli sur le libellé nu couvre une intégration antérieure à
+     * l'attribut. La condition porte sur « strictement positif » et non sur
+     * « présent » : un zéro publié pendant que l'état vaut `on` est une
+     * contradiction de l'intégration, et « 0 en retard » sur un bandeau
+     * rouge serait la façon la plus sûre de la rendre illisible.
+     *
+     * Les quatre traductions emploient une locution **invariable** — « en
+     * retard », « con retraso », « in ritardo », « em atraso » — pour
+     * qu'une seule forme serve tous les comptes. L'espagnol l'imposait :
+     * l'adjectif du libellé nu, « atrasado », s'accorde, donc ni le
+     * singulier ni le pluriel n'aurait convenu aux deux.
+     */
+    const overdueCount = ctx.attr<number>(OVERDUE, 'count');
+    const overdueLabel =
+      typeof overdueCount === 'number' && Number.isFinite(overdueCount) && overdueCount > 0
+        ? ctx.t('devoirs.overdue_count', { count: overdueCount })
+        : ctx.t('devoirs.overdue');
     // Passe par `listRow` plutôt que par un `div` de classe `row` écrit ici :
     // la bannière doit réserver la gouttière comme les lignes de devoir, et
     // `listRow` est le seul endroit qui sache la poser.
     const overdueBanner = overdueOn
-      ? listRow({ primary: chip(ctx.t('devoirs.overdue'), 'problem'), accent: null })
+      ? listRow({ primary: chip(overdueLabel, 'problem'), accent: null })
       : '';
 
     /**
@@ -328,6 +520,40 @@ export const SPEC: CardSpec<Config> = {
       // ses trois valeurs, et la règle `.row.empile` de `styles.ts` pour les
       // deux dispositifs que ce placement a annulés.
       const accent = subjectAccent(h.background_color, h.subject, ctx.config.subject_colors);
+      const enonce = h.description_text ?? plainText(h.description);
+      const replie = maxLines > 0 && lignesEstimees(enonce) > maxLines;
+      const pieces = attachmentsOf(h.attachments);
+      const piecesOn = ctx.config.show_attachments !== false && pieces.length > 0;
+      const enonceRendu = replie
+        ? html`<details class="enonce" style="--pronote-max-lines: ${maxLines}">
+            <summary class="enonce-tete"><span class="enonce-corps">${enonce}</span></summary>
+          </details>`
+        : enonce;
+      /**
+       * L'énoncé, puis les pièces jointes — **hors** du bloc repliable.
+       *
+       * Un devoir dont l'énoncé est replié doit continuer à dire qu'il porte
+       * un document : c'est justement le devoir dont on risque de ne lire que
+       * les trois premières lignes.
+       *
+       * `undefined` quand il n'y a ni énoncé ni pièce : `listRow` teste la
+       * présence de `secondary`, et un gabarit est toujours vrai.
+       */
+      const secondary =
+        enonce === '' && !piecesOn
+          ? undefined
+          : html`${enonceRendu}${
+              piecesOn
+                ? html`<span class="devoirs-pieces"
+                    >${
+                      pieces.length === 1
+                        ? ctx.t('devoirs.attachments_one')
+                        : ctx.t('devoirs.attachments_many')
+                    }
+                    ${pieces.join(' · ')}</span
+                  >`
+                : ''
+            }`;
       return html`
         ${listRow({
           // La matière TITRE le bloc, elle n'occupe plus une colonne à sa
@@ -352,8 +578,9 @@ export const SPEC: CardSpec<Config> = {
             ${h.subject ?? ctx.t('devoirs.name')}
           `,
           // Le texte simple publié par l'intégration s'il existe, sinon
-          // l'énoncé HTML dévêtu ici — jamais injecté.
-          secondary: h.description_text ?? plainText(h.description),
+          // l'énoncé HTML dévêtu ici — jamais injecté. Replié seulement s'il
+          // dépasse vraiment, et suivi de ses pièces jointes : voir plus haut.
+          secondary,
           // `undefined` et non un gabarit vide : `listRow` teste la
           // présence de `trailing`, et un `TemplateResult` est toujours vrai
           // — groupé par échéance, chaque ligne sans retard aurait donc posé
