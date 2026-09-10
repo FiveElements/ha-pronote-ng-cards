@@ -62,6 +62,30 @@ export const SPEC: CardSpec<Config> = {
     // « Nominal » pour un état que la carte n'a en réalité pas pu lire.
     const state = ctx.entity(STATE)!.state;
     const until = ctx.attr<string>(STATE, 'until');
+    // **Les six libellés sont ceux de l'entité, pas ceux de la carte.** Trois
+    // divergeaient jusqu'au 10 septembre 2026 : `backoff` se lisait ici
+    // « En retrait » quand l'intégration dit « Temporisation »,
+    // `credentials_hold` « Identifiants en attente » pour « Connexions
+    // suspendues », `bootstrap_failed` « Démarrage en échec » pour « Page de
+    // session illisible ».
+    //
+    // Deux de ces trois étaient des contresens, et le pire est
+    // `credentials_hold` : « en attente » se lit « on attend que vous
+    // saisissiez vos identifiants », alors que le sens est l'inverse —
+    // l'intégration a suspendu d'elle-même toute tentative après trois refus
+    // dans l'heure. Le libellé poussait donc à ressaisir le mot de passe,
+    // c'est-à-dire au geste exact que la pause existe pour empêcher, là où
+    // PRONOTE sanctionne l'adresse IP.
+    //
+    // La règle qui en sort et qui vaut pour toute valeur d'énumération :
+    // **l'historique, le journal de bord et la boîte de dialogue d'entité
+    // portent le libellé de l'entité**, et ce sont les surfaces où l'on
+    // enquête après coup. Une carte est une vue de cette entité ; si elle
+    // reformule, le même incident se relit sous deux noms selon l'écran.
+    // C'est ainsi que le défaut a été trouvé — un état lu sur une carte,
+    // introuvable dans la documentation du socle. Ne renommez pas ces six
+    // chaînes sans que l'intégration bouge d'abord.
+    //
     // `localize` (via `ctx.t`) rend le chemin lui-même quand la clé manque :
     // c'est le signal du repli, jamais un texte à montrer tel quel. Un état
     // que le catalogue ne connaît pas encore (l'intégration en ajoute un avant

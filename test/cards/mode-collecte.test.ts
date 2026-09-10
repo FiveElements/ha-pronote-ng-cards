@@ -77,8 +77,17 @@ describe('carte mode de collecte — la lecture, qui marche déjà', () => {
     // chaînes dans quatre catalogues : ce sont les valeurs de l'intégration,
     // elles n'appartiennent à aucune des deux cartes. Deux états suffisent à
     // mesurer que la racine est la bonne ; six ne mesureraient rien de plus.
+    //
+    // Le libellé attendu est celui que l’INTÉGRATION donne à l’état, et pas
+    // une reformulation de carte. Trois des six divergeaient — celui-ci
+    // disait « En retrait » — et le propriétaire l’a vu de la seule façon
+    // dont ça se voit : il a lu un état sur une carte, l’a cherché dans la
+    // documentation du socle, et ne l’a pas trouvé. L’historique et la boîte
+    // de dialogue d’entité portent toujours le libellé de l’entité ; une
+    // carte qui en invente un autre rend le même incident illisible d’un
+    // écran à l’autre.
     expect(text(await monter({}, sansSelecteur('nominal')))).toContain('Nominal');
-    expect(text(await monter({}, sansSelecteur('backoff')))).toContain('En retrait');
+    expect(text(await monter({}, sansSelecteur('backoff')))).toContain('Temporisation');
   });
 
   it("affiche un état que le catalogue ne connaît pas tel que l'intégration l'envoie", async () => {
