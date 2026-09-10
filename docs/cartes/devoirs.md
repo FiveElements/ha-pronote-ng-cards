@@ -23,7 +23,7 @@ group_by: date
 | Option | Défaut | Effet |
 | --- | --- | --- |
 | `filter` | `todo` | `todo` (à faire), `tomorrow` (pour demain) ou `all` (tous). Change l'entité lue. |
-| `group_by` | `date` | `date` ou `subject`. Le tri suit le regroupement. Groupé par échéance, la date titre le groupe et n'est plus répétée en fin de chaque ligne. |
+| `group_by` | `date` | `date` ou `subject`. Les devoirs sont toujours ordonnés par échéance — groupés par matière, à l'intérieur de chaque matière. Groupé par échéance, la date titre le groupe et n'est plus répétée en fin de chaque ligne. |
 | `limit` | *tout* | Nombre maximum de devoirs. Absent ou négatif : tout. `0` : rien — et la carte dit alors que la cause est l'option, non l'absence de devoirs. |
 | `max_lines` | *aucun repli* | Nombre de lignes d'énoncé avant repli. Voir [L'énoncé long](#lenonce-long-et-la-hauteur-de-la-carte). |
 | `show_attachments` | `true` | Afficher les pièces jointes d'un devoir, une pastille par pièce. Voir [Les pièces jointes](#les-pieces-jointes). |

@@ -153,6 +153,22 @@ const liensPieces = (el: HTMLElement & MountableElement): HTMLAnchorElement[] =>
     (n): n is HTMLAnchorElement => n instanceof HTMLAnchorElement
   );
 
+/** Les échéances rendues, groupées sous leur intitulé de matière. */
+  const parGroupe = (el: HTMLElement & MountableElement): { titre: string; jours: string[] }[] => {
+    const out: { titre: string; jours: string[] }[] = [];
+    for (const n of Array.from(el.shadowRoot?.querySelectorAll('.title, .row') ?? [])) {
+      if (n.classList.contains('title')) {
+        out.push({ titre: (n.textContent ?? '').trim(), jours: [] });
+        continue;
+      }
+      const groupe = out[out.length - 1];
+      if (!groupe) continue;
+      const fin = n.querySelector('.trailing');
+      groupe.jours.push((fin?.textContent ?? '').replace(/\s+/g, ' ').trim());
+    }
+    return out;
+  };
+
 /** Un devoir dont on choisit les DEUX listes : les noms, et les ouvrables. */
 const devoirDeuxListes = (attachments: unknown[], attachment_links: unknown[]) => [
   {
@@ -1733,5 +1749,130 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
     );
     expect(elementsPieces(el).length).toBe(2);
     expect(liensPieces(el).length).toBe(2);
+  });
+});
+
+describe('carte devoirs — l’ordre à l’intérieur d’un groupe de matière', () => {
+  /**
+   * Groupée par matière, la carte ne triait que sur la matière : à matière
+   * égale l'ordre restait celui de l'intégration. Mesuré le 10 septembre 2026
+   * sur une instance — dans un groupe de six lignes, les échéances sortaient
+   * 4, 7, 8, **21**, 11, 11 septembre.
+   *
+   * Or c'est le seul mode où la ligne porte sa date, donc le seul où l'ordre
+   * chronologique porte de l'information : on ouvre un groupe de matière pour
+   * savoir ce qui tombe d'abord.
+   *
+   * Les fixtures ci-dessous sont **anti-chronologiques à dessein**. Le test
+   * qui existait avant ne voyait rien parce que la sienne était déjà dans
+   * l'ordre par coïncidence : inverser ses deux dates ne faisait rien tomber.
+   * Une fixture qui se trouve juste ne prouve pas que le code trie.
+   */
+
+  it('trie par échéance à l’intérieur de chaque matière', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', group_by: 'subject' },
+      hw({
+        items: [
+          { id: 'h1', subject: 'Maths', description: 'A', due: '2026-09-21' },
+          { id: 'h2', subject: 'Anglais', description: 'B', due: '2026-09-12' },
+          { id: 'h3', subject: 'Maths', description: 'C', due: '2026-09-11' },
+          { id: 'h4', subject: 'Maths', description: 'D', due: '2026-09-14' },
+        ],
+      })
+    );
+    const groupes = parGroupe(el);
+    expect(groupes.map((g) => g.titre)).toEqual(['Anglais', 'Maths']);
+    // Le groupe Maths : 11, 14, 21 — et non 21, 11, 14 comme l'intégration
+    // les envoie.
+    const maths = groupes.find((g) => g.titre === 'Maths');
+    expect(maths?.jours).toEqual([
+      'pour le vendredi 11 septembre',
+      'pour le lundi 14 septembre',
+      'pour le lundi 21 septembre',
+    ]);
+  });
+
+  it('place un devoir sans échéance en dernier dans sa matière', async () => {
+    /**
+     * `Infinity` et non zéro : un devoir sans échéance n'est pas un devoir dû
+     * au premier janvier 1970. Avec zéro il ouvrirait chaque groupe, ce qui
+     * est exactement l'inverse de ce qu'on veut voir en premier.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', group_by: 'subject' },
+      hw({
+        items: [
+          { id: 'h1', subject: 'Maths', description: 'Sans échéance' },
+          { id: 'h2', subject: 'Maths', description: 'Avec', due: '2026-09-11' },
+        ],
+      })
+    );
+    const enonces = Array.from(el.shadowRoot?.querySelectorAll('.row .secondary') ?? []).map(
+      (n) => (n.textContent ?? '').trim()
+    );
+    expect(enonces).toEqual(['Avec', 'Sans échéance']);
+  });
+
+  it('range les matières selon la langue de l’instance, pas celle du navigateur', async () => {
+    /**
+     * `localeCompare` sans argument prend la langue du **moteur** — mesuré à
+     * `fr-FR` sur l'instance — donc l'ordre dépendait du réglage de chaque
+     * visiteur, et deux habitants de la maison pouvaient voir deux ordres.
+     *
+     * Le suédois sert de témoin **parce qu'il range autrement** : A-rond et
+     * O-tréma s'y placent après le z. Mesuré : en français
+     * Åke/Anglais/Örjan/Zoologie, en suédois Anglais/Zoologie/Åke/Örjan.
+     *
+     * C'est ce qui rend ce test contrefactuel : retirer l'argument de langue
+     * rend l'ordre français et le fait tomber. Une langue dont la collation
+     * coïncide avec celle du moteur n'aurait rien prouvé — c'est l'erreur que
+     * j'ai commise en prenant le suédois sur des chaînes où les deux ordres
+     * étaient identiques.
+     */
+    const matieres = [
+      { id: 'h1', subject: 'Åke', description: 'A', due: '2026-09-11' },
+      { id: 'h2', subject: 'Zoologie', description: 'B', due: '2026-09-11' },
+      { id: 'h3', subject: 'Örjan', description: 'C', due: '2026-09-11' },
+      { id: 'h4', subject: 'Anglais', description: 'D', due: '2026-09-11' },
+    ];
+    const suedois = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', group_by: 'subject' },
+      makeHass(
+        [
+          {
+            key: 'sensor:homework_todo',
+            entity_id: 'sensor.abc_devoirs_a_faire',
+            device: 'dev_enfant',
+            state: '4',
+            attributes: { items: matieres },
+          },
+        ],
+        'sv'
+      )
+    );
+    expect(parGroupe(suedois).map((g) => g.titre)).toEqual([
+      'Anglais',
+      'Zoologie',
+      'Åke',
+      'Örjan',
+    ]);
+
+    // Appariement positif : la même liste en français donne l'autre ordre,
+    // donc c'est bien la langue qui décide et non un hasard de tri.
+    const francais = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', group_by: 'subject' },
+      hw({ items: matieres }, '4')
+    );
+    expect(parGroupe(francais).map((g) => g.titre)).toEqual([
+      'Åke',
+      'Anglais',
+      'Örjan',
+      'Zoologie',
+    ]);
   });
 });

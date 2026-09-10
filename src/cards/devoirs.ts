@@ -248,6 +248,15 @@ const dayKey = (d: Date, timeZone: string): string =>
  * donc la carte et l'intégration se contredisaient sur la même page, et
  * c'est la carte qui avait tort.
  */
+/**
+ * L'échéance d'un devoir en rang de tri ; sans échéance, en dernier.
+ *
+ * `Infinity` et non zéro : un devoir sans échéance n'est pas un devoir dû au
+ * premier janvier 1970. Il passe donc après tous les autres, dans son groupe
+ * comme dans la liste entière.
+ */
+const dueOrder = (h: Homework): number => parseTimestamp(h.due)?.getTime() ?? Infinity;
+
 const isOverdue = (h: Homework, timeZone: string): boolean => {
   if (h.done === true) return false;
   const d = parseTimestamp(h.due);
@@ -677,12 +686,39 @@ export const SPEC: CardSpec<Config> = {
 
     const maxLines = maxLinesOf(ctx.config.max_lines);
     const by = ctx.config.group_by ?? 'date';
-    const sorted = sortedBy(raw, (a, b) =>
-      by === 'subject'
-        ? (a.subject ?? '').localeCompare(b.subject ?? '')
-        : (parseTimestamp(a.due)?.getTime() ?? Infinity) -
-          (parseTimestamp(b.due)?.getTime() ?? Infinity)
-    );
+    /**
+     * Groupé par matière, l'échéance départage à matière égale.
+     *
+     * Le comparateur ne portait que sur la matière, donc à matière égale
+     * l'ordre restait celui du serveur. Mesuré le 10 septembre 2026 sur une
+     * instance, `group_by: subject` : dans un groupe de six lignes, les
+     * échéances sortaient 4, 7, 8, **21**, 11, 11 septembre — le devoir du 21
+     * au-dessus de celui du 11. Dans un autre de cinq lignes, 7, 11, 7, 7, 11.
+     *
+     * Or c'est le seul mode où la ligne porte sa date, donc le seul où
+     * l'ordre chronologique dit quelque chose : on ouvre un groupe de matière
+     * pour savoir ce qui tombe d'abord. Un parent devait lire les six dates
+     * et les comparer de tête.
+     *
+     * La langue passe à `localeCompare`, et ce n'est pas décoratif. Sans
+     * argument, la méthode prend la langue du **moteur** — c'est-à-dire du
+     * navigateur, mesuré à `fr-FR` sur l'instance — et non celle de Home
+     * Assistant. L'ordre dépendait donc du réglage de chaque visiteur :
+     * mesuré, `['Åke', 'Zoologie', 'Örjan', 'Anglais']` se range
+     * Åke/Anglais/Örjan/Zoologie en français et Anglais/Zoologie/Åke/Örjan en
+     * suédois. Deux habitants de la maison voyaient deux ordres. Avec la
+     * langue de l'instance, l'ordre est une propriété de la maison.
+     *
+     * Rien à craindre pour `Intl` ici : cette même valeur alimente déjà
+     * `formatDayLabel`, donc une langue qu'`Intl` refuserait ferait tomber la
+     * carte bien avant ce tri. La valeur piégeuse du socle est
+     * `hass.locale.time_zone`, pas `hass.language`.
+     */
+    const sorted = sortedBy(raw, (a, b) => {
+      if (by !== 'subject') return dueOrder(a) - dueOrder(b);
+      const matiere = (a.subject ?? '').localeCompare(b.subject ?? '', ctx.language);
+      return matiere !== 0 ? matiere : dueOrder(a) - dueOrder(b);
+    });
 
     const limited = truncate(sorted, ctx.config.limit);
 
