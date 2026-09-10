@@ -177,8 +177,11 @@ const liensPieces = (el: HTMLElement & MountableElement): HTMLAnchorElement[] =>
       }
       const groupe = out[out.length - 1];
       if (!groupe) continue;
-      const fin = n.querySelector('.trailing');
-      groupe.jours.push((fin?.textContent ?? '').replace(/\s+/g, ' ').trim());
+      // L'échéance se lit dans `.primary` et non dans `.trailing` : groupée
+      // par matière, c'est elle qui TITRE la ligne, la matière étant déjà
+      // dans l'intertitre. La fin de ligne ne porte plus que le retard.
+      const tete = n.querySelector('.primary');
+      groupe.jours.push((tete?.textContent ?? '').replace(/\s+/g, ' ').trim());
     }
     return out;
   };
@@ -849,17 +852,64 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
     expect(text(el)).not.toContain('pour le');
   });
 
-  it('garde l’échéance en fin de ligne quand le groupe est une matière', async () => {
-    // Le contrepoids : groupée par matière, la date est la seule chose qui
-    // situe le devoir. Sans ce cas, retirer `dueLabel` partout passerait le
-    // test précédent — mesuré, il passe.
+  it('garde l’échéance quand le groupe est une matière, en TÊTE de ligne', async () => {
+    /**
+     * Le contrepoids : groupée par matière, la date est la seule chose qui
+     * situe le devoir. Sans ce cas, retirer l'échéance partout passerait le
+     * test précédent — mesuré, il passe.
+     *
+     * Ce cas assertait la **fin** de ligne jusqu'au 11 septembre 2026. Il a
+     * changé de place, pas d'objet : groupée par matière, la ligne redisait
+     * l'intertitre — vingt lignes sur vingt sur une instance — et c'est
+     * désormais l'échéance qui la titre. Ce qu'il défend reste le même :
+     * l'échéance ne disparaît pas.
+     */
     const el = await mountCard(
       'pronote-ng-devoirs',
       { device_id: 'dev_enfant', group_by: 'subject' },
       hw({ items })
     );
     expect(text(el)).toContain('pour le');
-    expect(fins(el).some((f) => f.includes('septembre'))).toBe(true);
+    expect(parGroupe(el).some((g) => g.jours.some((j) => j.includes('septembre')))).toBe(true);
+    // Et la fin de ligne ne la reprend pas : elle ne porte plus que le retard.
+    expect(fins(el).some((f) => f.includes('septembre'))).toBe(false);
+  });
+
+  it('ne redit pas l’intertitre en tête de ligne, dans les deux regroupements', async () => {
+    /**
+     * La règle, écrite comme règle et non comme cas. Elle avait été posée
+     * pour le regroupement par échéance seulement, et le symétrique est
+     * resté cassé : le propriétaire a signalé que « le titre dit la matière,
+     * puis chaque ligne dit la même matière ». Mesuré sur une instance avant
+     * correction : vingt lignes sur vingt, soit la totalité.
+     *
+     * Le test compare les chaînes rendues, pas les intentions : aucune tête
+     * de ligne ne doit être égale à l'intertitre qui la précède.
+     */
+    // Les deux cartes montées d'abord : un `await` dans la boucle
+    // séquentialise deux montages indépendants, et le lint le refuse.
+    const montees = await Promise.all(
+      (['date', 'subject'] as const).map(async (group_by) => ({
+        group_by,
+        el: await mountCard(
+          'pronote-ng-devoirs',
+          { device_id: 'dev_enfant', group_by },
+          hw({ items })
+        ),
+      }))
+    );
+    for (const { group_by, el } of montees) {
+      const groupes = parGroupe(el);
+      // Appariement positif : il y a bien des groupes et des lignes à
+      // comparer. Sans ça, un rendu vide passerait ce test.
+      expect(groupes.length).toBeGreaterThan(0);
+      expect(groupes.some((g) => g.jours.length > 0)).toBe(true);
+      for (const g of groupes) {
+        for (const tete of g.jours) {
+          expect(tete, 'regroupement ' + group_by).not.toBe(g.titre);
+        }
+      }
+    }
   });
 
   it('ne pose pas de fin de ligne vide quand il n’y a rien à y mettre', async () => {

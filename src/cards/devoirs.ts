@@ -976,14 +976,35 @@ export const SPEC: CardSpec<Config> = {
 
     const rowFor = (h: Homework): TemplateResult => {
       const overdue = isOverdue(h, ctx.timeZone);
-      // Groupée par échéance, la date TITRE déjà le groupe : la répéter en fin
-      // de ligne la disait deux fois par devoir. Mesuré le 10 septembre 2026 :
-      // quinze lignes sur dix-sept dont la fin reprenait mot pour mot le titre
-      // juste au-dessus — et c'est le regroupement par DÉFAUT, donc le cas le
-      // plus fréquent et non un cas de coin. Groupée par matière, la date est
-      // au contraire la seule chose qui situe le devoir : elle reste.
-      const dueLabel =
-        by === 'date' ? '' : h.due ? dueLabelOf(h.due, ctx.language, ctx.timeZone) : '';
+      /**
+       * **Chaque niveau dit ce qui le distingue, et rien de plus.**
+       *
+       * Une seule règle, appliquée deux fois : ce que l'intertitre porte
+       * déjà, la ligne ne le répète pas. Groupée par échéance, la ligne dit
+       * la matière ; groupée par matière, elle dit l'échéance.
+       *
+       * Les deux moitiés ont été mesurées séparément, et la seconde était
+       * pire. Groupée par échéance, le 10 septembre 2026 : quinze lignes sur
+       * dix-sept dont la fin reprenait mot pour mot le titre juste au-dessus.
+       * Groupée par matière, le 11 septembre 2026 : **vingt lignes sur
+       * vingt**, soit la totalité — le titre de bloc et le titre de ligne
+       * étaient la même chaîne, sans exception. Le propriétaire l'a signalé,
+       * et le défaut était le symétrique exact de celui déjà corrigé dans
+       * l'autre sens : la règle avait été écrite pour un cas au lieu d'être
+       * écrite comme règle.
+       *
+       * L'échéance garde son gabarit (« pour le 11 septembre ») plutôt que
+       * la date nue : en tête de ligne, une date seule ne dit pas de quoi
+       * elle est la date, et cette carte en porte deux notions (rendu et
+       * retard).
+       */
+      const dateLisible = h.due ? dueLabelOf(h.due, ctx.language, ctx.timeZone) : '';
+      const titreLigne =
+        by === 'subject'
+          ? dateLisible
+            ? ctx.t('devoirs.due', { date: dateLisible })
+            : ctx.t('devoirs.name')
+          : (h.subject ?? ctx.t('devoirs.name'));
       // La couleur de matière est une gouttière à gauche, comme sur les cinq
       // autres cartes qui portent une matière. Voir `RowOptions.accent` pour
       // ses trois valeurs, et la règle `.row.empile` de `styles.ts` pour les
@@ -1140,7 +1161,7 @@ export const SPEC: CardSpec<Config> = {
                   />`
                 : ''
             }
-            ${h.subject ?? ctx.t('devoirs.name')}
+            ${titreLigne}
           `,
           // Le texte simple publié par l'intégration s'il existe, sinon
           // l'énoncé HTML dévêtu ici — jamais injecté. Replié seulement s'il
@@ -1148,15 +1169,14 @@ export const SPEC: CardSpec<Config> = {
           secondary,
           // `undefined` et non un gabarit vide : `listRow` teste la
           // présence de `trailing`, et un `TemplateResult` est toujours vrai
-          // — groupé par échéance, chaque ligne sans retard aurait donc posé
-          // une boîte vide dans la tête du bloc.
-          trailing:
-            overdue || dueLabel
-              ? html`
-                  ${overdue ? chip(ctx.t('devoirs.overdue'), 'problem') : ''}
-                  ${dueLabel ? ctx.t('devoirs.due', { date: dueLabel }) : ''}
-                `
-              : undefined,
+          // — chaque ligne sans retard aurait donc posé une boîte vide dans la
+          // tête du bloc.
+          //
+          // La fin de ligne ne porte plus que le retard. L'échéance en est
+          // partie : elle titre la ligne quand le bloc est groupé par
+          // matière, et elle titre le bloc sinon — dans les deux cas elle est
+          // déjà dite une fois.
+          trailing: overdue ? html`${chip(ctx.t('devoirs.overdue'), 'problem')}` : undefined,
         })}
       `;
     };

@@ -23,7 +23,7 @@ group_by: date
 | Option | Défaut | Effet |
 | --- | --- | --- |
 | `filter` | `todo` | `todo` (à faire), `tomorrow` (pour demain) ou `all` (tous). Change l'entité lue. |
-| `group_by` | `date` | `date` ou `subject`. Les devoirs sont toujours ordonnés par échéance — groupés par matière, à l'intérieur de chaque matière. Groupé par échéance, la date titre le groupe et n'est plus répétée en fin de chaque ligne. |
+| `group_by` | `date` | `date` ou `subject`. Les devoirs sont toujours ordonnés par échéance — groupés par matière, à l'intérieur de chaque matière. Voir [Ce que chaque niveau dit](#ce-que-chaque-niveau-dit). |
 | `limit` | *tout* | Nombre maximum de devoirs. Absent ou négatif : tout. `0` : rien — et la carte dit alors que la cause est l'option, non l'absence de devoirs. |
 | `max_lines` | *aucun repli* | Nombre de lignes d'énoncé avant repli. Voir [L'énoncé long](#lenonce-long-et-la-hauteur-de-la-carte). |
 | `show_attachments` | `true` | Afficher les pièces jointes d'un devoir, une pastille par pièce. Voir [Les pièces jointes](#les-pieces-jointes). |
@@ -220,6 +220,37 @@ la pastille pour **quatre** retards réels, et les cinq de trop étaient
 exactement les cinq devoirs cochés. L'intégration, elle, comptait juste. La
 carte criait donc au retard d'autant plus fort que l'élève avait travaillé, et
 elle contredisait son propre bandeau sur la même page.
+
+## Ce que chaque niveau dit
+
+**L'intertitre porte ce qui distingue le bloc ; la ligne porte ce qui distingue
+le devoir.** Une seule règle, et c'est ce qui décide de la disposition :
+
+| `group_by` | l'intertitre dit | la tête de ligne dit |
+|---|---|---|
+| `date` (défaut) | l'échéance | la matière |
+| `subject` | la matière | l'échéance |
+
+La fin de ligne ne porte, dans les deux cas, que la pastille « en retard ».
+
+Cette règle a d'abord été écrite pour un seul cas, et c'est l'erreur à
+retenir. Groupée par échéance, la carte répétait la date en fin de chaque
+ligne : corrigé le 10 septembre 2026, après mesure — quinze lignes sur
+dix-sept dont la fin reprenait mot pour mot le titre juste au-dessus. Le
+symétrique est resté cassé un jour de plus, et il était pire : groupée par
+matière, **vingt lignes sur vingt** portaient en tête la même chaîne que leur
+intertitre. Le propriétaire l'a signalé le 11 septembre 2026 — « le titre dit
+la matière, puis chaque ligne dit la même matière ».
+
+**Une correction écrite pour le cas qu'on regarde laisse debout le cas
+symétrique**, et elle le laisse debout avec, juste à côté, un commentaire qui
+explique pourquoi il faudrait le corriger. Un test vérifie désormais la règle
+dans les **deux** regroupements, plutôt qu'un cas dans chaque sens.
+
+Un détail de forme : groupée par matière, la tête de ligne écrit « pour le
+11 septembre » et non la date nue. En tête de ligne, une date seule ne dit pas
+de quoi elle est la date, et cette carte en porte deux notions — le jour du
+rendu, et le retard.
 
 ## Les pièces jointes
 

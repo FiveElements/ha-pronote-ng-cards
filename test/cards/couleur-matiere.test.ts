@@ -123,8 +123,8 @@ const structure = (
 ): {
   tete: number;
   enonce: number;
-  matiereDansTete: boolean;
-  echeanceDansTete: boolean;
+  primaireDansTete: boolean;
+  finDansTete: boolean;
   enonceHorsTete: boolean;
 } => {
   const ligne = el.shadowRoot?.querySelector('.row.empile');
@@ -134,8 +134,14 @@ const structure = (
   return {
     tete: rangDe('empile-tete'),
     enonce: rangDe('secondary'),
-    matiereDansTete: tete?.querySelector('.primary') != null,
-    echeanceDansTete: tete?.querySelector('.trailing') != null,
+    // Nommés d'après ce qu'ils LISENT, pas d'après ce qu'on croit y trouver.
+    // Ils s'appelaient `matiereDansTete` et `echeanceDansTete` : depuis que
+    // la tête de ligne suit le regroupement, `.primary` porte l'échéance
+    // quand le bloc est groupé par matière, et `.trailing` ne porte plus que
+    // le retard. Un nom de lecteur qui promet un contenu fait croire à une
+    // assertion qu'on n'a pas écrite.
+    primaireDansTete: tete?.querySelector('.primary') != null,
+    finDansTete: tete?.querySelector('.trailing') != null,
     // L'énoncé enfant DIRECT de la ligne, et non descendant du titre : c'est
     // ce qui lui donne toute la largeur de la carte.
     enonceHorsTete: tete?.querySelector('.secondary') == null,
@@ -287,29 +293,46 @@ describe('code couleur des matières — devoirs', () => {
    */
   it('titre le bloc par la matière et donne toute la largeur à l’énoncé', async () => {
     // Groupé par MATIÈRE ici, et non par échéance comme le reste du fichier.
-    // Ce test mesure OÙ se place la fin de ligne — dans la tête du bloc — et
-    // il lui faut donc une fin de ligne à placer. Groupée par échéance, la
-    // date titre déjà le groupe et la carte ne la répète plus en fin de
-    // ligne ; voir `dueLabel` dans `devoirs.ts`. Le placement mesuré ne
-    // dépend pas du regroupement, seule la PRÉSENCE d'une fin en dépend.
+    //
+    // Ce test mesure OÙ les choses se placent : la tête du bloc, puis
+    // l'énoncé hors de la tête, ce qui lui donne la largeur de la carte. Le
+    // placement ne dépend pas du regroupement ; ce qui en dépend, c'est
+    // quelle information atterrit où — voir `titreLigne` dans `devoirs.ts`.
+    // Groupée par matière, la matière titre le BLOC et l'échéance titre la
+    // LIGNE : redire la matière à chaque ligne la disait deux fois, vingt
+    // fois sur vingt sur une instance.
     const el = await mountCard(
       'pronote-ng-devoirs',
       { device_id: 'dev_enfant', filter: 'todo', group_by: 'subject' },
       deuxDevoirs()
     );
 
-    const { tete, enonce, matiereDansTete, echeanceDansTete, enonceHorsTete } = structure(el);
+    const { tete, enonce, primaireDansTete, finDansTete, enonceHorsTete } = structure(el);
     // Les deux bornes d'abord : sans elles, deux -1 se compareraient
     // sereinement et le test passerait sur une ligne vide.
     expect(tete).toBeGreaterThanOrEqual(0);
     expect(enonce).toBeGreaterThanOrEqual(0);
     // L'ordre du DOM est l'ordre visuel : le titre, PUIS l'énoncé.
     expect(tete).toBeLessThan(enonce);
-    // La matière et l'échéance dans le titre, l'énoncé en dehors : c'est ce
-    // dernier point qui lui donne la largeur de la carte.
-    expect(matiereDansTete).toBe(true);
-    expect(echeanceDansTete).toBe(true);
+    // Le titre de ligne dans la tête, l'énoncé en dehors : c'est ce dernier
+    // point qui lui donne la largeur de la carte.
+    expect(primaireDansTete).toBe(true);
     expect(enonceHorsTete).toBe(true);
+    // Groupée par matière, ce titre de ligne est l'échéance — et la matière
+    // est dans l'intertitre, une seule fois pour le bloc.
+    const teteTexte = el.shadowRoot?.querySelector('.row.empile .primary')?.textContent ?? '';
+    expect(teteTexte).toContain('pour le');
+    expect(teteTexte).not.toContain('Histoire');
+    expect(el.shadowRoot?.querySelector('.title')?.textContent).toContain('Histoire');
+    // La première ligne n'a PAS de fin : elle ne porterait qu'un retard, et
+    // le devoir d'histoire est à rendre, pas en retard.
+    expect(finDansTete).toBe(false);
+    // Le placement de la fin, mesuré là où il y en a une : le devoir de
+    // maths est échu. Elle doit être DANS la tête du bloc, pas après
+    // l'énoncé.
+    const fin = el.shadowRoot?.querySelector('.row.empile .trailing');
+    expect(fin).not.toBeNull();
+    expect(fin?.closest('.empile-tete')).not.toBeNull();
     // Et plus aucun filet séparateur nulle part.
     expect(separateurs(el)).toBe(0);
   });
