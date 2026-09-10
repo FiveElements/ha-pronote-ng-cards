@@ -1,6 +1,6 @@
 {
   "name": "ha-pronote-ng-cards",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "private": true,
   "type": "module",
   "description": "Cartes Lovelace pour l'intégration Home Assistant Pronote NG",
