@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 334" width="372" height="334" role="img" aria-label="Aperçu de la carte Devoirs : les devoirs groupés par échéance, avec leur case à cocher.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 334" width="372" height="334" role="img" aria-label="Aperçu de la carte Devoirs : les devoirs groupés par échéance, avec leur case à cocher et la couleur de leur matière en gouttiere à gauche. Un bandeau annonce deux devoirs en retard pour l'élève entier ; dans la fenêtre affichée, un seul porte la pastille — le devoir coché du même jour passé n'en porte pas.">
   <title>Carte Devoirs</title>
-  <desc>Illustration synthétique. Rien n'y vient d'un élève réel : les dates, les horaires et les valeurs sont inventés, et les matières sont des matières de programme.</desc>
+  <desc>Illustration synthétique. Rien n'y vient d'un élève réel : les dates, les horaires et les valeurs sont inventés, et les matières sont des matières de programme. Le bandeau et la pastille de ligne ne comptent pas la même chose : le premier porte sur l'élève entier, la seconde sur un devoir dont l'échéance est passée sans qu'il soit fait.</desc>
 
   <style>
     .bg { fill: #f2f4f7; }
@@ -20,24 +20,49 @@
   <g transform="translate(16 16)">
     <rect class="shadow" x="1" y="3" width="340" height="302" rx="12"/>
     <rect class="card" width="340" height="302" rx="12"/>
-    <rect x="18" y="11" width="78" height="19" rx="9.5" fill="#fef3f2"/>
-    <text class="chip" x="25" y="24" fill="#b42318">2 en retard</text>
-    <text class="sect" x="18" y="50">JEUDI 10 SEPTEMBRE</text>
+    <!-- Le bandeau de retard passe par `listRow` avec un accent nul : sa
+         gouttiere est reservee et transparente, donc son contenu est decale
+         de neuf pixels comme celui des lignes de devoir. -->
+    <rect x="27" y="11" width="78" height="19" rx="9.5" fill="#fef3f2"/>
+    <text class="chip" x="34" y="24" fill="#b42318">2 en retard</text>
+
+    <!-- Les titres de jour ne passent pas par `listRow` : ils ne portent donc
+         aucune gouttiere, et c'est tout ce que ce dessin affirme d'eux. Leur
+         retrait reel est une question ouverte : `.title` est defini pour
+         l'en-tete de carte, et cette carte le reutilise DANS `.body`.
+         Le decalage de neuf des lignes, lui, est mesure : `styles.ts` pose
+         trois pixels de bordure et six de retrait sur `.row.accented`. -->
+    <text class="sect" x="18" y="50">MARDI 8 SEPTEMBRE</text>
     <line class="rule" x1="18" y1="62" x2="322" y2="62"/>
-    <text class="p" x="18" y="84">☐  Mathématiques</text>
-    <text class="s" x="18" y="100">Exercices 12 à 15</text>
+
+    <!-- Echeance passee ET devoir non fait : la pastille de ligne. Elle ne
+         dit pas la meme chose que le bandeau, qui porte sur l'eleve entier
+         et compte donc un retard de plus que la fenetre n'en montre. -->
+    <rect x="18" y="72" width="3" height="32" rx="1.5" fill="#ee46bc"/>
+    <text class="p" x="27" y="84">☐  Mathématiques</text>
+    <rect x="255" y="71" width="67" height="19" rx="9.5" fill="#fef3f2"/>
+    <text class="chip" x="262" y="84" fill="#b42318">en retard</text>
+    <text class="s" x="27" y="100">Exercices 12 à 15</text>
     <line class="rule" x1="18" y1="110" x2="322" y2="110"/>
-    <text class="p" x="18" y="132">☑  Anglais</text>
-    <text class="s" x="18" y="148">Lire le chapitre 3</text>
+
+    <!-- Meme jour passe, mais coche : PAS de pastille. `done` fait partie de
+         la definition du retard, sans quoi la carte crierait au retard sur
+         son propre historique, et d'autant plus fort que l'eleve a travaille. -->
+    <rect x="18" y="120" width="3" height="32" rx="1.5" fill="#175cd3"/>
+    <text class="p" x="27" y="132">☑  Anglais</text>
+    <text class="s" x="27" y="148">Lire le chapitre 3</text>
     <line class="rule" x1="18" y1="158" x2="322" y2="158"/>
-    <text class="sect" x="18" y="184">VENDREDI 11 SEPTEMBRE</text>
+
+    <text class="sect" x="18" y="184">JEUDI 10 SEPTEMBRE</text>
     <line class="rule" x1="18" y1="196" x2="322" y2="196"/>
-    <text class="p" x="18" y="218">☐  Français</text>
-    <rect x="285" y="205" width="37" height="19" rx="9.5" fill="#fffaeb"/>
-    <text class="chip" x="292" y="218" fill="#b54708">noté</text>
-    <text class="s" x="18" y="234">Rédaction, une page</text>
+
+    <rect x="18" y="206" width="3" height="32" rx="1.5" fill="#6938ef"/>
+    <text class="p" x="27" y="218">☐  Français</text>
+    <text class="s" x="27" y="234">Rédaction, une page</text>
     <line class="rule" x1="18" y1="244" x2="322" y2="244"/>
-    <text class="p" x="18" y="266">☐  SVT</text>
-    <text class="s" x="18" y="282">Schéma à compléter</text>
+
+    <rect x="18" y="254" width="3" height="32" rx="1.5" fill="#12b76a"/>
+    <text class="p" x="27" y="266">☐  SVT</text>
+    <text class="s" x="27" y="282">Schéma à compléter</text>
   </g>
 </svg>

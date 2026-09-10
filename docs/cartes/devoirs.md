@@ -31,7 +31,9 @@ group_by: date
 
 ### Exemple complet
 
-Toutes les options renseignées, copiable tel quel :
+Les trois options les plus courantes, copiables telles quelles. Les autres
+— la table de couleurs, le repli de l'énoncé, les pièces jointes — ont chacune
+leur section plus bas :
 
 ```yaml
 type: custom:pronote-ng-devoirs
@@ -231,13 +233,6 @@ l'injecter.
 Cette section dit d'où vient le texte ; sa **longueur**, et ce qu'elle fait à
 la hauteur de la carte, sont traitées dans
 [L'énoncé long](#lenonce-long-et-la-hauteur-de-la-carte).
-
-## Le code couleur des matières
-
-Chaque devoir porte la couleur que l'établissement associe à sa matière, en
-bordure gauche — le même code visuel que sur l'emploi du temps, dont la page
-explique [comment il fonctionne et pourquoi il n'est pas encore
-visible](emploi-du-temps.md#le-code-couleur-des-matieres).
 
 ## Si la carte est vide
 
