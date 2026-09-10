@@ -250,18 +250,14 @@ taille porte la lisibilité : les deux familles n'occupent pas le même canal.
 Mesuré le 10 septembre 2026 sur une instance : douze pièces réparties sur neuf
 devoirs sur vingt, deux au plus par devoir.
 
-### Ouvrir la pièce : ce qui manque, et ce qui est prêt
+### Ouvrir la pièce : ce qui s'ouvre, et ce qui ne s'ouvrira pas
 
-**La carte ne peut pas encore ouvrir un document, et ce n'est pas une limite
-de sécurité : c'est une donnée absente.** L'attribut ne porte que des noms.
-Aucune des douze pièces mesurées ne contient de schéma, ni `://`, ni même
-une barre oblique, et une recherche du 10 septembre 2026 n'a trouvé aucune
-adresse dans les soixante-sept entités de l'intégration — c'est une mesure
-à une date, pas une propriété garantie de la forme.
+**Une pastille sur trois s'ouvre, et les autres ne s'ouvriront jamais.** Ce
+n'est pas un chantier en cours : c'est une propriété de PRONOTE, et elle vaut
+d'être comprise une fois pour ne pas l'attendre indéfiniment.
 
-PRONOTE, lui, a l'adresse. Mais il y en a **deux sortes**, et la différence
-décide de tout. Établi dans la source de la bibliothèque, pas déduit d'une
-adresse observée :
+Il y a **deux sortes de pièces**, et la différence décide de tout. Établi dans
+la source de la bibliothèque, pas déduit d'une adresse observée :
 
 - une pièce de type **lien** porte son adresse telle quelle — stable, sans
   secret. Un lien vers elle vivrait ;
@@ -275,13 +271,41 @@ adresse observée :
 Ce que ça change : pour un fichier, « le lien qui échouera un jour » n'est
 pas un risque à pondérer, c'est le résultat garanti. Une pastille cliquable
 qui ouvre une page d'erreur est pire qu'un nom, parce qu'elle a promis. C'est
-pourquoi l'intégration publie des noms : ce n'est pas un oubli.
+pourquoi l'intégration ne publie l'adresse **que** des pièces de type lien :
+ce n'est pas un oubli, c'est le refus de promettre.
 
-La carte, elle, est prête. Dès que `attachments` portera des objets
-`{ name, url }` — ou des adresses complètes — les pastilles concernées
-deviendront des liens qui s'ouvrent dans un nouvel onglet, sans qu'une ligne
-de la carte change. Elle ne distingue pas les deux sortes et n'a pas à le
-faire : elle reçoit une adresse, ou rien.
+Une pastille de type lien s'ouvre donc dans un nouvel onglet ; une pastille de
+type fichier reste du texte, sans soulignement, et rien n'invite à cliquer
+dessus. Mesuré le 10 septembre 2026 sur une instance : **quatre pièces
+ouvrables sur douze**, sur quatre devoirs de vingt, vers des adresses
+publiques collées par des professeurs — un site de vente, une vidéo, un
+éditeur scolaire.
+
+Ce compte est une propriété des devoirs de la quinzaine, **pas de votre
+établissement** : une semaine sans lien n'ouvrira aucune pastille, et ce n'est
+pas une panne. La pastille muette est le cas courant, pas le cas dégradé.
+
+#### Comment les deux listes se rejoignent
+
+L'intégration publie sur chaque devoir `attachments`, les noms de toutes les
+pièces, et `attachment_links`, les seules pièces ouvrables. La carte les
+rapproche **par le nom**, la même chaîne des deux côtés, et garde l'ordre de
+la première liste — un tri qui remonterait les pièces ouvrables ferait bouger
+les pastilles d'un devoir à l'autre sans qu'on puisse le prévoir.
+
+Pourquoi deux listes et non une adresse ajoutée à la première, puisque ça
+aurait été plus simple ici : `attachments` porte des chaînes depuis l'origine,
+et y mettre des objets casserait tout gabarit qui la joint par des virgules
+— ce qui est la façon normale d'écrire « Pièces jointes : a.pdf, b.pdf »
+dans une notification. Le coût a été pesé des deux côtés, et une ligne de
+carte coûtait moins cher qu'une rupture pour tous les lecteurs de l'attribut.
+
+Ce rapprochement a une **faiblesse connue**, signalée plutôt que découverte :
+si un même devoir porte deux pièces de même nom dont une seule est un lien,
+le nom ne les distingue plus et les deux pastilles s'ouvrent vers la même
+adresse. C'est rare, c'est cosmétique, et c'est le prix assumé de ne pas
+rompre la forme. La carte ne « corrige » pas ce cas en n'ouvrant que la
+première pastille : rien ne dirait que c'est la bonne.
 
 Trois précautions encadrent ce lien :
 
@@ -296,12 +320,26 @@ Trois précautions encadrent ce lien :
   est un fait sur le HTML du site web, pas sur ce qui nous parviendrait ;
 - **une adresse de pièce jointe ouvre le document sans demander
   d'identifiant.** Elle se traite comme l'URL iCal : sa place n'est ni dans le
-  dépôt, ni dans cette documentation, ni dans une capture d'écran.
+  dépôt, ni dans cette documentation, ni dans une capture d'écran. Les quatre
+  adresses mesurées sont publiques et ne portent aucune autorisation, mais
+  c'est une propriété de ces quatre-là et pas une garantie de la clé ;
+- **le lien s'ouvre dans un nouvel onglet, sans référent.** Le document est
+  sur un serveur tiers : `rel="noreferrer"` évite de lui annoncer l'adresse
+  de votre Home Assistant.
 
-Un détail de forme, pour finir : le chemin d'une pièce PRONOTE ne porte pas
-de nom de fichier. Quand l'adresse ne donne aucun nom lisible, la pastille
-écrit « Ouvrir la pièce jointe » plutôt que le dernier segment du chemin,
-qui serait le même mot sous chaque devoir.
+Un détail de forme, pour finir : quand une adresse arrive sans nom, la
+pastille écrit « Ouvrir la pièce jointe » plutôt que le dernier segment du
+chemin. Le chemin d'une pièce PRONOTE ne porte pas de nom de fichier, et ce
+segment serait le même mot sous chaque devoir.
+
+Une dernière chose, parce que cette page a été écrite trois fois en un soir et
+que l'ordre des erreurs vaut d'être connu. Elle a d'abord affirmé qu'ouvrir
+une pièce « demanderait un appel de service, interdit au rendu » — faux, un
+lien n'appelle aucun service. Elle a ensuite affirmé que la carte ne pourrait
+« pas encore » ouvrir de document, ce qui laissait attendre le jour où toutes
+les pastilles s'ouvriraient : ce jour n'existe pas pour les fichiers. **Les
+deux fois, l'erreur était de décrire une limite sans savoir d'où elle
+venait.**
 
 Cette page a elle-même affirmé le contraire, et il vaut de le savoir pour ne
 pas le réécrire : elle disait qu'ouvrir une pièce « demanderait un appel de

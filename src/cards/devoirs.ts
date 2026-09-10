@@ -96,15 +96,21 @@ interface Config extends PronoteCardConfig {
    * forme `{ name, url }`, et un nom devient un lien dès qu'une adresse
    * arrive, sans qu'une ligne d'ici change.
    *
-   * **La carte ne lit délibérément pas `attachment_links`**, et l'écrire ici
-   * évite qu'on le prenne pour un oubli. L'intégration a ajouté cette clé
-   * pour mesurer, sans casser la forme de `attachments` — un gabarit qui
-   * joint cette liste par des virgules se briserait le jour, imprévisible, où
-   * un professeur colle un lien. Elle la donne explicitement comme un palier
-   * et non comme un contrat : si elle se remplit, les adresses rejoindront
-   * `attachments` sous la forme `{ name, url }`. S'y lier maintenant
-   * achèterait un chemin mort au cas où elle reste vide, et un couplage à
-   * une forme annoncée comme provisoire dans l'autre cas.
+   * **Depuis le 10 septembre 2026 au soir, les liens existent.** Mesuré sur
+   * l'instance : quatre pièces ouvrables sur douze, adressées par
+   * `attachment_links` sur chaque devoir, vers des hôtes publics collés par
+   * des professeurs. La carte les rend, et une pastille dont le nom figure
+   * dans cette liste est une ancre.
+   *
+   * Cette clé avait d'abord été posée comme un palier de mesure, et j'avais
+   * écrit ici que la carte ne la lirait pas : l'intégration comptait déplacer
+   * les adresses dans `attachments` si la clé se remplissait. La mesure a
+   * inversé l'arbitrage plutôt que de le confirmer, et pour une raison qui
+   * vaut d'être retenue : tant que « zéro lien » restait plausible, déplacer
+   * coûtait une rupture de forme pour rien. Les liens existant, le choix
+   * devient une ligne ici contre une rupture pour tous les lecteurs de
+   * `attachments`, qui porte des chaînes depuis l'origine. Une ligne ici
+   * coûte moins cher, et c'est ce que la carte fait.
    *
    * Un précédent commentaire affirmait à cet endroit qu'ouvrir une pièce
    * « demanderait un appel de service, interdit au rendu ». C'était faux, et
@@ -160,6 +166,27 @@ interface Homework {
    * `attachmentsOf` filtre, plutôt que le type promettre.
    */
   attachments?: unknown;
+  /**
+   * Les pièces **ouvrables** du devoir, `[{ name, url }]`.
+   *
+   * Une seconde liste, et non une adresse ajoutée dans `attachments` : celle-ci
+   * porte des chaînes depuis l'origine, et y mettre des objets casserait tout
+   * gabarit qui la joint par des virgules — ce qui est la façon normale
+   * d'écrire une notification. L'intégration a pesé ce coût contre une ligne
+   * ici, et une ligne ici coûte moins cher.
+   *
+   * Le rapprochement se fait par le **nom**, la même chaîne dans les deux
+   * listes. Une pièce dont le nom y figure devient un lien ; les autres
+   * restent du texte, et c'est le cas courant — mesuré le 10 septembre 2026 :
+   * quatre pièces ouvrables sur douze, sur quatre devoirs de vingt. Les huit
+   * autres sont des fichiers, dont l'adresse est un artefact de session que
+   * l'intégration ne publie donc pas.
+   *
+   * Ce compte est une propriété des devoirs de la quinzaine, pas de
+   * l'établissement : une semaine sans lien rend cette liste vide, ce qui
+   * n'est pas une panne.
+   */
+  attachment_links?: unknown;
 }
 
 const TODO: EntityKey = 'sensor:homework_todo';
@@ -387,6 +414,49 @@ const champ = (source: object, ...cles: string[]): unknown => {
     if (valeur !== undefined && valeur !== null) return valeur;
   }
   return undefined;
+};
+
+/**
+ * Les pièces d'un devoir, chaque nom porté par son adresse quand elle existe.
+ *
+ * L'intégration publie deux listes : les noms de toutes les pièces, et les
+ * seules pièces ouvrables sous la forme `{ name, url }`. Le rapprochement se
+ * fait par le nom, qui est la même chaîne des deux côtés.
+ *
+ * L'ordre est celui de `attachments`, parce que c'est celui que PRONOTE
+ * envoie ; un tri par ouvrabilité ferait bouger les pastilles d'un devoir
+ * à l'autre sans qu'aucun lecteur puisse le prévoir.
+ *
+ * Un lien dont le nom ne figure dans aucun nom est ajouté à la fin plutôt que
+ * jeté. Le contrat dit que ça n'arrive pas ; s'il se rompt un jour, perdre
+ * une pièce qui s'ouvre serait le pire des deux résultats possibles.
+ *
+ * **La faiblesse connue du rapprochement par le nom**, signalée par
+ * l'intégration plutôt que découverte ici : si un même devoir porte deux
+ * pièces de même nom dont une seule est ouvrable, le nom ne les distingue
+ * plus et les deux pastilles deviennent des ancres vers la même adresse.
+ * C'est le prix assumé de ne pas rompre la forme de `attachments`, et il se
+ * paie ici, à l'affichage. Ne pas « corriger ça » en n'ouvrant que la
+ * première : rien ne dit que c'est elle. Le doublon est un cas dégénéré,
+ * pas une liste ordonnée.
+ */
+const piecesOf = (h: Homework): Attachment[] => {
+  const noms = attachmentsOf(h.attachments);
+  const liens = attachmentsOf(h.attachment_links);
+  if (liens.length === 0) return noms;
+  const adresseDe = new Map<string, string>();
+  for (const lien of liens) {
+    if (lien.name !== undefined && lien.url !== undefined) adresseDe.set(lien.name, lien.url);
+  }
+  const nommees = new Set(noms.map((piece) => piece.name));
+  const out = noms.map((piece) => {
+    const url = piece.name === undefined ? undefined : adresseDe.get(piece.name);
+    return url === undefined || piece.name === undefined ? piece : { name: piece.name, url };
+  });
+  for (const lien of liens) {
+    if (!nommees.has(lien.name)) out.push(lien);
+  }
+  return out;
 };
 
 const attachmentsOf = (value: unknown): Attachment[] => {
@@ -710,7 +780,7 @@ export const SPEC: CardSpec<Config> = {
       const accent = subjectAccent(h.background_color, h.subject, ctx.config.subject_colors);
       const enonce = h.description_text ?? plainText(h.description);
       const replie = maxLines > 0 && lignesEstimees(enonce) > maxLines;
-      const pieces = attachmentsOf(h.attachments);
+      const pieces = piecesOf(h);
       const piecesOn = ctx.config.show_attachments !== false && pieces.length > 0;
       const enonceRendu = replie
         ? html`<details class="enonce" style="--pronote-max-lines: ${maxLines}">

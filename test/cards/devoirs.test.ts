@@ -153,6 +153,18 @@ const liensPieces = (el: HTMLElement & MountableElement): HTMLAnchorElement[] =>
     (n): n is HTMLAnchorElement => n instanceof HTMLAnchorElement
   );
 
+/** Un devoir dont on choisit les DEUX listes : les noms, et les ouvrables. */
+const devoirDeuxListes = (attachments: unknown[], attachment_links: unknown[]) => [
+  {
+    id: 'h1',
+    subject: 'Anglais',
+    description_text: 'Acheter le cahier.',
+    due: '2099-01-01',
+    attachments,
+    attachment_links,
+  },
+];
+
 /** Un devoir dont on choisit les pieces jointes. */
 const devoirAvecPieces = (attachments: unknown[]) => [
   {
@@ -1523,5 +1535,168 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
     );
     expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual(['vraie.pdf']);
     expect(nomGroupePieces(el)).toContain('Pièce jointe');
+  });
+});
+
+describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
+  /**
+   * L'intégration publie **deux** listes sur chaque devoir : `attachments`,
+   * les noms de toutes les pièces, et `attachment_links`, les seules pièces
+   * ouvrables sous la forme `{ name, url }`. Le rapprochement se fait par le
+   * nom, la même chaîne des deux côtés.
+   *
+   * Pourquoi deux listes plutôt qu'une adresse ajoutée dans la première :
+   * `attachments` porte des chaînes depuis l'origine, et y mettre des objets
+   * casserait tout gabarit qui la joint par des virgules — la façon normale
+   * d'écrire une notification. Le coût a été pesé contre une ligne de carte.
+   *
+   * Mesuré sur une instance le 10 septembre 2026 : quatre pièces ouvrables
+   * sur douze, sur quatre devoirs de vingt. Les huit autres sont des fichiers,
+   * dont l'adresse est un artefact de session que l'intégration ne publie
+   * pas. Le cas courant reste donc la pastille muette.
+   */
+
+  it('ouvre la pièce dont le nom figure dans la liste des liens', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirDeuxListes(
+            ['Lien du cahier', 'corrige.pdf'],
+            [{ name: 'Lien du cahier', url: 'https://demo.example.invalid/cahier' }]
+          ),
+        },
+        '1'
+      )
+    );
+    // Les deux pièces sont là, dans l'ordre de `attachments`.
+    expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual([
+      'Lien du cahier',
+      'corrige.pdf',
+    ]);
+    // Une seule s'ouvre, et c'est celle qui a une adresse.
+    const liens = liensPieces(el);
+    expect(liens.length).toBe(1);
+    expect(liens[0]?.textContent?.trim()).toBe('Lien du cahier');
+    expect(liens[0]?.getAttribute('href')).toBe('https://demo.example.invalid/cahier');
+    expect(liens[0]?.getAttribute('target')).toBe('_blank');
+  });
+
+  it('garde l’ordre de la première liste, pas celui des liens', async () => {
+    /**
+     * Un tri qui remonterait les pièces ouvrables ferait bouger les pastilles
+     * d'un devoir à l'autre sans qu'aucun lecteur puisse le prévoir. L'ordre
+     * de `attachments` est celui que PRONOTE envoie.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirDeuxListes(
+            ['a.pdf', 'ouvrable', 'b.pdf'],
+            [{ name: 'ouvrable', url: 'https://demo.example.invalid/x' }]
+          ),
+        },
+        '1'
+      )
+    );
+    expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual([
+      'a.pdf',
+      'ouvrable',
+      'b.pdf',
+    ]);
+    expect(liensPieces(el).length).toBe(1);
+  });
+
+  it('n’ouvre rien quand la liste des liens est vide', async () => {
+    // Le cas courant, et le seul qui existait avant : une semaine sans lien
+    // rend cette liste vide, ce qui n'est pas une panne.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: devoirDeuxListes(['fiche.pdf', 'schema.png'], []) }, '1')
+    );
+    expect(elementsPieces(el).length).toBe(2);
+    expect(liensPieces(el).length).toBe(0);
+    expect(nomGroupePieces(el)).toContain('Pièces jointes');
+  });
+
+  it('n’oublie pas un lien dont le nom ne figure dans aucun nom', async () => {
+    /**
+     * Le contrat dit que ça n'arrive pas : le nom est la même chaîne des deux
+     * côtés. S'il se rompt, perdre une pièce qui s'ouvre serait le pire des
+     * deux résultats — elle est donc ajoutée à la fin plutôt que jetée.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirDeuxListes(
+            ['fiche.pdf'],
+            [{ name: 'orphelin.pdf', url: 'https://demo.example.invalid/o' }]
+          ),
+        },
+        '1'
+      )
+    );
+    expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual([
+      'fiche.pdf',
+      'orphelin.pdf',
+    ]);
+    expect(liensPieces(el).map((n) => n.textContent?.trim())).toEqual(['orphelin.pdf']);
+  });
+
+  it('filtre le schéma de la liste des liens comme de l’autre', async () => {
+    // Cette valeur vient du serveur et atteint un attribut `href`.
+    // L'intégration filtre déjà, ce verrou est le second.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirDeuxListes(
+            ['piege.pdf'],
+            [{ name: 'piege.pdf', url: 'javascript:alert(1)' }]
+          ),
+        },
+        '1'
+      )
+    );
+    expect(liensPieces(el).length).toBe(0);
+    // Le nom reste affiché : écarter le lien ne fait pas disparaître la pièce.
+    expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual(['piege.pdf']);
+    expect(el.shadowRoot?.innerHTML).not.toContain('javascript:');
+  });
+
+  it('ouvre les deux homonymes, et c’est la faiblesse assumée du contrat', async () => {
+    /**
+     * Signalée par l'intégration plutôt que découverte ici : le
+     * rapprochement par le nom ne distingue pas deux pièces homonymes dont une
+     * seule est ouvrable. Les deux deviennent des ancres vers la même adresse.
+     *
+     * Ce cas est épinglé **volontairement** avec le comportement actuel, et
+     * non corrigé. N'ouvrir que la première serait un choix arbitraire : rien
+     * ne dit que c'est elle. Ce test existe pour que la faiblesse soit connue
+     * et que personne ne la « répare » au hasard — le jour où le contrat
+     * portera une clé unique, il tombera, et ce sera la bonne nouvelle.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirDeuxListes(
+            ['meme-nom', 'meme-nom'],
+            [{ name: 'meme-nom', url: 'https://demo.example.invalid/un' }]
+          ),
+        },
+        '1'
+      )
+    );
+    expect(elementsPieces(el).length).toBe(2);
+    expect(liensPieces(el).length).toBe(2);
   });
 });
