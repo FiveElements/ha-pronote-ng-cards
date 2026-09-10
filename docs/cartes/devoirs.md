@@ -285,6 +285,18 @@ Ce compte est une propriété des devoirs de la quinzaine, **pas de votre
 établissement** : une semaine sans lien n'ouvrira aucune pastille, et ce n'est
 pas une panne. La pastille muette est le cas courant, pas le cas dégradé.
 
+Une pastille qui ne s'ouvre pas **dit pourquoi au survol**. Sans ça, elle
+ressemble à une panne de la carte, et c'est exactement la conclusion qu'en a
+tirée le propriétaire la première fois : « les liens sur les fichiers ne
+fonctionnent pas ». La phrase est dans l'infobulle et non sous la pastille,
+parce qu'on ne la lit qu'une fois et qu'elle coûterait cinq lignes sur huit
+pièces.
+
+Si vous comptez les ancres et qu'il vous en manque une, vérifiez d'abord quel
+capteur la carte lit. Un devoir **coché fait** sort de la liste à faire par
+construction, avec sa pièce ouvrable : c'est arrivé le 10 septembre 2026, où
+`filter: all` montrait quatre liens et le réglage par défaut trois.
+
 #### Comment les deux listes se rejoignent
 
 L'intégration publie sur chaque devoir `attachments`, les noms de toutes les

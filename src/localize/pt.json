@@ -81,6 +81,7 @@
     "attachments_one": "Anexo",
     "attachments_many": "Anexos",
     "attachment_open": "Abrir o anexo",
+    "attachment_not_openable": "Este ficheiro não tem endereço durável: o PRONOTE não permite abri-lo a partir do Home Assistant.",
     "show_attachments": "Mostrar os anexos",
     "next_due": "Próxima entrega"
   },

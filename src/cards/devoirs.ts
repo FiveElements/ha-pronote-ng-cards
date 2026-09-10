@@ -846,10 +846,22 @@ export const SPEC: CardSpec<Config> = {
                       // primitive rend un `span`, et une piece ouvrable doit
                       // etre une ancre. Les deux portent la meme classe, donc
                       // le meme style, sans dupliquer la regle.
+                      //
+                      // L'infobulle de la pastille muette repond a une
+                      // question posee par le proprietaire : << les liens sur
+                      // les fichiers ne fonctionnent pas >>. Ils ne
+                      // fonctionneront jamais, et une pastille qui se tait
+                      // laisse croire a une panne. Elle dit donc pourquoi,
+                      // au survol, sans rien promettre : un `title` n'est pas
+                      // une cible de clic.
                       return html`<span class="devoirs-piece" role="listitem"
                         >${
                           piece.url === undefined
-                            ? html`<span class="chip">${libelle}</span>`
+                            ? html`<span
+                                class="chip"
+                                title=${ctx.t('devoirs.attachment_not_openable')}
+                                >${libelle}</span
+                              >`
                             : html`<a
                                 class="chip chip-lien"
                                 href=${piece.url}

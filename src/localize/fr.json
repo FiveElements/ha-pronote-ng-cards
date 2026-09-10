@@ -81,6 +81,7 @@
     "attachments_one": "Pièce jointe",
     "attachments_many": "Pièces jointes",
     "attachment_open": "Ouvrir la pièce jointe",
+    "attachment_not_openable": "Ce fichier n'a pas d'adresse durable : PRONOTE ne permet pas de l'ouvrir depuis Home Assistant.",
     "show_attachments": "Afficher les pièces jointes",
     "next_due": "Prochaine échéance"
   },

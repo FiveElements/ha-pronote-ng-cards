@@ -1671,6 +1671,41 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
     expect(el.shadowRoot?.innerHTML).not.toContain('javascript:');
   });
 
+  it('dit pourquoi une pièce ne s’ouvre pas, au lieu de se taire', async () => {
+    /**
+     * Répond à une phrase du propriétaire : « les liens sur les fichiers ne
+     * fonctionnent pas ». Ils ne fonctionneront jamais — l'adresse d'un
+     * fichier PRONOTE est un artefact de session — et une pastille qui se
+     * tait laisse croire à une panne de la carte. Elle porte donc la raison
+     * au survol.
+     *
+     * Sur un `title` et non dans le texte visible : écrire la phrase sous
+     * chaque fichier coûterait cinq lignes sur huit pièces, pour une
+     * information qu'on ne lit qu'une fois. Et un `title` n'est pas une cible
+     * de clic, donc il n'invite à rien.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirDeuxListes(
+            ['fichier.pdf', 'Lien'],
+            [{ name: 'Lien', url: 'https://demo.example.invalid/x' }]
+          ),
+        },
+        '1'
+      )
+    );
+    const muette = pastillesPieces(el).find((n) => n.tagName === 'SPAN');
+    expect(muette?.textContent?.trim()).toBe('fichier.pdf');
+    expect(muette?.getAttribute('title')).toContain('adresse durable');
+    // L'ancre, elle, ne porte pas cette phrase : elle s'ouvre.
+    const ancre = liensPieces(el)[0];
+    expect(ancre?.textContent?.trim()).toBe('Lien');
+    expect(ancre?.getAttribute('title')).toBeNull();
+  });
+
   it('ouvre les deux homonymes, et c’est la faiblesse assumée du contrat', async () => {
     /**
      * Signalée par l'intégration plutôt que découverte ici : le
