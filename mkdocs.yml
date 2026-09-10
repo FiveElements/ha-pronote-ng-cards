@@ -13,6 +13,20 @@ theme:
       toggle: { icon: material/brightness-4, name: Mode clair }
 exclude_docs: |
   superpowers/
+
+# Sans ce bloc, `admonition` n'est pas active -- le theme ne l'ajoute pas de
+# lui-meme -- et les quatre encadres `!!! tip` / `!!! note` / `!!! warning` de
+# `cartes/journee.md`, `cartes/emploi-du-temps.md` et `cartes/mode-collecte.md`
+# sortaient en TEXTE BRUT sur Pages, les trois points d'exclamation compris.
+#
+# Mesure du 10 septembre 2026 sur la page publiee de la carte journee : deux
+# marqueurs `!!!` visibles dans le texte rendu, zero element `.admonition`
+# dans le document. Signale par la session de documentation, verifie sur le
+# site avant d'y toucher -- une extension manquante ne casse rien, elle
+# degrade en silence, et c'est le genre de defaut qu'on ne voit qu'en ouvrant
+# la page publiee plutot que le depot.
+markdown_extensions:
+  - admonition
 nav:
   - Accueil: index.md
   - Installation: installation.md

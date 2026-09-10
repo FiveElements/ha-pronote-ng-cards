@@ -1,6 +1,6 @@
 # Assembler un tableau de bord
 
-Les neuf pages de cartes décrivent chacune une carte. Celle-ci décrit comment on
+Les onze pages de cartes décrivent chacune une carte. Celle-ci décrit comment on
 les met ensemble : dans quel ordre, à quelle largeur, et ce qui change quand il y
 a plusieurs enfants.
 
@@ -14,6 +14,7 @@ vous ; il n'y a pas d'identifiant d'entité à écrire nulle part.
 ## Sommaire
 
 - [Un enfant, une vue](#un-enfant-une-vue)
+- [Une fenetre glissante sur la semaine](#une-fenetre-glissante-sur-la-semaine)
 - [Les hauteurs, et la seule qui pose probleme](#les-hauteurs-et-la-seule-qui-pose-probleme)
 - [Plusieurs enfants](#plusieurs-enfants)
 - [La carte limiteur, une par entree de configuration](#la-carte-limiteur-une-par-entree-de-configuration)
@@ -72,9 +73,86 @@ vue donne l'impression que rien ne fonctionne.
 d'un enfant — voyez
 [plus bas](#la-carte-limiteur-une-par-entree-de-configuration).
 
-**L'emploi du temps de la semaine non plus.** En mode `week`, la carte est trois
+**L'emploi du temps de la semaine non plus.** En mode `week`, la carte est deux
 fois plus haute que la plus haute des autres : elle mérite sa propre vue, ou au
-moins sa propre section pleine largeur. C'est le sujet de la section suivante.
+moins sa propre section pleine largeur. C'est le sujet des
+[hauteurs](#les-hauteurs-et-la-seule-qui-pose-probleme).
+
+---
+
+## Une fenetre glissante sur la semaine
+
+Trois cartes [Vue journée](cartes/journee.md) sur la même vue, chacune sur son
+jour : trois jours d'affilée d'un coup d'œil, sans cliquer. C'est ce que
+`day_offset` achète — le détail de l'option est sur
+[sa page](cartes/journee.md#plusieurs-jours-cote-a-cote).
+
+```yaml
+type: sections
+max_columns: 3
+title: Les jours qui viennent
+sections:
+  - type: grid
+    cards:
+      - type: custom:pronote-ng-journee
+        device_id: <appareil de l'enfant>
+        day_offset: 0
+
+  - type: grid
+    cards:
+      - type: custom:pronote-ng-journee
+        device_id: <appareil de l'enfant>
+        day_offset: 1
+        show_nav: false
+
+  - type: grid
+    cards:
+      - type: custom:pronote-ng-journee
+        device_id: <appareil de l'enfant>
+        day_offset: 2
+        show_nav: false
+```
+
+**Une section par carte, et `max_columns: 3`** : trois colonnes sur un écran
+large, une pile sur un téléphone, sans rien régler de plus. Rien n'oblige à
+trois — deux suffisent souvent, et `-1` regarde en arrière plutôt qu'en avant.
+
+**`show_nav: false` sur les deux dernières**, parce que six flèches sur une
+même vue font beaucoup. Les cartes restent indépendantes de toute façon : les
+flèches de chacune partent de **son** jour, et naviguer dans l'une ne déplace
+pas les autres. Aucune des trois ne déclenche de collecte — les jours autres
+qu'aujourd'hui viennent de la semaine déjà en mémoire du navigateur.
+
+**`show_current` n'agit que sur la carte à `0`.** La mise en avant se calcule
+sur l'heure courante, donc aucun créneau de demain ne peut être « en cours ».
+Le laisser actif sur les trois n'est pas une incohérence, c'est simplement sans
+effet sur deux d'entre elles.
+
+**Le décalage part du jour de repos, pas d'aujourd'hui.** Sans `auto_advance`,
+les deux sont le même jour et `1` est bien demain : il n'y a rien de plus à
+savoir. Avec `auto_advance`, le jour de repos avance au prochain jour de cours
+une fois la journée finie, et la fenêtre glisse **avec** lui — le mercredi à
+22 h, les trois cartes montrent jeudi, vendredi et samedi. C'est ce que ce
+choix d'origine achète : si le décalage partait d'aujourd'hui, la première
+suivrait le saut et les deux autres non — **jeudi, jeudi, vendredi**, un jour
+en double et un de perdu.
+
+**Hors de la fenêtre, la carte dit qu'elle ne sait pas.** Un décalage qui
+pointe au-delà de la semaine collectée affiche « ce jour n'est pas dans la
+semaine collectée », et non « aucun cours ce jour-là ». La distinction n'est
+pas du style : « aucun cours » est une **affirmation** sur une journée, et la
+carte n'a pas le droit de la faire sur une date dont elle ne sait rien.
+L'en-tête reste affiché, avec la date demandée — la phrase dit donc de quel
+jour on n'a rien.
+
+**Ce motif se dégrade en fin de semaine, et c'est normal.** La semaine
+collectée s'arrête au dernier jour qui porte des cours, en général le vendredi.
+Une vue à trois cartes est donc pleine du lundi au mercredi, puis partielle :
+un jeudi, la carte à `2` vise samedi et affiche déjà le message ; un vendredi,
+celles à `1` et `2` l'affichent toutes les deux, et elles continuent tout le
+week-end. Constaté sur une instance le 10 septembre 2026. Rien n'est cassé —
+mais quelqu'un qui installe ce motif un samedi verra deux cartes sur trois dire
+qu'elles ne savent pas, et conclura le contraire.
 
 ---
 
@@ -88,14 +166,16 @@ configuration :
 | Prochain cours | 2 |
 | Élève | 3 |
 | Cantine | 4 |
+| Mode de collecte | 4 |
 | Évaluations | 4 sans les acquisitions, **8** avec |
 | Devoirs | 5 |
 | Limiteur | 5 |
 | Notes | 6 |
 | Vie scolaire | 6 |
+| Vue journée | 10 |
 | Emploi du temps | 8 en `today` et `tomorrow`, **24** en `week` |
 
-**Le cas isolé, c'est `range: week`.** 24 contre 8 pour la plus haute des
+**Le cas isolé, c'est `range: week`.** 24 contre 10 pour la plus haute des
 autres. Placée dans une colonne étroite, elle s'y écrase ; placée à côté d'une
 petite carte, elle laisse un vide de plusieurs écrans.
 
@@ -112,9 +192,12 @@ donner la largeur, et l'emploi du temps de la semaine veut la largeur complète 
     columns: 12
 ```
 
-**Le seul autre appariement qui déséquilibre visiblement** est deux cartes à 8
-côte à côte : l'emploi du temps en `today` et les évaluations avec leurs
-acquisitions. Séparez-les, ou donnez-leur chacune la pleine largeur.
+**Le seul autre appariement qui déséquilibre visiblement** est deux des trois
+cartes hautes côte à côte : l'emploi du temps en `today` (8), les évaluations
+avec leurs acquisitions (8) et la vue journée (10). Séparez-les, ou
+donnez-leur chacune la pleine largeur — c'est d'ailleurs pourquoi la
+[fenêtre glissante](#une-fenetre-glissante-sur-la-semaine) met une section par
+carte.
 
 **Attention aux réglages qui changent la hauteur.** Un tableau de bord équilibré
 se déséquilibre quand vous basculez `range` sur `week` ou que vous activez les
@@ -152,7 +235,8 @@ Dans les deux cas, **une seule carte limiteur** pour tout le tableau de bord.
 
 ## La carte limiteur, une par entree de configuration
 
-C'est la seule carte des neuf qui n'affiche pas les données d'un enfant. Elle
+C'est, avec [Mode de collecte](cartes/mode-collecte.md), l'une des deux cartes
+qui n'affichent pas les données d'un enfant. Elle
 montre le budget de requêtes, l'état du limiteur et un bouton de
 rafraîchissement — trois choses qui appartiennent au **compte**, pas à l'élève.
 
@@ -186,8 +270,16 @@ cette carte.
 ci-dessus.
 
 **L'emploi du temps de la semaine sans largeur explicite.** Dans une vue
-`sections`, réglez `grid_options`. Sans ça, la carte la plus haute des neuf se
+`sections`, réglez `grid_options`. Sans ça, la carte la plus haute des onze se
 retrouve dans la largeur d'une colonne.
+
+**Coiffer une fenêtre glissante d'intertitres « Aujourd'hui / Demain /
+Après-demain ».** C'est le piège de ce motif. Un libellé écrit en dur cesse
+d'être vrai dès que la fenêtre glisse : avec `auto_advance`, la carte à `0`
+montre le prochain jour de cours et non aujourd'hui, et celle à `1` le jour
+d'après. L'intertitre contredit alors la date que la carte affiche elle-même —
+plausible et faux, la famille de défauts que ce dépôt traque. Chaque carte
+porte sa vraie date dans son en-tête ; il n'y a rien à ajouter au-dessus.
 
 **Une vue par thème pour un seul enfant.** Elle n'a d'intérêt que pour comparer
 plusieurs enfants ; avec un seul, elle disperse en cinq onglets ce qui tenait

@@ -67,6 +67,10 @@ entités consommées, et ce qu'elle ne peut pas savoir.
 
  Cette carte est particulièrement adaptée à un tableau de bord principal.
 
+ L'option `day_offset` décale le jour de la carte : plusieurs cartes côte à
+côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/journee/#plusieurs-jours-cote-a-cote)**
+— chacune sur son jour, chacune avec sa date dans son en-tête.
+
 ---
 
  ### 🗓️ [Emploi du temps](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/emploi-du-temps/)

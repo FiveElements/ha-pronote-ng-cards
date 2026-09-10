@@ -218,9 +218,15 @@ demain, et il n'y a rien de plus à savoir.
 
 Avec `auto_advance`, le jour de repos avance au prochain jour de cours une fois
 la journée finie — et la fenêtre glisse **avec** lui. Le mercredi à 22 h, vos
-trois cartes montrent jeudi, vendredi et lundi, au lieu de répéter jeudi deux
-fois. C'est ce que ce choix d'origine achète : si le décalage partait
-d'aujourd'hui, la carte à `0` sauterait et les autres non.
+trois cartes montrent jeudi, vendredi et samedi.
+
+C'est ce que ce choix d'origine achète. Si le décalage partait d'aujourd'hui,
+la carte à `0` suivrait le saut et les deux autres non : **jeudi, jeudi,
+vendredi** — un jour en double, et un de perdu.
+
+Le décalage est un décalage de **calendrier**, pas un saut de jour de cours :
+il ne traverse pas les jours vides. Le samedi de l'exemple tombe donc hors de
+la semaine collectée, et la troisième carte le dit — voir juste en dessous.
 
 ### Un jour hors de la semaine collectée le dit
 
