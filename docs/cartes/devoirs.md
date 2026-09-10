@@ -263,16 +263,30 @@ pièces sont grises sur gris, sous l'énoncé. La couleur porte l'alerte, la
 taille porte la lisibilité : les deux familles n'occupent pas le même canal.
 
 Mesuré le 10 septembre 2026 sur une instance : douze pièces réparties sur neuf
-devoirs sur vingt, deux au plus par devoir.
+devoirs sur vingt, deux au plus par devoir — et vingt-trois en balayant tous
+les capteurs de devoirs, fenêtres et périodes confondues. Les deux comptes
+sont justes et ne mesurent pas la même chose : le premier est ce que la vue
+par défaut affiche, le second ce que l'intégration publie.
 
-### Ouvrir la pièce : ce qui s'ouvre, et ce qui ne s'ouvrira pas
+### Ouvrir la pièce : chez le tiers, ou par l'intégration
 
-**Une pastille sur trois s'ouvre, et les autres ne s'ouvriront jamais.** Ce
-n'est pas un chantier en cours : c'est une propriété de PRONOTE, et elle vaut
-d'être comprise une fois pour ne pas l'attendre indéfiniment.
+**Toutes les pastilles s'ouvrent désormais, par deux chemins différents.**
 
-Il y a **deux sortes de pièces**, et la différence décide de tout. Établi dans
-la source de la bibliothèque, pas déduit d'une adresse observée :
+Cette page a affirmé le contraire, en gras, et il faut le lire avant la
+suite : « une pastille sur trois s'ouvre, et les autres ne s'ouvriront
+**jamais** ». La phrase était fondée — elle décrivait une vraie propriété de
+PRONOTE, établie dans la source de la bibliothèque — et elle était fausse
+comme **énoncé sur le produit**. Ce qui n'a pas d'adresse stable chez PRONOTE
+peut très bien en recevoir une ailleurs, et c'est ce que l'intégration a fait
+en relayant les octets elle-même. L'erreur n'était pas dans le fait, elle
+était dans la **portée** que je lui ai donnée : une limite vraie d'un composant
+publiée comme une limite du produit. C'est la troisième fois que cette section
+décrit une limite en se trompant sur son origine, et les trois fois le défaut
+a la même forme.
+
+Il y a **deux sortes de pièces**, et la différence décide encore de tout — non
+plus de ce qui s'ouvre, mais de **qui** l'ouvre. Établi dans la source de la
+bibliothèque, pas déduit d'une adresse observée :
 
 - une pièce de type **lien** porte son adresse telle quelle — stable, sans
   secret. Un lien vers elle vivrait ;
@@ -283,27 +297,47 @@ la source de la bibliothèque, pas déduit d'une adresse observée :
   n'ont aucun octet commun. Une telle adresse meurt à la connexion suivante,
   et une session inactive est abandonnée au bout d'une heure.
 
-Ce que ça change : pour un fichier, « le lien qui échouera un jour » n'est
-pas un risque à pondérer, c'est le résultat garanti. Une pastille cliquable
-qui ouvre une page d'erreur est pire qu'un nom, parce qu'elle a promis. C'est
-pourquoi l'intégration ne publie l'adresse **que** des pièces de type lien :
-ce n'est pas un oubli, c'est le refus de promettre.
+Ce que ça change : republier telle quelle l'adresse d'un fichier aurait donné
+un lien mort à la connexion suivante — et une pastille cliquable qui ouvre une
+page d'erreur est pire qu'un nom, parce qu'elle a promis. L'intégration ne le
+fait donc pas. Elle **relaie** : elle publie une adresse **chez elle**, un
+chemin de son propre point d'entrée, et c'est elle qui va chercher les octets
+au moment où vous cliquez, avec la session vivante. Vous ne voyez jamais
+l'adresse PRONOTE, et il n'y a rien à renouveler.
 
-Une pastille de type lien s'ouvre donc dans un nouvel onglet ; une pastille de
-type fichier reste du texte, sans soulignement, et rien n'invite à cliquer
-dessus. Mesuré le 10 septembre 2026 sur une instance : **quatre pièces
-ouvrables sur douze**, sur quatre devoirs de vingt, vers des adresses
-publiques collées par des professeurs — un site de vente, une vidéo, un
-éditeur scolaire.
+Une pastille de type lien s'ouvre donc chez le tiers, dans un nouvel onglet ;
+une pastille de type fichier s'ouvre chez votre Home Assistant. Les deux sont
+soulignées, parce que les deux s'ouvrent — la carte ne fait pas de différence
+visible entre elles, et c'est voulu : la distinction intéresse celui qui écrit
+la carte, pas celui qui cherche la fiche de révisions.
 
-Ce compte est une propriété des devoirs de la quinzaine, **pas de votre
-établissement** : une semaine sans lien n'ouvrira aucune pastille, et ce n'est
-pas une panne. La pastille muette est le cas courant, pas le cas dégradé.
+Mesuré le 10 septembre 2026 sur une instance, avant et après : sur les
+vingt-trois pièces jointes de l'instance, **sept portent une adresse absolue**
+vers un tiers — un site de vente, une vidéo, un éditeur scolaire — et
+**seize un chemin relayé**. La carte refusait les seize : `new URL` sans base
+lève sur un chemin enraciné, et le filtre traitait cette exception comme un
+refus. Cinq de ces pastilles muettes étaient visibles dans la vue par défaut.
+
+Une nuance de disponibilité, rapportée par la session de l'intégration et
+**non mesurée ici** — nous ne téléchargeons pas de pièce pour vérifier, parce
+que chaque requête compte contre l'adresse IP de la maison : le relais réserve
+les heures creuses. Entre 22 h et 6 h, un document **jamais ouvert** peut
+répondre « pas maintenant » plutôt que s'afficher ; un document déjà ouvert
+sort du cache et s'affiche. « Pas maintenant » n'est pas « introuvable ».
 
 **Une phrase en bas de carte dit pourquoi**, une seule fois, dès qu'au moins
 une pièce affichée ne s'ouvre pas. Sans ça la carte ressemble à une panne, et
 c'est exactement la conclusion qu'en a tirée le propriétaire : « les liens sur
-les fichiers ne fonctionnent pas ».
+les fichiers ne fonctionnent pas ». Il avait raison, et la correction a pris
+cinq versions.
+
+Cette phrase se voit maintenant beaucoup moins, et ce qu'elle dit a changé.
+Elle annonçait que les pièces non soulignées étaient des fichiers que PRONOTE
+ne laisse pas ouvrir — ce n'est plus vrai. Elle dit désormais que
+l'intégration n'a **pas publié d'adresse** pour ces pièces, ce qui reste vrai
+quelle qu'en soit la raison : une version d'intégration antérieure au relais,
+ou une sorte de pièce qu'elle ne sait pas servir. La phrase ne nomme plus la
+cause qu'elle croyait connaître.
 
 Cette phrase a d'abord été posée en **infobulle** sur chaque pastille muette,
 et cette page présentait le dispositif comme acquis. Il ne l'était pas : il
@@ -340,44 +374,77 @@ adresse. C'est rare, c'est cosmétique, et c'est le prix assumé de ne pas
 rompre la forme. La carte ne « corrige » pas ce cas en n'ouvrant que la
 première pastille : rien ne dirait que c'est la bonne.
 
-Trois précautions encadrent ce lien :
+Six précautions encadrent ce lien. Elles étaient trois, et les trois ajoutées
+portent toutes sur la même question : contre quoi résoudre un chemin, et
+comment vérifier qu'il n'en est pas sorti.
 
 - **seuls `http` et `https` sont acceptés.** Cette valeur vient du serveur et
   atterrit dans un attribut `href` : un `javascript:` y exécuterait du code
   dans votre page Home Assistant. Un schéma refusé laisse la pastille
   affichée sans lien — l'information ne disparaît pas ;
-- **une adresse relative est refusée**, faute de savoir de quel hôte PRONOTE
-  elle viendrait. La résoudre contre celui de Home Assistant fabriquerait un
-  lien mort. C'est un garde et non un cas attendu : la bibliothèque préfixe
-  par le site racine, donc une adresse publiée serait absolue — le relatif
-  est un fait sur le HTML du site web, pas sur ce qui nous parviendrait ;
+- **un chemin enraciné est résolu contre l'adresse de votre instance**, et
+  seulement s'il y reste. C'est la forme du relais, et le point délicat est la
+  base : ni la page, ni son `baseURI`, mais l'adresse que Home Assistant
+  publie de lui-même. La différence est invisible chez vous, où les deux
+  coïncident, et décisive sur le tableau de bord **Cast**, servi depuis une
+  origine tierce : résolu contre la page, le lien y pointerait vers ce tiers
+  — mort, **et** lui livrant la signature dans l'adresse demandée. Un
+  « nouvel onglet sans référent » n'y changerait rien, puisque le jeton n'est
+  pas dans le référent mais dans l'adresse. Si l'instance ne publie pas son
+  adresse, la pastille reste muette : deviner une base, c'est précisément
+  envoyer le jeton ailleurs ;
+- **la vérification porte sur l'origine après analyse, jamais sur le début de
+  la chaîne.** Mesuré, et c'est ce qui a décidé de la forme du filtre : une
+  valeur qui commence par une barre oblique suivie d'une barre oblique
+  *inverse* satisfait « commence par une seule barre oblique », et l'analyseur
+  d'URL la normalise pourtant en nom d'hôte — elle sort donc de votre
+  instance en ayant l'air d'y rester ;
+- **la carte ne vérifie pas que le chemin mène bien au relais**, et c'est
+  assumé. Exiger le début du chemin ne serait pas une garantie de sécurité —
+  c'est l'égalité d'origine qui en est une — et ça inscrirait dans la carte un
+  chemin dont l'intégration est propriétaire : le jour où elle le renommerait,
+  toutes les pastilles redeviendraient muettes **sans un mot**. Sans ce
+  contrôle, la même panne donne une page introuvable, visible et
+  diagnosticable. Une régression bruyante vaut mieux qu'une silencieuse ;
 - **une adresse de pièce jointe ouvre le document sans demander
   d'identifiant.** Elle se traite comme l'URL iCal : sa place n'est ni dans le
   dépôt, ni dans cette documentation, ni dans une capture d'écran. Les quatre
   adresses mesurées sont publiques et ne portent aucune autorisation, mais
   c'est une propriété de ces quatre-là et pas une garantie de la clé ;
-- **le lien s'ouvre dans un nouvel onglet, sans référent.** Le document est
-  sur un serveur tiers : `rel="noreferrer"` évite de lui annoncer l'adresse
-  de votre Home Assistant.
+- **le lien s'ouvre dans un nouvel onglet, sans référent.** Quand le document
+  est sur un serveur tiers, `rel="noreferrer"` évite de lui annoncer
+  l'adresse de votre Home Assistant. Pour une pièce relayée, la précaution ne
+  sert à rien — l'origine est la vôtre — et elle ne coûte rien : la carte ne
+  distingue pas les deux cas, et un attribut appliqué partout est un attribut
+  qu'on ne peut pas oublier au mauvais endroit.
 
 Un détail de forme, pour finir : quand une adresse arrive sans nom, la
 pastille écrit « Ouvrir la pièce jointe » plutôt que le dernier segment du
 chemin. Le chemin d'une pièce PRONOTE ne porte pas de nom de fichier, et ce
 segment serait le même mot sous chaque devoir.
 
-Une dernière chose, parce que cette page a été écrite trois fois en un soir et
-que l'ordre des erreurs vaut d'être connu. Elle a d'abord affirmé qu'ouvrir
-une pièce « demanderait un appel de service, interdit au rendu » — faux, un
-lien n'appelle aucun service. Elle a ensuite affirmé que la carte ne pourrait
-« pas encore » ouvrir de document, ce qui laissait attendre le jour où toutes
-les pastilles s'ouvriraient : ce jour n'existe pas pour les fichiers. **Les
-deux fois, l'erreur était de décrire une limite sans savoir d'où elle
-venait.**
+Une dernière chose, parce que cette section a décrit **trois** limites qui
+n'en étaient pas, et que l'ordre des erreurs vaut d'être connu — elles ont la
+même forme, et c'est ça qui est utile.
 
-Cette page a elle-même affirmé le contraire, et il vaut de le savoir pour ne
-pas le réécrire : elle disait qu'ouvrir une pièce « demanderait un appel de
-service, interdit au rendu ». C'était faux — un lien n'appelle aucun service.
-**Une limite écrite parce qu'elle arrange n'est pas une limite**, et
+1. Elle a d'abord affirmé qu'ouvrir une pièce « demanderait un appel de
+   service, interdit au rendu ». Faux : un lien n'appelle aucun service. La
+   limite était écrite parce qu'elle **arrangeait** — elle dispensait
+   d'ouvrir le sujet.
+2. Elle a ensuite affirmé que la carte ne pourrait « pas encore » ouvrir de
+   document, ce qui laissait attendre un jour indéfini.
+3. Elle a enfin affirmé que ce jour **n'existerait jamais pour les fichiers**.
+   C'était la plus solide des trois : elle reposait sur une propriété vérifiée
+   dans la source de la bibliothèque, pas sur une supposition. Et c'est celle
+   qui a tenu le moins longtemps, parce que l'intégration a changé le monde
+   dont la propriété parlait : elle s'est mise à relayer les octets.
+
+Les trois fois, l'erreur était de décrire une limite sans en situer
+l'**origine**. La troisième est la plus instructive parce qu'elle montre que
+l'exactitude ne suffit pas : un fait vrai d'un composant, publié comme une
+propriété du produit, devient faux dès qu'une autre couche s'en mêle. Avant
+d'écrire « jamais », demandez-vous de qui vous parlez.
+
 `docs/limites.md` porte déjà deux leçons de ce genre.
 
 ## La case à cocher

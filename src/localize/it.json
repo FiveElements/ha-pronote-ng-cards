@@ -81,7 +81,7 @@
     "attachments_one": "Allegato",
     "attachments_many": "Allegati",
     "attachment_open": "Aprire l'allegato",
-    "attachment_not_openable": "Gli allegati non sottolineati sono file: PRONOTE non consente di aprirli da Home Assistant.",
+    "attachment_not_openable": "Gli allegati non sottolineati non possono essere aperti: l’integrazione non ne ha pubblicato l’indirizzo.",
     "enonce_deplier": "Mostra il testo completo",
     "enonce_replier": "Comprimi il testo",
     "show_attachments": "Mostrare gli allegati",

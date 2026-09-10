@@ -1,5 +1,12 @@
 import { html, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } from '../core/types';
+import type {
+  CardSpec,
+  EntityKey,
+  HassView,
+  PronoteCardConfig,
+  RenderCtx,
+  Translate,
+} from '../core/types';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
 import { formatDayLabel, parseTimestamp, plainText } from '../core/format';
@@ -125,11 +132,17 @@ interface Config extends PronoteCardConfig {
    * l'URL iCal : sa place n'est ni dans le dépôt, ni dans la documentation,
    * ni dans une capture d'écran.
    *
-   * Le refus des adresses relatives par `openableUrl` reste juste, mais pas
-   * pour la raison qui y était écrite : la bibliothèque préfixe déjà par le
-   * site racine, donc une adresse publiée serait **absolue**. Le relatif est
-   * un fait sur le HTML du site web, pas sur ce qui nous parviendrait. Le
-   * refus vaut donc comme garde et non comme cas attendu.
+   * Deux formes d'adresse arrivent, et elles n'ont pas le même propriétaire.
+   * Une pièce de type **lien** porte une adresse absolue chez un tiers, que
+   * la carte ouvre directement. Une pièce de type **fichier** n'a pas
+   * d'adresse stable côté PRONOTE ; l'intégration en publie une **chez elle**,
+   * un chemin enraciné et signé qu'elle relaie. `openableUrl` admet donc
+   * l'enraciné, et seulement s'il reste sur l'origine du tableau de bord.
+   *
+   * Ce qui reste refusé est l'adresse sans schéma ni barre oblique initiale.
+   * Le refus vaut comme **garde**, pas comme cas attendu : l'intégration n'en
+   * publie pas, et le présenter comme la forme normale inviterait à « réparer »
+   * la carte en résolvant contre un hôte deviné.
    */
   show_attachments?: boolean;
 }
@@ -422,16 +435,75 @@ interface Attachment {
  * `data:` y servirait un document arbitraire. C'est le même raisonnement que
  * `subjectColor`, la seule autre valeur de serveur du projet qui atteigne un
  * attribut — on n'admet qu'une forme close, ici `http:` et `https:`.
+ *
+ * **Deux formes passent**, et la seconde a demandé deux mesures. Une adresse
+ * absolue est admise telle quelle. Une adresse **enracinée** — exactement une
+ * barre oblique initiale — est résolue contre l'origine de l'**instance**,
+ * puis n'est admise que si elle y est restée. C'est la forme que
+ * l'intégration publie pour les pièces qu'elle relaie elle-même, et le refus
+ * n'était pas théorique : mesuré le 10 septembre 2026 sur une instance, seize
+ * des vingt-trois pièces jointes portent un chemin enraciné signé, et la
+ * carte les écartait toutes.
+ *
+ * **L'origine de l'instance, jamais celle du document.** La première version
+ * résolvait contre `window.location.origin`, et c'était faux d'une manière
+ * qui ne se voit pas sur une instance ordinaire : le tableau de bord Cast est
+ * servi depuis une origine **tierce** et parle à Home Assistant par
+ * WebSocket. Le lien fabriqué y pointait chez ce tiers — mort, et emportant
+ * la signature dans son adresse. `hass.hassUrl` donne la bonne base ; le
+ * défaut a été signalé par la session de l'intégration, et la forme du
+ * champ vérifiée sur l'instance avant d'être écrite ici.
+ *
+ * **L'égalité d'origine ne se remplace pas par un test de préfixe**, et c'est
+ * le seul point de cette fonction qui ne se devine pas. Mesuré : une valeur
+ * qui commence par une barre oblique suivie d'une barre oblique **inverse**
+ * est normalisée en autorité par l'analyseur d'URL — elle désigne donc un
+ * autre hôte tout en satisfaisant « commence par une seule barre oblique ».
+ * Seule la comparaison de `url.origin` **après** analyse l'attrape. Le refus
+ * explicite de deux barres obliques en tête est un second verrou, redondant
+ * exprès : mesuré, le retirer ne fait tomber aucun test, parce que l'égalité
+ * d'origine l'attrape seule. C'est la définition d'un verrou redondant, pas
+ * une lacune de couverture — et c'est écrit ici pour qu'on ne le retire pas au
+ * motif qu'aucun test ne le défend.
+ *
+ * Une adresse sans schéma **et** sans barre oblique initiale reste refusée :
+ * il faudrait la résoudre contre le chemin de la page courante, qui dépend de
+ * la vue ouverte — la même pièce jointe donnerait deux adresses selon
+ * l'endroit où la carte est posée. L'intégration n'en publie pas.
  */
-const openableUrl = (value: unknown): string | undefined => {
-  if (typeof value !== 'string' || value.trim() === '') return undefined;
+const instanceOrigin = (hass: HassView): string | undefined => {
   try {
-    const url = new URL(value.trim());
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : undefined;
+    const brut = hass.hassUrl?.();
+    if (typeof brut !== 'string' || brut === '') return undefined;
+    const url = new URL(brut);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.origin : undefined;
   } catch {
-    // Pas une adresse absolue. Une adresse relative n'est pas utilisable non
-    // plus : la carte ne sait pas de quel hôte PRONOTE elle viendrait, et la
-    // résoudre contre l'hôte de Home Assistant fabriquerait un lien mort.
+    return undefined;
+  }
+};
+
+const openableUrl = (value: unknown, origine: string | undefined): string | undefined => {
+  if (typeof value !== 'string' || value.trim() === '') return undefined;
+  const brut = value.trim();
+  const enracinee = brut.startsWith('/') && !brut.startsWith('//');
+  // Sans origine d'instance connue, un chemin enraciné est refusé. Une
+  // pastille muette est un moindre mal qu'une adresse devinée : c'est
+  // exactement là que le jeton partirait chez un tiers.
+  //
+  // Cette ligne est explicite plus que nécessaire, et c'est mesuré : la
+  // retirer seule ne fait tomber aucun test, parce que `new URL` lève déjà
+  // sur une base absente. Ce qui est bel et bien couvert, c'est le
+  // COMPORTEMENT — remplacer l'origine manquante par celle de la page fait
+  // tomber le cas « refuse le chemin enraciné quand l’instance est inconnue ».
+  if (enracinee && origine === undefined) return undefined;
+  try {
+    const url = new URL(brut, enracinee ? origine : undefined);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
+    // Le verrou : ce qui a été résolu contre notre origine doit y être resté.
+    if (enracinee && url.origin !== origine) return undefined;
+    return url.href;
+  } catch {
+    // Ni absolue, ni enracinée : rien à résoudre.
     return undefined;
   }
 };
@@ -519,9 +591,9 @@ const champ = (source: object, ...cles: string[]): unknown => {
  * première : rien ne dit que c'est elle. Le doublon est un cas dégénéré,
  * pas une liste ordonnée.
  */
-const piecesOf = (h: Homework): Attachment[] => {
-  const noms = attachmentsOf(h.attachments);
-  const liens = attachmentsOf(h.attachment_links);
+const piecesOf = (h: Homework, origine: string | undefined): Attachment[] => {
+  const noms = attachmentsOf(h.attachments, origine);
+  const liens = attachmentsOf(h.attachment_links, origine);
   if (liens.length === 0) return noms;
   const adresseDe = new Map<string, string>();
   for (const lien of liens) {
@@ -552,14 +624,14 @@ const piecesOf = (h: Homework): Attachment[] => {
   return out;
 };
 
-const attachmentsOf = (value: unknown): Attachment[] => {
+const attachmentsOf = (value: unknown, origine: string | undefined): Attachment[] => {
   if (!Array.isArray(value)) return [];
   const out: Attachment[] = [];
   for (const item of value) {
     if (typeof item === 'string') {
       const trimmed = item.trim();
       if (trimmed === '') continue;
-      const url = openableUrl(trimmed);
+      const url = openableUrl(trimmed, origine);
       if (url === undefined) {
         out.push({ name: trimmed });
         continue;
@@ -569,7 +641,7 @@ const attachmentsOf = (value: unknown): Attachment[] => {
       continue;
     }
     if (item === null || typeof item !== 'object') continue;
-    const url = openableUrl(champ(item, 'url', 'href', 'link'));
+    const url = openableUrl(champ(item, 'url', 'href', 'link'), origine);
     const brut = champ(item, 'name', 'filename', 'title', 'label');
     const name =
       typeof brut === 'string' && brut.trim() !== ''
@@ -797,6 +869,9 @@ export const SPEC: CardSpec<Config> = {
     });
 
     const limited = truncate(sorted, ctx.config.limit);
+    // Calculée une fois : c'est la base contre laquelle un chemin enraciné se
+    // résout, et elle vaut pour toute la carte.
+    const origineInstance = instanceOrigin(ctx.hass);
 
     const overdueOn = ctx.entity(OVERDUE)?.state === 'on';
     /**
@@ -922,7 +997,7 @@ export const SPEC: CardSpec<Config> = {
       const publie = typeof h.description_text === 'string' ? h.description_text : '';
       const enonce = publie.trim() === '' ? plainText(h.description) : publie;
       const replie = maxLines > 0 && lignesEstimees(enonce) > maxLines;
-      const pieces = piecesOf(h);
+      const pieces = piecesOf(h, origineInstance);
       const piecesOn = ctx.config.show_attachments !== false && pieces.length > 0;
       /**
        * L'énoncé replié : du **texte**, et une bascule à côté.
@@ -1105,7 +1180,7 @@ export const SPEC: CardSpec<Config> = {
      */
     const noteFichiers =
       ctx.config.show_attachments !== false &&
-      limited.some((h) => piecesOf(h).some((piece) => piece.url === undefined))
+      limited.some((h) => piecesOf(h, origineInstance).some((piece) => piece.url === undefined))
         ? html`<div class="notice">${ctx.t('devoirs.attachment_not_openable')}</div>`
         : '';
 

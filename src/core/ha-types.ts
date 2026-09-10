@@ -48,6 +48,21 @@ export interface HomeAssistant {
   locale: { language: string; time_zone: string };
   /** Absent de certains contextes de rendu (aperçu d'éditeur) : à traiter comme optionnel. */
   config?: { time_zone?: string };
+  /**
+   * L'adresse de l'instance, **et pas celle de la page**.
+   *
+   * La distinction n'est pas théorique : le tableau de bord Cast est servi
+   * depuis une origine tierce et parle à Home Assistant par WebSocket.
+   * L'origine du document n'y est donc pas celle de l'instance, et une carte
+   * qui résoudrait un chemin d'API contre la page enverrait la requête —
+   * jeton compris — chez ce tiers.
+   *
+   * Optionnel exprès : un contexte de rendu peut ne pas la fournir, et le
+   * repli correct est alors de **refuser** le chemin, jamais de deviner une
+   * base. `hass.auth.data.hassUrl` porte la même valeur, mais cet objet
+   * contient aussi les jetons de session : une carte n'a rien à y chercher.
+   */
+  hassUrl?: (path?: string) => string;
   callService(
     domain: string,
     service: string,

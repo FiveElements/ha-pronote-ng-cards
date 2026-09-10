@@ -81,7 +81,7 @@
     "attachments_one": "Pièce jointe",
     "attachments_many": "Pièces jointes",
     "attachment_open": "Ouvrir la pièce jointe",
-    "attachment_not_openable": "Les pièces qui ne sont pas soulignées sont des fichiers : PRONOTE ne permet pas de les ouvrir depuis Home Assistant.",
+    "attachment_not_openable": "Les pièces qui ne sont pas soulignées ne peuvent pas être ouvertes : l’intégration n’a pas publié d’adresse pour elles.",
     "enonce_deplier": "Déplier l’énoncé",
     "enonce_replier": "Replier l’énoncé",
     "show_attachments": "Afficher les pièces jointes",

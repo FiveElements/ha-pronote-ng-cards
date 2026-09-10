@@ -215,10 +215,34 @@ typé, et c'est ce silence qui a laissé passer l'hypothèse.
 `attachments` est une liste de **chaînes** — des **noms**, jamais des
 adresses — et les adresses vivent dans une **seconde** liste sur le même
 devoir, `attachment_links`, de la forme `[{ name, url }]`. Le rapprochement se
-fait par le nom, la même chaîne des deux côtés. Mesuré le 10 septembre 2026 :
-quatre pièces ouvrables sur douze, sur quatre devoirs de vingt, vers des
-hôtes publics. `attachment_links` est **absent** de l'entité : il est sur
-chaque élément de `items`, ce qui a coûté une mesure pour être trouvé.
+fait par le nom, la même chaîne des deux côtés. `attachment_links` est
+**absent** de l'entité : il est sur chaque élément de `items`, ce qui a coûté
+une mesure pour être trouvé.
+
+**`url` a deux formes, et c'est le piège de cet attribut.** Mesuré le
+10 septembre 2026 en balayant tous les capteurs de devoirs de l'instance,
+vingt-trois pièces :
+
+| forme | compte | ce que c'est |
+|---|---|---|
+| `https://hôte/...` | 7 | une pièce de type **lien**, chez un tiers |
+| `/api/pronote_ng/attachment/<empreinte>?authSig=<jeton>` | 16 | une pièce de type **fichier**, relayée par l'intégration |
+
+La seconde est **enracinée**, donc `new URL(valeur)` sans base **lève**. Une
+carte qui traite cette exception comme un refus écarte silencieusement les
+seize — c'est ce qu'a fait la carte devoirs jusqu'au 11 septembre 2026. Elle
+se résout contre l'adresse de l'**instance** (`hass.hassUrl`), jamais contre
+celle du document : le tableau de bord Cast est servi depuis une origine
+tierce, et résoudre contre la page y enverrait le jeton chez ce tiers.
+
+Deux propriétés de cette adresse relayée, qui interdisent deux usages :
+
+- **elle change à chaque écriture d'état** (le jeton porte sa date d'émission
+  et d'expiration). Elle ne peut donc **jamais** servir de clé de comparaison
+  ni de mémoïsation — le nom est la clé stable ;
+- **elle ouvre le document sans demander d'identifiant.** Elle se traite comme
+  l'URL iCal : jamais dans le dépôt, un test, la documentation ou une capture.
+  Les fixtures n'en portent que la **forme**, avec un jeton synthétique.
 
 Ce qui suit reste vrai de `attachments` seul, et explique pourquoi les deux
 listes existent. Mesuré le 10 septembre 2026 : douze pièces
@@ -234,9 +258,19 @@ adresse stable et sans secret. Une pièce de type **fichier** n'en a pas : son
 chemin contient son numéro chiffré avec la clé et le vecteur de la session
 en cours, plus un paramètre de session — l'adresse meurt à la connexion
 suivante, et l'horizon réel est l'heure. Publier une telle adresse
-produirait un lien mort garanti, pas un lien fragile — c'est pourquoi
-`attachment_links` ne porte que les pièces de type lien, et pourquoi une
-pastille muette est le cas courant et non le cas dégradé.
+produirait un lien mort garanti, pas un lien fragile.
+
+C'est pourquoi l'intégration ne la publie pas et **relaie** : pour un fichier,
+`url` est un chemin de son propre point d'entrée, et c'est elle qui va
+chercher les octets avec la session vivante au moment du clic.
+
+Ce paragraphe a longtemps fini par « `attachment_links` ne porte que les
+pièces de type lien, et une pastille muette est le cas courant ». Les deux
+moitiés sont fausses depuis que le relais existe, et la leçon vaut pour tout
+ce fichier : **une forme d'attribut est une observation datée, pas une
+propriété.** Ce qui reste vrai est la contrainte qui l'a produite — pas d'adresse
+stable côté PRONOTE pour un fichier — et une contrainte peut être levée par la
+couche du dessous sans que personne ici ne le sache.
 
 `end_inferred` vaut **exactement** « le serveur n'a pas envoyé la fin » —
 vérifié dans les deux chemins de décodage de l'intégration, qui le posent tous

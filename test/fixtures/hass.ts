@@ -81,6 +81,16 @@ export function makeHass(entities: EntitySpec[] = [], language = 'fr'): HomeAssi
     // du fuseau de la machine qui les exécute.
     locale: { language, time_zone: 'server' },
     config: { time_zone: 'Europe/Paris' },
+    // La forme RÉELLE, vérifiée sur une instance : `hassUrl` est une
+    // **fonction**, elle joint son argument à l'adresse de l'instance, et sans
+    // argument elle rend cette adresse avec sa barre oblique finale.
+    //
+    // L'hôte choisi n'est **pas** celui du document — happy-dom sert la page
+    // depuis une origine locale. C'est délibéré : c'est la seule façon de
+    // reproduire en test le cas du tableau de bord Cast, où la page vient d'un
+    // tiers et l'instance est ailleurs. Une fixture qui ferait coïncider les
+    // deux laisserait passer une carte qui résout contre la page.
+    hassUrl: (path = '/') => new URL(path, 'https://demo.example.invalid').toString(),
     callService: async () => undefined,
   };
 }

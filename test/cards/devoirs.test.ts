@@ -1540,6 +1540,12 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
      *
      * Le nom, lui, reste affiché : écarter le lien ne doit pas faire
      * disparaître l'information que le devoir porte une pièce.
+     *
+     * Ce cas portait une troisième ligne, `/pronote/piece.pdf`, et elle a
+     * été retirée le 11 septembre 2026 : un chemin enraciné est désormais
+     * résolu contre l'origine du tableau de bord, parce que c'est la forme
+     * sous laquelle l'intégration publie les pièces qu'elle relaie. Le test
+     * qui suit prend le relais et dit ce que ce changement coûte.
      */
     const el = await mountCard(
       'pronote-ng-devoirs',
@@ -1549,7 +1555,6 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
           items: devoirAvecPieces([
             { name: 'piege.pdf', url: 'javascript:alert(1)' },
             { name: 'donnee.pdf', url: 'data:text/html,<script></script>' },
-            { name: 'relative.pdf', url: '/pronote/piece.pdf' },
           ]),
         },
         '1'
@@ -1559,9 +1564,34 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
     expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual([
       'piege.pdf',
       'donnee.pdf',
-      'relative.pdf',
     ]);
     expect(el.shadowRoot?.innerHTML).not.toContain('javascript:');
+  });
+
+  it('ouvre un chemin enraciné sans vérifier qu’il mène au relais', async () => {
+    /**
+     * Le coût assumé de l'élargissement, écrit ici pour qu'on ne le
+     * « corrige » pas par erreur. La carte ne compare pas le début du chemin
+     * à celui du point d'entrée de l'intégration : un chemin local qui ne
+     * mène nulle part donne donc un lien qui rend un 404 de Home Assistant.
+     *
+     * Pourquoi ne pas exiger le préfixe. Ce ne serait pas une garantie de
+     * sécurité — c'est l'égalité d'origine qui en est une — et ça inscrirait
+     * dans la carte un chemin dont l'intégration est propriétaire. Le jour
+     * où elle le renommerait, toutes les pièces redeviendraient muettes
+     * **sans un mot** ; sans préfixe, la panne est un 404, visible et
+     * diagnosticable. Une régression bruyante vaut mieux qu'une silencieuse.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: devoirAvecPieces([{ name: 'ailleurs.pdf', url: '/pronote/piece.pdf' }]) }, '1')
+    );
+    const liens = liensPieces(el);
+    expect(liens.length).toBe(1);
+    expect(liens[0]?.getAttribute('href')).toBe(
+      new URL(makeHass().hassUrl?.() ?? '').origin + '/pronote/piece.pdf'
+    );
   });
 
   it('écarte une pièce qui ne donne ni nom ni adresse utilisable', async () => {
@@ -2286,5 +2316,202 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
     expect(el.shadowRoot?.querySelectorAll('.notice').length).toBe(0);
     // Appariement positif : la pièce est bien rendue, et ouvrable.
     expect(liensPieces(el).length).toBe(1);
+  });
+});
+
+/**
+ * Le tableau d'entrées hostiles, figé. Chaque ligne a été **mesurée** dans un
+ * navigateur avant d'être écrite ici, et deux d'entre elles ont changé la
+ * forme du filtre.
+ *
+ * L'origine attendue est celle de l'**instance**, que la fixture publie par
+ * `hassUrl` — et elle ne coïncide pas avec celle du document, exprès. C'est
+ * ce qui rend le cas Cast mesurable ici : une carte qui résoudrait contre la
+ * page produirait une adresse vers `localhost`, et les assertions ci-dessous
+ * tomberaient.
+ *
+ * Aucun hôte n'est écrit en dur, et pas seulement par propreté : l'hôte d'une
+ * instance réelle n'a rien à faire dans un dépôt public. La garde des hôtes
+ * autorisées de `test/guards.test.ts` a d'ailleurs refusé la première version
+ * de ce commentaire, qui citait l'origine de l'environnement de test.
+ */
+describe('carte devoirs — l’élargissement du filtre d’adresses', () => {
+  /**
+   * La forme que l'intégration publie pour une pièce qu'elle relaie
+   * elle-même : un chemin **enraciné**, une empreinte, une signature.
+   *
+   * Entièrement synthétique, et la précaution n'est pas rhétorique — une
+   * adresse de pièce jointe ouvre le document **sans demander d'identifiant**.
+   * Seule la FORME est réelle.
+   */
+  const SIGNATURE =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9' +
+    '.eyJwYXRoIjoiL2FwaS9zeW50aGV0aXF1ZSIsImlhdCI6MTc4OTAwMDAwMCwiZXhwIjoxNzg5MDQzMjAwfQ' +
+    '.bGFfc2lnbmF0dXJlX2NpX2Rlc3NvdXNfZXN0X3N5bnRoZXRpcXVlX3Bhc191bmVfdnJhaWU';
+  const CHEMIN_SIGNE =
+    '/api/pronote_ng/attachment/0123456789abcdef/a1b2c3d4e5f60718?authSig=' + SIGNATURE;
+
+  const avecAdresse = async (url: unknown, nom = 'sujet.pdf') =>
+    mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: devoirDeuxListes([nom], [{ name: nom, url }]) }, '1')
+    );
+
+  /** L'origine de l'instance telle que la fixture la publie. */
+  const ORIGINE_INSTANCE = new URL(makeHass().hassUrl?.() ?? '').origin;
+
+  it('ouvre la pièce que l’intégration relaie sur sa propre origine', async () => {
+    /**
+     * Le défaut que cet élargissement corrige, et il n'était pas théorique :
+     * mesuré le 10 septembre 2026 sur une instance, seize des vingt-trois
+     * pièces jointes portent cette forme, et la carte les écartait toutes —
+     * `new URL` sans base lève sur un chemin enraciné.
+     */
+    const el = await avecAdresse(CHEMIN_SIGNE);
+    const liens = liensPieces(el);
+    expect(liens.length).toBe(1);
+    expect(liens[0]?.getAttribute('href')).toBe(ORIGINE_INSTANCE + CHEMIN_SIGNE);
+    expect(liens[0]?.textContent?.trim()).toBe('sujet.pdf');
+  });
+
+  it('rend la signature caractère pour caractère', async () => {
+    /**
+     * Une signature abîmée donnerait un 401, donc une pièce qui a l'air
+     * ouvrable et ne s'ouvre pas. `new URL(chemin, origine).href` ne
+     * réécrit ni le point, ni le tiret bas, ni les caractères base64url.
+     */
+    const el = await avecAdresse(CHEMIN_SIGNE);
+    const href = liensPieces(el)[0]?.getAttribute('href') ?? '';
+    expect(new URL(href).search).toBe('?authSig=' + SIGNATURE);
+    expect(href.length).toBe(ORIGINE_INSTANCE.length + CHEMIN_SIGNE.length);
+  });
+
+  it('laisse intacte une adresse absolue chez un tiers', async () => {
+    const el = await avecAdresse('https://demo.example.invalid/pj/a.pdf?v=2#page=3');
+    expect(liensPieces(el)[0]?.getAttribute('href')).toBe(
+      'https://demo.example.invalid/pj/a.pdf?v=2#page=3'
+    );
+  });
+
+  it('garde le fragment d’un chemin enraciné sans sortir du chemin', async () => {
+    // Un fragment n'est pas un segment de chemin : les deux points ne
+    // remontent nulle part.
+    const el = await avecAdresse('/api/pronote_ng/attachment/abc#/../..');
+    const href = liensPieces(el)[0]?.getAttribute('href') ?? '';
+    expect(new URL(href).pathname).toBe('/api/pronote_ng/attachment/abc');
+    expect(new URL(href).origin).toBe(ORIGINE_INSTANCE);
+  });
+
+  it('résout contre l’instance et non contre la page', async () => {
+    /**
+     * Le défaut que la session de l'intégration a signalé, et il ne se voit
+     * pas sur une instance ordinaire où les deux origines coïncident.
+     *
+     * Le tableau de bord **Cast** est servi depuis une origine tierce et
+     * parle à Home Assistant par WebSocket. Résoudre un chemin enraciné
+     * contre le document y fabriquerait une adresse vers ce tiers : le lien
+     * est mort, **et** la signature part chez lui dans l'adresse demandée.
+     * Un `rel="noreferrer"` n'y change rien — le jeton n'est pas dans le
+     * référent, il est dans l'adresse.
+     *
+     * Ce test est le seul de ce fichier qui distingue les deux bases, et
+     * c'est la fixture qui le permet en les faisant volontairement différer.
+     */
+    const el = await avecAdresse(CHEMIN_SIGNE);
+    const href = liensPieces(el)[0]?.getAttribute('href') ?? '';
+    expect(new URL(href).origin).toBe(ORIGINE_INSTANCE);
+    expect(new URL(href).origin).not.toBe(window.location.origin);
+  });
+
+  it('refuse le chemin enraciné quand l’instance est inconnue', async () => {
+    /**
+     * Le repli, et il est volontairement sévère. Sans `hassUrl`, la carte ne
+     * sait pas contre quoi résoudre — et deviner, c'est précisément envoyer
+     * la signature ailleurs. Une pastille muette est le moindre mal.
+     */
+    const sansUrl: HomeAssistant = {
+      ...hw({ items: devoirDeuxListes(['sujet.pdf'], [{ name: 'sujet.pdf', url: CHEMIN_SIGNE }]) }, '1'),
+      hassUrl: undefined,
+    };
+    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, sansUrl);
+    expect(liensPieces(el).length).toBe(0);
+    // Appariement positif : la pièce est rendue, et la carte dit pourquoi.
+    expect(pastillesPieces(el).length).toBe(1);
+    expect(el.shadowRoot?.querySelectorAll('.notice').length).toBe(1);
+  });
+
+  it('accepte encore une adresse absolue quand l’instance est inconnue', async () => {
+    // Le contrepoids : l'absence de `hassUrl` ne doit éteindre QUE le chemin
+    // enraciné. Une adresse absolue n'a pas besoin de base.
+    const sansUrl: HomeAssistant = {
+      ...hw(
+        {
+          items: devoirDeuxListes(
+            ['sujet.pdf'],
+            [{ name: 'sujet.pdf', url: 'https://demo.example.invalid/pj/sujet.pdf' }]
+          ),
+        },
+        '1'
+      ),
+      hassUrl: undefined,
+    };
+    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, sansUrl);
+    expect(liensPieces(el).length).toBe(1);
+  });
+
+  /**
+   * Ce qui doit rester refusé, et pourquoi chaque ligne y est.
+   *
+   * La troisième est celle qui a décidé de la forme du filtre. Une barre
+   * oblique suivie d'une barre oblique **inverse** satisfait « commence par
+   * une seule barre oblique », et l'analyseur d'URL la normalise pourtant en
+   * autorité : le nom qui suit devient l'hôte. Un test de préfixe l'aurait
+   * laissée passer ; seule l'égalité d'origine **après** analyse l'attrape.
+   */
+  const REFUSEES: [string, string][] = [
+    ['//evil.example/x', 'une autorité déguisée en chemin'],
+    ['/' + String.fromCharCode(92) + 'evil.example/x', 'la barre oblique inverse normalisée'],
+    ['api/pronote_ng/attachment/abc', 'sans barre oblique initiale : quelle base ?'],
+    ['javascript:alert(1)', 'exécution dans la page de l’utilisateur'],
+    ['JaVaScRiPt:alert(1)', 'le schéma est insensible à la casse'],
+    ['java' + String.fromCharCode(9) + 'script:alert(1)', 'la tabulation est ôtée du schéma'],
+    ['data:text/html,pas%20un%20document', 'un document arbitraire'],
+    ['vbscript:msgbox', 'le même exécutable, autre nom'],
+    ['file:///etc/passwd', 'le disque du lecteur'],
+    ['', 'vide'],
+  ];
+
+  for (const [entree, raison] of REFUSEES) {
+    it('refuse ' + raison, async () => {
+      const el = await avecAdresse(entree, 'piece');
+      expect(liensPieces(el).length).toBe(0);
+      // Appariement positif : la pièce est bien rendue, simplement muette.
+      // Sans ça, un rendu entièrement cassé passerait ce test.
+      expect(pastillesPieces(el).length).toBe(1);
+      expect(pastillesPieces(el)[0]?.textContent?.trim()).toBe('piece');
+    });
+  }
+
+  it('n’annonce plus l’impossibilité quand tout s’ouvre', async () => {
+    // La note de bas de carte porte sur les pièces SANS adresse. Un chemin
+    // enraciné en est une : la note doit disparaître.
+    const el = await avecAdresse(CHEMIN_SIGNE);
+    expect(el.shadowRoot?.querySelectorAll('.notice').length).toBe(0);
+    expect(liensPieces(el).length).toBe(1);
+  });
+
+  it('annonce encore l’impossibilité pour une pièce sans adresse', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: devoirDeuxListes(['a.pdf', 'b.pdf'], [{ name: 'a.pdf', url: CHEMIN_SIGNE }]) }, '1')
+    );
+    expect(el.shadowRoot?.querySelectorAll('.notice').length).toBe(1);
+    expect(liensPieces(el).length).toBe(1);
+    // Deux pastilles, dont une seule est muette : l'ancre porte elle aussi la
+    // classe `chip`, parce que le lien EST la pastille.
+    expect(pastillesPieces(el).length).toBe(2);
+    expect(pastillesPieces(el).filter((n) => !n.classList.contains('chip-lien')).length).toBe(1);
   });
 });

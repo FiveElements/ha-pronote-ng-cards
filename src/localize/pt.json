@@ -81,7 +81,7 @@
     "attachments_one": "Anexo",
     "attachments_many": "Anexos",
     "attachment_open": "Abrir o anexo",
-    "attachment_not_openable": "Os anexos sem sublinhado são ficheiros: o PRONOTE não permite abri-los a partir do Home Assistant.",
+    "attachment_not_openable": "Os anexos sem sublinhado não podem ser abertos: a integração não publicou o endereço deles.",
     "enonce_deplier": "Mostrar o enunciado completo",
     "enonce_replier": "Recolher o enunciado",
     "show_attachments": "Mostrar os anexos",
