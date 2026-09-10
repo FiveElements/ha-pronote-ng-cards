@@ -393,8 +393,27 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
           // Posé AVANT l'appel : un double-clic pendant l'attente doit
           // retomber sous le refroidissement, pas en envoyer un second — la
           // seule carte qui touche au budget de requêtes en dépend.
-          this.refreshedAt = Date.now();
-          writeGuard(config.device_id, this.refreshedAt);
+          //
+          // Et RENDU si l'appel est rejeté, ce qui suppose de retenir l'état
+          // d'avant. Arbitré par le propriétaire le 10 septembre 2026, après
+          // l'avoir payé : le bouton refusait `device_id` en cible, son clic
+          // échouait, et la garde le verrouillait quand même un quart
+          // d'heure. Le défaut est corrigé, la punition non.
+          //
+          // L'objection qui avait fait renoncer une première fois est
+          // sérieuse : `refresh` peut échouer APRÈS que l'ordonnanceur a
+          // accepté la priorité — une coupure de la liaison, par exemple — et
+          // rendre la garde autorise alors un second boost pour un premier
+          // qui a bel et bien porté. Ce qui la tranche est le coût comparé :
+          // une priorité relevée deux fois ne place AUCUNE requête PRONOTE,
+          // c'est l'ordonnanceur qui décide et le plafond serveur reste par
+          // palier ; un verrou injustifié, lui, se paie tout de suite et se
+          // paie en entier.
+          const previousAt = this.refreshedAt;
+          const previousStored = readGuard(config.device_id);
+          const armedAt = Date.now();
+          this.refreshedAt = armedAt;
+          writeGuard(config.device_id, armedAt);
           try {
             await callService(
               'pronote_ng.refresh',
@@ -438,6 +457,14 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
             // Le rejet doit remonter à l'utilisateur, pas disparaître : la
             // carte reste seule juge de la façon de le montrer.
             this.refreshFailed = true;
+            this.refreshedAt = previousAt;
+            // La garde partagée n'est rendue que si PERSONNE ne l'a reprise
+            // entre-temps. Deux cartes du même appareil peuvent être sur la
+            // même vue : restaurer sans regarder écraserait la garde qu'une
+            // voisine vient d'armer pour un appel qui, lui, a réussi.
+            if (readGuard(config.device_id) === armedAt) {
+              writeGuard(config.device_id, previousStored);
+            }
           }
         },
         // La garde retenue est la plus récente des deux : celle de l'instance

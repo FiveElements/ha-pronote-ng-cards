@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { html } from 'lit';
 import { defineCard } from '../src/core/registry';
 import { resolveTimeZone } from '../src/core/base-card';
@@ -327,6 +327,14 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
     defineCard(SPEC_REFRESH);
   });
 
+  // La garde vit dans `localStorage`, donc elle FUIT d'un cas au suivant. Sans
+  // ce nettoyage, un test de garde rendue mesurerait celle qu'un cas
+  // précédent a laissée, et le premier cas ci-dessous — qui affirme que le
+  // bouton part non grisé — tenait par l'ordre d'exécution seul.
+  beforeEach(() => {
+    globalThis.localStorage?.clear();
+  });
+
   it('pose refreshedAt avant l’appel : le bouton se grise dès le clic, avant même la résolution du service', async () => {
     const hass = makeHass([]);
     probeRefresh(hass);
@@ -362,6 +370,74 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
     await el.updateComplete;
 
     expect(text(el)).toContain('échoué');
+  });
+
+  it('rend la garde quand l’appel est rejeté : le bouton redevient cliquable', async () => {
+    // Mesuré sur l'instance du propriétaire le 10 septembre 2026, avant le
+    // correctif de `device_id` : le service rejetait l'appel, et la garde
+    // verrouillait quand même le bouton un quart d'heure. Un utilisateur
+    // puni pour une demande qui n'est jamais partie.
+    const hass = makeHass([]);
+    probeRefresh(hass);
+    hass.callService = () => Promise.reject(new Error('value should be a string'));
+    const el = await mountRefreshCard(hass);
+
+    btnOf(el)?.dispatchEvent(new MouseEvent('click'));
+    // Grisé dès le clic : la protection contre le double-clic ne change pas,
+    // c'est le RETOUR en arrière qui est nouveau.
+    await el.updateComplete;
+    expect(btnOf(el)?.hasAttribute('disabled')).toBe(true);
+
+    await new Promise((r) => setTimeout(r, 0));
+    await el.updateComplete;
+    expect(btnOf(el)?.hasAttribute('disabled')).toBe(false);
+    // Appariement positif : un bouton non grisé se rencontre aussi sur un
+    // rendu qui n'a rien vu. L'échec affiché prouve que le clic est bien
+    // allé jusqu'au bout du chemin de rejet.
+    expect(text(el)).toContain('échoué');
+  });
+
+  it('rend aussi la garde PARTAGÉE : un remontage après un rejet part libre', async () => {
+    // La garde de l'instance et celle du stockage sont deux choses, et c'est
+    // la seconde qui survit à un rechargement de page. La rendre à moitié
+    // laisserait le verrou revenir au prochain affichage.
+    const hass = makeHass([]);
+    probeRefresh(hass);
+    hass.callService = () => Promise.reject(new Error('rejet'));
+    const first = await mountRefreshCard(hass);
+    btnOf(first)?.dispatchEvent(new MouseEvent('click'));
+    await new Promise((r) => setTimeout(r, 0));
+    await first.updateComplete;
+
+    const second = await mountRefreshCard(hass);
+    expect(btnOf(second)?.hasAttribute('disabled')).toBe(false);
+  });
+
+  it('ne rend PAS la garde qu’une carte voisine a reprise entre-temps', async () => {
+    // Deux cartes du même appareil peuvent être sur la même vue. Si la
+    // voisine arme la garde pendant que notre appel est en vol, et que le
+    // nôtre échoue, restaurer sans regarder effacerait un verrou légitime —
+    // pour un appel qui, lui, a réussi.
+    const hass = makeHass([]);
+    probeRefresh(hass);
+    const CLE = 'pronote-ng-cards:refreshed-at:dev_enfant';
+    hass.callService = () => {
+      // La voisine arme la garde APRÈS nous, avec un horodatage plus récent.
+      globalThis.localStorage.setItem(CLE, String(Date.now() + 1000));
+      return Promise.reject(new Error('rejet'));
+    };
+    const el = await mountRefreshCard(hass);
+    btnOf(el)?.dispatchEvent(new MouseEvent('click'));
+    await new Promise((r) => setTimeout(r, 0));
+    await el.updateComplete;
+
+    // Notre instance oublie sa propre garde — c'est notre appel qui a
+    // échoué — mais la garde partagée reste celle de la voisine.
+    const restee = Number(globalThis.localStorage.getItem(CLE));
+    expect(restee).toBeGreaterThan(Date.now());
+    // Et un remontage la relit, donc le bouton repart grisé.
+    const second = await mountRefreshCard(hass);
+    expect(btnOf(second)?.hasAttribute('disabled')).toBe(true);
   });
 
   it('garde le bouton grisé après un remontage : un rechargement de page ne réarme pas avant l’heure', async () => {
