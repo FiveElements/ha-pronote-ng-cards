@@ -15,7 +15,7 @@ vous ; il n'y a pas d'identifiant d'entité à écrire nulle part.
 
 - [Un enfant, une vue](#un-enfant-une-vue)
 - [Une fenetre glissante sur la semaine](#une-fenetre-glissante-sur-la-semaine)
-- [Les hauteurs, et la seule qui pose probleme](#les-hauteurs-et-la-seule-qui-pose-probleme)
+- [Les hauteurs, et les deux qui posent probleme](#les-hauteurs-et-les-deux-qui-posent-probleme)
 - [Plusieurs enfants](#plusieurs-enfants)
 - [La carte limiteur, une par entree de configuration](#la-carte-limiteur-une-par-entree-de-configuration)
 - [Ce qui ne doit pas se faire](#ce-qui-ne-doit-pas-se-faire)
@@ -73,10 +73,9 @@ vue donne l'impression que rien ne fonctionne.
 d'un enfant — voyez
 [plus bas](#la-carte-limiteur-une-par-entree-de-configuration).
 
-**L'emploi du temps de la semaine non plus.** En mode `week`, la carte est deux
-fois plus haute que la plus haute des autres : elle mérite sa propre vue, ou au
-moins sa propre section pleine largeur. C'est le sujet des
-[hauteurs](#les-hauteurs-et-la-seule-qui-pose-probleme).
+**L'emploi du temps de la semaine non plus.** En mode `week`, la carte annonce
+24 : elle mérite sa propre vue, ou au moins sa propre section pleine largeur.
+C'est le sujet des [hauteurs](#les-hauteurs-et-les-deux-qui-posent-probleme).
 
 ---
 
@@ -156,10 +155,10 @@ qu'elles ne savent pas, et conclura le contraire.
 
 ---
 
-## Les hauteurs, et la seule qui pose probleme
+## Les hauteurs, et les deux qui posent probleme
 
-Chaque carte annonce une hauteur à Home Assistant. Deux la font varier selon leur
-configuration :
+Chaque carte annonce une hauteur à Home Assistant. Trois la font varier selon
+leur configuration :
 
 | Carte | Hauteur annoncée |
 | --- | --- |
@@ -168,16 +167,27 @@ configuration :
 | Cantine | 4 |
 | Mode de collecte | 4 |
 | Évaluations | 4 sans les acquisitions, **8** avec |
-| Devoirs | 5 |
 | Limiteur | 5 |
 | Notes | 6 |
 | Vie scolaire | 6 |
 | Vue journée | 10 |
 | Emploi du temps | 8 en `today` et `tomorrow`, **24** en `week` |
+| Devoirs | 13 en `tomorrow`, **31** en `todo`, **40** en `all` |
 
-**Le cas isolé, c'est `range: week`.** 24 contre 10 pour la plus haute des
-autres. Placée dans une colonne étroite, elle s'y écrase ; placée à côté d'une
-petite carte, elle laisse un vide de plusieurs écrans.
+**Deux cartes sortent du lot, et pas pour la même raison.**
+
+Les **devoirs** annoncent 31 par défaut, et jusqu'à 40 avec `filter: all` : c'est
+la plus haute du dépôt. La cause est dans la donnée et non dans le dessin —
+l'énoncé est le contenu de cette carte, et quinze devoirs de deux lignes font
+plus de mille trois cents pixels, mesurés sur une instance. Deux options la
+ramènent : `max_lines: 3` la fait tomber à 28, et un `limit` explicite la fixe
+exactement, la carte n'ayant alors plus rien à estimer. Voir
+[L'énoncé long](cartes/devoirs.md#lenonce-long-et-la-hauteur-de-la-carte).
+
+L'**emploi du temps** en `range: week` annonce 24, et sa gêne n'est pas la
+même : sa grille de semaine veut aussi de la largeur. Placée dans une colonne
+étroite, elle s'y écrase ; placée à côté d'une petite carte, elle laisse un vide
+de plusieurs écrans.
 
 **Ce que les cartes ne font pas pour vous.** Elles déclarent leur hauteur par
 `getCardSize()`, qui est l'API de dimensionnement des vues **masonry**. Aucune
@@ -192,17 +202,20 @@ donner la largeur, et l'emploi du temps de la semaine veut la largeur complète 
     columns: 12
 ```
 
-**Le seul autre appariement qui déséquilibre visiblement** est deux des trois
-cartes hautes côte à côte : l'emploi du temps en `today` (8), les évaluations
-avec leurs acquisitions (8) et la vue journée (10). Séparez-les, ou
+**L'appariement qui déséquilibre le plus** est désormais les devoirs à côté de
+quoi que ce soit d'autre : à 31, leur voisine flotte en haut d'une colonne
+presque vide. Viennent ensuite deux des trois cartes moyennes côte à côte :
+l'emploi du temps en `today` (8), les évaluations avec leurs acquisitions (8) et
+la vue journée (10). Séparez-les, ou
 donnez-leur chacune la pleine largeur — c'est d'ailleurs pourquoi la
 [fenêtre glissante](#une-fenetre-glissante-sur-la-semaine) met une section par
 carte.
 
 **Attention aux réglages qui changent la hauteur.** Un tableau de bord équilibré
-se déséquilibre quand vous basculez `range` sur `week` ou que vous activez les
-acquisitions. Si vous ajustez des largeurs à la main, refaites le tour après
-avoir changé un de ces deux réglages.
+se déséquilibre quand vous basculez `range` sur `week`, quand vous activez les
+acquisitions, et quand vous touchez au `filter`, au `limit` ou au `max_lines`
+des devoirs. Si vous ajustez des largeurs à la main, refaites le tour après
+avoir changé un de ces réglages.
 
 ---
 
