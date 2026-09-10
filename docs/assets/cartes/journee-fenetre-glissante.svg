@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 300" width="780" height="300" role="img" aria-label="Trois cartes Vue journée côte à côte, chacune sur son jour : jeudi 12 mars avec ses cinq créneaux et ses deux flèches actives, vendredi 13 mars dont la flèche vers l'avant est éteinte parce que c'est le dernier jour collecté, et samedi 14 mars qui porte sa date en en-tête et la phrase « ce jour n'est pas dans la semaine collectée » à la place d'une journée.">
+  <title>Vue journée : trois jours côte à côte</title>
+  <desc>Illustration synthétique. Rien n'y vient d'un élève réel : les dates, les horaires, les salles et les professeurs sont inventés, les professeurs sont réduits à une initiale, et les matières sont des matières de programme. La semaine collectée s'arrête au vendredi 13, donc la troisième carte dit qu'elle ne connaît pas le samedi 14 au lieu d'affirmer qu'il est sans cours.</desc>
+
+  <style>
+    .bg { fill: #f2f4f7; }
+    .card { fill: #ffffff; }
+    .shadow { fill: #101828; opacity: .06; }
+    .h { font: 600 13px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .p { font: 600 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #101828; }
+    .s { font: 400 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .t { font: 400 10.5px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .meal { font: italic 400 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .notice { font: italic 400 11px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .rule { stroke: #eaecf0; stroke-width: 1; }
+    /* Les fleches sont grises comme dans la feuille de style de la carte, et
+       une fleche eteinte s'efface au lieu de se peindre en pave. */
+    .nav { font: 400 17px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #667085; }
+    .nav-off { font: 400 17px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; fill: #d0d5dd; }
+  </style>
+
+  <rect class="bg" width="780" height="300"/>
+
+  <!-- ======================================================================
+       Carte 1 — day_offset: 0. Aujourd'hui, jeudi 12 mars : les deux fleches
+       sont actives, et les bornes de la journee viennent des attributs
+       publies par l'integration.
+       ====================================================================== -->
+  <g transform="translate(12 12)">
+    <rect class="shadow" x="1" y="3" width="244" height="276" rx="12"/>
+    <rect class="card" width="244" height="276" rx="12"/>
+
+    <text class="nav" x="14" y="27">‹</text>
+    <text class="h" x="32" y="26">Jeudi 12 mars</text>
+    <text class="nav" x="126" y="27">›</text>
+    <text class="t" x="232" y="26" text-anchor="end">08:30 – 17:00</text>
+    <line class="rule" x1="12" y1="38" x2="232" y2="38"/>
+
+    <text class="t" x="12" y="58">08:30</text>
+    <text class="t" x="12" y="74">09:30</text>
+    <rect x="46" y="46" width="3" height="32" rx="1.5" fill="#ee46bc"/>
+    <text class="p" x="54" y="58">MATHÉMATIQUES</text>
+    <text class="s" x="54" y="75">Salle 1.4 · M. B.</text>
+    <line class="rule" x1="12" y1="86" x2="232" y2="86"/>
+
+    <text class="t" x="12" y="104">10:30</text>
+    <text class="t" x="12" y="120">11:30</text>
+    <rect x="46" y="92" width="3" height="32" rx="1.5" fill="#12b76a"/>
+    <text class="p" x="54" y="104">TECHNOLOGIE</text>
+    <text class="s" x="54" y="121">Salle 2.9 · M. C.</text>
+    <line class="rule" x1="12" y1="132" x2="232" y2="132"/>
+
+    <!-- Le creux du midi : pas un cours, donc un filet pointille et pas de
+         couleur. Ses bornes sont celles du trou, pas la plage configuree. -->
+    <text class="t" x="12" y="150">11:30</text>
+    <text class="t" x="12" y="166">14:00</text>
+    <line x1="47.5" y1="138" x2="47.5" y2="170" stroke="#d0d5dd" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 6"/>
+    <text class="meal" x="54" y="154">Repas</text>
+    <line class="rule" x1="12" y1="178" x2="232" y2="178"/>
+
+    <text class="t" x="12" y="196">14:00</text>
+    <text class="t" x="12" y="212">15:00</text>
+    <rect x="46" y="184" width="3" height="32" rx="1.5" fill="#eaaa08"/>
+    <text class="p" x="54" y="196">ESPAGNOL LV2</text>
+    <text class="s" x="54" y="213">Salle 3.1 · Mme D.</text>
+    <line class="rule" x1="12" y1="224" x2="232" y2="224"/>
+
+    <text class="t" x="12" y="242">16:00</text>
+    <text class="t" x="12" y="258">17:00</text>
+    <rect x="46" y="230" width="3" height="32" rx="1.5" fill="#0e9384"/>
+    <text class="p" x="54" y="242">ÉDUCATION MUSICALE</text>
+    <text class="s" x="54" y="259">Salle 0.2 · M. G.</text>
+  </g>
+
+  <!-- ======================================================================
+       Carte 2 — day_offset: 1. Vendredi 13 mars, dernier jour collecte : la
+       fleche vers l'avant est eteinte, faute de jour au-dela. Les bornes sont
+       recalculees par la carte, l'integration ne les publiant que pour
+       aujourd'hui.
+       ====================================================================== -->
+  <g transform="translate(268 12)">
+    <rect class="shadow" x="1" y="3" width="244" height="230" rx="12"/>
+    <rect class="card" width="244" height="230" rx="12"/>
+
+    <text class="nav" x="14" y="27">‹</text>
+    <text class="h" x="32" y="26">Vendredi 13 mars</text>
+    <text class="nav-off" x="146" y="27">›</text>
+    <text class="t" x="232" y="26" text-anchor="end">09:30 – 16:00</text>
+    <line class="rule" x1="12" y1="38" x2="232" y2="38"/>
+
+    <text class="t" x="12" y="58">09:30</text>
+    <text class="t" x="12" y="74">10:30</text>
+    <rect x="46" y="46" width="3" height="32" rx="1.5" fill="#6938ef"/>
+    <text class="p" x="54" y="58">HISTOIRE-GÉO</text>
+    <text class="s" x="54" y="75">Salle 2.2 · Mme A.</text>
+    <line class="rule" x1="12" y1="86" x2="232" y2="86"/>
+
+    <text class="t" x="12" y="104">10:30</text>
+    <text class="t" x="12" y="120">11:30</text>
+    <rect x="46" y="92" width="3" height="32" rx="1.5" fill="#175cd3"/>
+    <text class="p" x="54" y="104">ANGLAIS LV1</text>
+    <text class="s" x="54" y="121">Salle 3.4 · M. E.</text>
+    <line class="rule" x1="12" y1="132" x2="232" y2="132"/>
+
+    <text class="t" x="12" y="150">11:30</text>
+    <text class="t" x="12" y="166">14:00</text>
+    <line x1="47.5" y1="138" x2="47.5" y2="170" stroke="#d0d5dd" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 6"/>
+    <text class="meal" x="54" y="154">Repas</text>
+    <line class="rule" x1="12" y1="178" x2="232" y2="178"/>
+
+    <text class="t" x="12" y="196">14:00</text>
+    <text class="t" x="12" y="212">16:00</text>
+    <rect x="46" y="184" width="3" height="32" rx="1.5" fill="#f04438"/>
+    <!-- Une salle numerotee et non « Gymnase » : `roomLabel` prefixe le mot
+         « Salle » des que le champ ne le porte pas deja, et « Salle Gymnase »
+         se lirait comme une faute de l'illustration. -->
+    <text class="p" x="54" y="196">EPS</text>
+    <text class="s" x="54" y="213">Salle 0.5 · M. F.</text>
+  </g>
+
+  <!-- ======================================================================
+       Carte 3 — day_offset: 2. Samedi 14 mars tombe au-dela de la semaine
+       collectee : la carte ne sait RIEN de ce jour-la, donc elle le dit au
+       lieu d'affirmer qu'il est sans cours. L'en-tete reste, avec la date
+       demandee, pour que la phrase dise DE QUEL jour on n'a rien ; il n'y a
+       pas de bornes, faute de creneau pour les porter.
+       ====================================================================== -->
+  <g transform="translate(524 12)">
+    <rect class="shadow" x="1" y="3" width="244" height="148" rx="12"/>
+    <rect class="card" width="244" height="148" rx="12"/>
+
+    <text class="nav" x="14" y="27">‹</text>
+    <text class="h" x="32" y="26">Samedi 14 mars</text>
+    <text class="nav-off" x="132" y="27">›</text>
+    <line class="rule" x1="12" y1="38" x2="232" y2="38"/>
+
+    <text class="notice" x="12" y="60">Ce jour n&apos;est pas dans la semaine</text>
+    <text class="notice" x="12" y="75">collectée : la carte ne sait pas ce</text>
+    <text class="notice" x="12" y="90">qu&apos;il contient. Rapprochez le</text>
+    <text class="notice" x="12" y="105">décalage, ou activez le palier</text>
+    <text class="notice" x="12" y="120">hebdomadaire dans les options de</text>
+    <text class="notice" x="12" y="135">l&apos;intégration.</text>
+  </g>
+</svg>

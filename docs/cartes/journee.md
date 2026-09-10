@@ -203,6 +203,24 @@ cards:
 Chaque carte est indépendante : ses flèches partent de **son** jour, et son
 bouton de retour y ramène. Naviguer dans l'une ne déplace pas les autres.
 
+![Trois cartes Vue journée côte à côte : jeudi 12 mars et vendredi 13, puis samedi 14 qui n'est pas dans la semaine collectée](../assets/cartes/journee-fenetre-glissante.svg)
+
+*Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
+horaires, les salles et les professeurs sont inventés ; les matières sont des
+matières de programme.*
+
+Trois choses s'y lisent, et aucune n'est un choix de dessin :
+
+- **le rangement en colonnes vient de la vue, pas des cartes.** Le
+  `vertical-stack` ci-dessus les empile ; une vue `sections` à `max_columns: 3`
+  les met côte à côte, et retombe en pile sur un téléphone — voir
+  [Assembler un tableau de bord](../tableaux-de-bord.md#une-fenetre-glissante-sur-la-semaine) ;
+- **la flèche « suivant » du vendredi est éteinte**, parce que c'est le dernier
+  jour collecté et qu'il n'y a rien au-delà à atteindre ;
+- **le samedi porte sa date, mais pas de bornes.** Sans le moindre créneau, il
+  n'y a pas de journée de classe dont donner le début et la fin : il ne reste
+  que la phrase, et la date au-dessus d'elle qui dit de quel jour on n'a rien.
+
 !!! tip "Coupez l'en-tête ou les flèches si la pile est chargée"
 
     Trois en-têtes et six flèches sur une même vue font beaucoup. `show_nav:
