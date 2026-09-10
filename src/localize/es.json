@@ -78,8 +78,9 @@
     "limit_zero": "Ningún deber mostrado: la opción de límite está a cero. Quítela o dele un número.",
     "max_lines": "Líneas de enunciado antes de plegar",
     "max_lines_helper": "Vacío: el enunciado se muestra completo. Si no, se pliega a este número de líneas, con puntos suspensivos, y un clic lo despliega. El texto nunca se pierde.",
-    "attachments_one": "Adjunto:",
-    "attachments_many": "Adjuntos:",
+    "attachments_one": "Adjunto",
+    "attachments_many": "Adjuntos",
+    "attachment_open": "Abrir el adjunto",
     "show_attachments": "Mostrar los adjuntos",
     "next_due": "Próxima entrega"
   },

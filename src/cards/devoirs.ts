@@ -63,16 +63,67 @@ interface Config extends PronoteCardConfig {
    * extension de fichier. Un devoir qui demande d'ouvrir un document ne le
    * disait donc pas.
    *
-   * Ce sont des **noms**, pas des liens, et la carte les rend en texte. Elle
-   * ne peut pas les ouvrir de toute façon : il faudrait un appel de service,
-   * que le projet interdit au rendu et que le type refuse à la compilation.
+   * **Aujourd'hui ce sont des noms seuls, et cette limite n'est pas la
+   * nôtre.** Aucune des douze pièces mesurées ne contient de schéma, ni
+   * `://`, ni même une barre oblique, et une recherche d'adresse sur les
+   * soixante-sept entités de l'intégration n'en trouve aucune. PRONOTE, lui,
+   * a l'adresse : son interface web sert chaque pièce par un lien dont le
+   * libellé porte le titre du document — l'adresse et le nom y sont deux
+   * champs distincts, et l'intégration ne transmet que le second.
    *
-   * Si une version future publiait des adresses, elles ne devraient pas pour
-   * autant devenir des liens sans qu'on ait d'abord établi ce qu'elles
-   * donnent à qui les suit. Aucune de celles mesurées n'en contenait, et la
-   * prudence par défaut est celle qui s'applique à l'URL iCal : une adresse
-   * qui ouvre le dossier d'un élève sans demander d'identifiant se traite
-   * comme un mot de passe.
+   * **Et il y a deux sortes de pièces, ce qui décide tout.** Établi le
+   * 10 septembre 2026 par la session de l'intégration, dans la source de la
+   * bibliothèque, pas par lecture d'une adresse :
+   *
+   * - une pièce de type **lien** porte son adresse telle quelle, stable et
+   *   sans secret : publiable, et un lien vers elle vivra ;
+   * - une pièce de type **fichier** n'a pas d'adresse stable du tout. Le
+   *   long jeton de son chemin n'identifie pas le document : c'est son
+   *   numéro chiffré avec la clé **et** le vecteur de la session en cours,
+   *   suivi d'un paramètre de session. Deux liens vers le même document
+   *   depuis deux sessions n'ont aucun octet commun. Une telle adresse est
+   *   morte à la connexion suivante, et l'intégration abandonne une session
+   *   inactive au bout d'une heure — donc l'horizon est l'heure.
+   *
+   * Ce que ça change ici : « un lien qui échouerait silencieusement »
+   * n'était pas un risque à pondérer pour un fichier, c'était le résultat
+   * garanti. La carte ne peut pas distinguer les deux — elle reçoit une
+   * adresse ou rien — et n'a pas à le faire : ce qui arrive dans
+   * `attachments` est la décision de l'intégration, et elle a déjà choisi de
+   * ne rien publier plutôt que de publier ce qui périme.
+   *
+   * La carte est donc prête et attend la donnée : `attachmentsOf` accepte la
+   * forme `{ name, url }`, et un nom devient un lien dès qu'une adresse
+   * arrive, sans qu'une ligne d'ici change.
+   *
+   * **La carte ne lit délibérément pas `attachment_links`**, et l'écrire ici
+   * évite qu'on le prenne pour un oubli. L'intégration a ajouté cette clé
+   * pour mesurer, sans casser la forme de `attachments` — un gabarit qui
+   * joint cette liste par des virgules se briserait le jour, imprévisible, où
+   * un professeur colle un lien. Elle la donne explicitement comme un palier
+   * et non comme un contrat : si elle se remplit, les adresses rejoindront
+   * `attachments` sous la forme `{ name, url }`. S'y lier maintenant
+   * achèterait un chemin mort au cas où elle reste vide, et un couplage à
+   * une forme annoncée comme provisoire dans l'autre cas.
+   *
+   * Un précédent commentaire affirmait à cet endroit qu'ouvrir une pièce
+   * « demanderait un appel de service, interdit au rendu ». C'était faux, et
+   * doublement : un `href` n'appelle aucun service, et le projet n'interdit
+   * pas de suivre un lien. Ce qui manque n'est pas une permission, c'est la
+   * donnée. Une limite écrite parce qu'elle arrange n'est pas une limite.
+   *
+   * Ce que la prudence impose en revanche, et qui est réel : le schéma est
+   * filtré par `openableUrl`, parce que cette valeur vient du serveur et
+   * atterrit dans un attribut `href`. Et une adresse de pièce jointe ouvre le
+   * document **sans demander d'identifiant** — elle se traite donc comme
+   * l'URL iCal : sa place n'est ni dans le dépôt, ni dans la documentation,
+   * ni dans une capture d'écran.
+   *
+   * Le refus des adresses relatives par `openableUrl` reste juste, mais pas
+   * pour la raison qui y était écrite : la bibliothèque préfixe déjà par le
+   * site racine, donc une adresse publiée serait **absolue**. Le relatif est
+   * un fait sur le HTML du site web, pas sur ce qui nous parviendrait. Le
+   * refus vaut donc comme garde et non comme cas attendu.
    */
   show_attachments?: boolean;
 }
@@ -189,19 +240,42 @@ const truncate = <T>(items: T[], limit: number | undefined): T[] =>
 /**
  * Largeur supposée d'une ligne d'énoncé, en caractères.
  *
- * Volontairement **généreuse**. Mesuré dans le navigateur : une carte de 380
- * pixels tient environ 66 caractères par ligne à la taille de l'énoncé. En
- * comptant 80, l'estimation ci-dessous sous-évalue le nombre de lignes, donc
- * la carte replie **moins** souvent qu'il ne faudrait.
+ * **Cette constante est un compromis, pas une garantie**, et le commentaire
+ * qu'elle portait affirmait le contraire. Il disait que l'erreur allait
+ * toujours dans le sens sûr — sous-estimer le nombre de lignes, donc replier
+ * moins souvent qu'il ne faudrait. C'est vrai sur une carte étroite et faux
+ * sur une carte large, parce que le nombre de caractères par ligne dépend de
+ * la largeur, que la carte ne connaît pas au moment où elle décide.
  *
- * C'est le sens sûr de l'erreur, et c'est pour ça que le chiffre est haut :
- * ne pas replier un énoncé qui aurait pu l'être rend la carte plus haute,
- * ce qui se voit et ne trompe personne. Replier un énoncé qui tenait
- * déjà poserait un bloc dépliable sans rien dedans — annoncé comme tel à
- * un lecteur d'écran, qui irait chercher un contenu inexistant.
+ * Mesuré le 10 septembre 2026 sur une instance, avec `max_lines: 3` et les
+ * mêmes vingt devoirs à trois largeurs :
+ *
+ * | largeur | caractères par ligne | replis | débordent | replis inutiles |
+ * |---|---|---|---|---|
+ * | 380 px | 54 | 6 | 6 | 0 |
+ * | 700 px | 104 | 6 | 4 | 2 |
+ * | 1100 px | 168 | 6 | 3 | 3 |
+ *
+ * Le seuil de 80 place donc le point de bascule vers 550 pixels. En dessous,
+ * l'erreur est bien du bon côté : la carte est plus haute qu'elle n'aurait
+ * besoin, ça se voit et ça ne trompe personne. Au-dessus, elle replie des
+ * énoncés qui tenaient déjà, et pose un bloc dépliable qui ne cache rien.
+ *
+ * Ce que ce défaut résiduel coûte, pour qu'on puisse en juger plutôt que le
+ * craindre : le canal visuel reste **exact** quelle que soit la largeur, les
+ * points de suspension étant peints par le navigateur et seulement en cas de
+ * débordement réel. Un énoncé replié pour rien s'affiche donc en entier,
+ * sans marque. Seule la sémantique se trompe : un lecteur d'écran annonce un
+ * bloc dépliable, et l'ouvrir ne révèle rien de plus.
+ *
+ * Aucune constante ne peut supprimer ça, et c'est le point : à 380 pixels un
+ * énoncé de 288 caractères occupe cinq lignes et doit se replier, à 1100 il
+ * en occupe deux et ne doit pas. **La décision dépend vraiment de la
+ * largeur.** La corriger demande de la mesurer, donc de la faire remonter
+ * jusqu'à `RenderCtx` — un changement de socle, pas un réglage de carte.
  *
  * Aucune mesure du DOM ici, et c'est délibéré : la largeur réelle n'existe
- * qu'après rendu, et la lire déclencherait un rendu supplémentaire à chaque
+ * qu'après rendu, et la lire déclencherait un calcul de mise en page à chaque
  * évènement de la maison, multiplié par le nombre de devoirs.
  */
 const CHARS_PAR_LIGNE = 80;
@@ -220,20 +294,134 @@ const lignesEstimees = (texte: string): number =>
     .reduce((total, ligne) => total + Math.max(1, Math.ceil(ligne.length / CHARS_PAR_LIGNE)), 0);
 
 /**
+ * Une pièce jointe : son nom, son adresse, au moins l'un des deux.
+ *
+ * `name` est optionnel, et le cas est réel. Une pièce jointe PRONOTE
+ * s'atteint par un chemin qui se termine par « link » suivi d'un paramètre
+ * de session ; son titre vit ailleurs, dans le libellé du lien. Le chemin ne
+ * porte donc **aucun** nom de document, et une carte qui afficherait son
+ * dernier segment écrirait « link » sous chaque devoir.
+ */
+interface Attachment {
+  name?: string;
+  url?: string;
+}
+
+/**
+ * Une adresse **ouvrable dans un navigateur**, ou rien.
+ *
+ * Le filtre de schéma n'est pas de la prudence décorative : cette valeur
+ * vient du serveur et atterrit dans un attribut `href`. Un `javascript:` y
+ * exécuterait du code dans la page Home Assistant de l'utilisateur, un
+ * `data:` y servirait un document arbitraire. C'est le même raisonnement que
+ * `subjectColor`, la seule autre valeur de serveur du projet qui atteigne un
+ * attribut — on n'admet qu'une forme close, ici `http:` et `https:`.
+ */
+const openableUrl = (value: unknown): string | undefined => {
+  if (typeof value !== 'string' || value.trim() === '') return undefined;
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : undefined;
+  } catch {
+    // Pas une adresse absolue. Une adresse relative n'est pas utilisable non
+    // plus : la carte ne sait pas de quel hôte PRONOTE elle viendrait, et la
+    // résoudre contre l'hôte de Home Assistant fabriquerait un lien mort.
+    return undefined;
+  }
+};
+
+/**
+ * Le nom à montrer pour une adresse, **ou rien**.
+ *
+ * Le dernier segment de chemin, décodé, et seulement s'il ressemble à un nom
+ * de fichier — c'est-à-dire s'il porte une extension. Sinon rien, et
+ * l'appelant met un libellé générique.
+ *
+ * La condition d'extension n'est pas un raffinement, elle vient d'une adresse
+ * réelle : le chemin d'une pièce jointe PRONOTE finit par « link ». Sans
+ * elle, la carte affichait « link » comme nom de document, ce qui est pire
+ * que muet.
+ */
+const nameFromUrl = (href: string): string | undefined => {
+  try {
+    const segments = new URL(href).pathname.split('/').filter((part) => part !== '');
+    const last = segments[segments.length - 1];
+    if (last === undefined) return undefined;
+    const decoded = decodeURIComponent(last);
+    return /\.[A-Za-z0-9]{1,8}$/.test(decoded) ? decoded : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/**
  * Les pièces jointes utilisables d'un devoir, débarrassées du reste.
  *
- * Mesurées comme des chaînes, mais rien ne le garantit à l'exécution : une
- * version de l'intégration qui passerait à des objets ferait sinon rendre
- * « [object Object] » à la carte. Tout ce qui n'est pas une chaîne non vide
- * est écarté, et une liste qui n'en contient aucune n'affiche pas de ligne
- * — pas de ligne vide annonçant des pièces absentes.
+ * **Deux formes sont acceptées, et une seule existe aujourd'hui.** Mesuré le
+ * 10 septembre 2026 sur une instance : les douze pièces sont des chaînes
+ * portant un **nom seul** — aucune ne contient de schéma, ni `://`, ni même
+ * une barre oblique, et une recherche d'adresse sur les soixante-sept
+ * entités de l'intégration n'en a trouvé aucune. La carte ne peut donc pas
+ * ouvrir une pièce : l'adresse ne lui parvient pas.
+ *
+ * La forme objet est acceptée d'avance parce que c'est celle qui résoudrait
+ * le problème : le jour où l'intégration publiera `{ name, url }`, les noms
+ * deviennent des liens sans qu'une ligne de cette carte change. Les
+ * variantes de nom de champ couvrent ce qu'une intégration écrit
+ * naturellement, sans qu'on ait à deviner juste du premier coup.
+ *
+ * Tout ce qui ne donne pas un nom est écarté, et une liste qui n'en contient
+ * aucun n'affiche rien — pas de ligne vide annonçant des pièces absentes.
  */
-const attachmentsOf = (value: unknown): string[] =>
-  Array.isArray(value)
-    ? value
-        .filter((item): item is string => typeof item === 'string' && item.trim() !== '')
-        .map((item) => item.trim())
-    : [];
+/**
+ * Le premier des champs demandés qui porte quelque chose.
+ *
+ * `Reflect.get` plutôt qu'une assertion vers un dictionnaire : la valeur
+ * arrive en `unknown` sans qu'on ait promis au compilateur une forme qu'on
+ * n'a pas vérifiée. Les variantes de nom couvrent ce qu'une intégration
+ * écrit naturellement, sans qu'on ait à deviner juste du premier coup.
+ */
+const champ = (source: object, ...cles: string[]): unknown => {
+  for (const cle of cles) {
+    const valeur: unknown = Reflect.get(source, cle);
+    if (valeur !== undefined && valeur !== null) return valeur;
+  }
+  return undefined;
+};
+
+const attachmentsOf = (value: unknown): Attachment[] => {
+  if (!Array.isArray(value)) return [];
+  const out: Attachment[] = [];
+  for (const item of value) {
+    if (typeof item === 'string') {
+      const trimmed = item.trim();
+      if (trimmed === '') continue;
+      const url = openableUrl(trimmed);
+      if (url === undefined) {
+        out.push({ name: trimmed });
+        continue;
+      }
+      const derive = nameFromUrl(url);
+      out.push(derive === undefined ? { url } : { name: derive, url });
+      continue;
+    }
+    if (item === null || typeof item !== 'object') continue;
+    const url = openableUrl(champ(item, 'url', 'href', 'link'));
+    const brut = champ(item, 'name', 'filename', 'title', 'label');
+    const name =
+      typeof brut === 'string' && brut.trim() !== ''
+        ? brut.trim()
+        : url === undefined
+          ? undefined
+          : nameFromUrl(url);
+    // Au moins l'un des deux, sinon il n'y a rien à montrer ni à ouvrir.
+    if (name === undefined && url === undefined) continue;
+    if (name === undefined) out.push({ url });
+    else if (url === undefined) out.push({ name });
+    else out.push({ name, url });
+  }
+  return out;
+};
 
 /** `max_lines`, en entier positif, ou zéro pour « pas de repli ». */
 const maxLinesOf = (value: unknown): number => {
@@ -536,6 +724,29 @@ export const SPEC: CardSpec<Config> = {
        * un document : c'est justement le devoir dont on risque de ne lire que
        * les trois premières lignes.
        *
+       * Des **pastilles**, une par pièce, et non le gabarit de l'interface
+       * web de PRONOTE : le propriétaire a explicitement laissé le choix de
+       * la forme, le 10 septembre 2026, en demandant l'intégration adaptée à
+       * Home Assistant plutôt que celle du site.
+       *
+       * La pastille est déjà le vocabulaire de quatre cartes d'ici — rien
+       * n'est inventé — elle tire ses couleurs des variables du thème, et
+       * elle donne une cible de clic prenable au doigt, ce qu'un nom précédé
+       * d'un tiret n'était pas.
+       *
+       * Le libellé « Pièces jointes : » a disparu avec : il coûtait une ligne
+       * entière et ne portait rien qu'un nom de fichier dans une pastille ne
+       * porte déjà. Il survit en **nom accessible du groupe**, sur
+       * `aria-label`, pour qu'un lecteur d'écran sache de quoi ces pastilles
+       * sont la liste au lieu de les énumérer sans les nommer.
+       *
+       * `role="list"` sur des `span` plutôt qu'un `ul` : `listRow` enveloppe
+       * `secondary` dans un `span`, et un `ul` dedans serait une imbrication
+       * invalide. Les rôles donnent la même sémantique à un lecteur d'écran
+       * — « liste de deux éléments » — sans produire du HTML fautif. Le rôle
+       * d'élément vit sur l'enveloppe et non sur la pastille : posé sur une
+       * ancre, il aurait remplacé son rôle de lien.
+       *
        * `undefined` quand il n'y a ni énoncé ni pièce : `listRow` teste la
        * présence de `secondary`, et un gabarit est toujours vrai.
        */
@@ -544,14 +755,42 @@ export const SPEC: CardSpec<Config> = {
           ? undefined
           : html`${enonceRendu}${
               piecesOn
-                ? html`<span class="devoirs-pieces"
-                    >${
+                ? html`<span
+                    class="devoirs-pieces"
+                    role="list"
+                    aria-label=${
                       pieces.length === 1
                         ? ctx.t('devoirs.attachments_one')
                         : ctx.t('devoirs.attachments_many')
                     }
-                    ${pieces.join(' · ')}</span
-                  >`
+                  >
+                    ${pieces.map((piece) => {
+                      // Un nom lisible, ou un libelle generique. Une adresse
+                      // de piece jointe PRONOTE ne porte pas le titre du
+                      // document dans son chemin : sans ce repli, un lien
+                      // sans nom se serait rendu VIDE, donc invisible et
+                      // pourtant present -- Lit n'ecrit rien pour
+                      // `undefined`, et aucun type ne l'aurait signale.
+                      const libelle = piece.name ?? ctx.t('devoirs.attachment_open');
+                      // La pastille n'est pas produite par `chip()` : cette
+                      // primitive rend un `span`, et une piece ouvrable doit
+                      // etre une ancre. Les deux portent la meme classe, donc
+                      // le meme style, sans dupliquer la regle.
+                      return html`<span class="devoirs-piece" role="listitem"
+                        >${
+                          piece.url === undefined
+                            ? html`<span class="chip">${libelle}</span>`
+                            : html`<a
+                                class="chip chip-lien"
+                                href=${piece.url}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                >${libelle}</a
+                              >`
+                        }</span
+                      >`;
+                    })}
+                  </span>`
                 : ''
             }`;
       return html`

@@ -98,9 +98,27 @@ const unDevoir = (description_text: string) => [
 const details = (el: HTMLElement & MountableElement): HTMLElement | null =>
   el.shadowRoot?.querySelector('details.enonce') ?? null;
 
-/** La ligne des noms de pieces jointes, si elle a ete emise. */
+/** Le groupe des pieces jointes d'un devoir, s'il a ete emis. */
 const piecesJointes = (el: HTMLElement & MountableElement): HTMLElement | null =>
   el.shadowRoot?.querySelector('.devoirs-pieces') ?? null;
+
+/**
+ * Le nom accessible du groupe de pieces jointes.
+ *
+ * Depuis le passage en pastilles, << Pieces jointes >> n'est plus du texte
+ * visible : il coutait une ligne entiere pour ce qu'un nom de fichier dans
+ * une pastille dit deja. Il vit sur `aria-label`, donc il se lit la et pas
+ * dans `textContent` -- et c'est pour ca que ce lecteur existe plutot que
+ * de laisser les assertions chercher dans le texte rendu.
+ */
+const nomGroupePieces = (el: HTMLElement & MountableElement): string | null =>
+  piecesJointes(el)?.getAttribute('aria-label') ?? null;
+
+/** Les pastilles du groupe : la pastille est l'idiome visuel du depot. */
+const pastillesPieces = (el: HTMLElement & MountableElement): HTMLElement[] =>
+  Array.from(el.shadowRoot?.querySelectorAll('.devoirs-piece > .chip') ?? []).filter(
+    (n): n is HTMLElement => n instanceof HTMLElement
+  );
 
 /**
  * Un `hass` avec le capteur de retard, dont on choisit les attributs.
@@ -122,6 +140,29 @@ const avecCapteurRetard = (
       attributes,
     },
   ]);
+
+/** Les elements de la liste des pieces jointes, dans l'ordre du rendu. */
+const elementsPieces = (el: HTMLElement & MountableElement): HTMLElement[] =>
+  Array.from(el.shadowRoot?.querySelectorAll('.devoirs-piece[role="listitem"]') ?? []).filter(
+    (n): n is HTMLElement => n instanceof HTMLElement
+  );
+
+/** Les liens de la liste des pieces jointes. */
+const liensPieces = (el: HTMLElement & MountableElement): HTMLAnchorElement[] =>
+  Array.from(el.shadowRoot?.querySelectorAll('.devoirs-piece a') ?? []).filter(
+    (n): n is HTMLAnchorElement => n instanceof HTMLAnchorElement
+  );
+
+/** Un devoir dont on choisit les pieces jointes. */
+const devoirAvecPieces = (attachments: unknown[]) => [
+  {
+    id: 'h1',
+    subject: 'Maths',
+    description_text: 'Exercices 4 a 7.',
+    due: '2099-01-01',
+    attachments,
+  },
+];
 
 describe('carte devoirs', () => {
   // `calendar:homework` porte la prochaine échéance telle que le calendrier la
@@ -1109,7 +1150,11 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     );
     const ligne = piecesJointes(el);
     expect(ligne).not.toBeNull();
-    expect(ligne?.textContent).toContain('Pièces jointes');
+    // Le libellé nomme le groupe pour un lecteur d'écran, il n'est plus
+    // écrit à l'écran : deux noms de fichiers dans deux pastilles disent
+    // déjà ce qu'une ligne « Pièces jointes : » répétait.
+    expect(nomGroupePieces(el)).toContain('Pièces jointes');
+    expect(ligne?.textContent).not.toContain('Pièces jointes');
     expect(ligne?.textContent).toContain('fiche-revision.pdf');
     expect(ligne?.textContent).toContain('schema.png');
   });
@@ -1120,8 +1165,8 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
       { device_id: 'dev_enfant' },
       hw({ items: [{ ...DEUX_PIECES[0], attachments: ['fiche-revision.pdf'] }] }, '1')
     );
-    expect(piecesJointes(une)?.textContent).toContain('Pièce jointe');
-    expect(piecesJointes(une)?.textContent).not.toContain('Pièces jointes');
+    expect(nomGroupePieces(une)).toContain('Pièce jointe');
+    expect(nomGroupePieces(une)).not.toContain('Pièces jointes');
   });
 
   it('n’affiche aucune ligne quand le devoir n’a pas de pièce', async () => {
@@ -1157,7 +1202,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     expect(ligne?.textContent).toContain('vrai.pdf');
     expect(ligne?.textContent).not.toContain('object');
     // Une seule pièce retenue, donc le singulier.
-    expect(ligne?.textContent).toContain('Pièce jointe');
+    expect(nomGroupePieces(el)).toContain('Pièce jointe');
   });
 
   it('n’affiche pas de ligne quand aucune pièce n’est utilisable', async () => {
@@ -1215,10 +1260,12 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     expect(piecesJointes(el)?.textContent).toContain('seule.pdf');
   });
 
-  it('ne fait de la pièce jointe ni un lien ni rien de cliquable', async () => {
-    // La carte ne peut pas ouvrir un document : il faudrait un appel de
-    // service, interdit au rendu. Un nom souligné inviterait à cliquer sur
-    // ce qui ne répond pas.
+  it('ne rend cliquable que ce qui porte une adresse', async () => {
+    // Un nom seul ne devient pas un lien. La raison n'est pas une
+    // interdiction du projet -- un `href` n'appelle aucun service, et un
+    // commentaire d'ici l'a affirmé à tort -- c'est qu'il n'y a rien à
+    // ouvrir. Inviter à cliquer sur ce qui ne répond pas est pire que de
+    // n'afficher qu'un nom.
     const el = await mountCard(
       'pronote-ng-devoirs',
       { device_id: 'dev_enfant' },
@@ -1227,5 +1274,254 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     const ligne = piecesJointes(el);
     expect(ligne?.querySelectorAll('a, button').length).toBe(0);
     expect(ligne?.textContent).toContain('fiche-revision.pdf');
+  });
+
+  it('rend chaque pièce en pastille, l’idiome visuel du dépôt', async () => {
+    /**
+     * La forme a été choisie, pas héritée : le propriétaire a demandé
+     * l'intégration adaptée à Home Assistant plutôt que le gabarit du site
+     * web de PRONOTE. La pastille est déjà le vocabulaire de quatre cartes
+     * d'ici, elle tire ses couleurs des variables du thème, et elle donne une
+     * cible de clic — ce qu'un nom précédé d'un tiret n'était pas.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: DEUX_PIECES }, '1')
+    );
+    const rendues = pastillesPieces(el);
+    expect(rendues.length).toBe(2);
+    expect(rendues.map((n) => n.textContent?.trim())).toEqual([
+      'fiche-revision.pdf',
+      'schema.png',
+    ]);
+    // Sans adresse, la pastille est un span : rien qui invite au clic.
+    expect(rendues.every((n) => n.tagName === 'SPAN')).toBe(true);
+  });
+});
+
+describe('carte devoirs — la liste des pièces jointes et son lien', () => {
+  /**
+   * Deux demandes du propriétaire le 10 septembre 2026 : une **liste**, pour
+   * distinguer plusieurs documents sur un même devoir, et un lien qui
+   * s'ouvre dans le navigateur — le nom d'un PDF ne permet pas de lire
+   * l'exercice qui est dedans.
+   *
+   * Ce qui bloque la seconde, et que ces tests ne peuvent pas débloquer :
+   * l'intégration publie des **noms seuls**. Mesuré sur une instance, douze
+   * pièces sans schéma ni barre oblique, et aucune adresse dans les
+   * soixante-sept entités. La carte est donc prête et attend la donnée :
+   * c'est exactement ce que les cas « lien » ci-dessous établissent, avec des
+   * adresses synthétiques.
+   */
+
+  // --- la liste ---
+
+  it('rend une vraie liste, un élément par pièce', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: devoirAvecPieces(['fiche.pdf', 'corrige.pdf']) }, '1')
+    );
+    // La sémantique de liste, pour qu'un lecteur d'écran annonce « deux
+    // éléments » : deux noms mis à la suite sur une ligne ne disaient pas où
+    // s'arrêtait le premier.
+    expect(el.shadowRoot?.querySelector('[role="list"]')).not.toBeNull();
+    const elements = elementsPieces(el);
+    expect(elements.length).toBe(2);
+    expect(elements.map((n) => n.textContent?.trim())).toEqual(['fiche.pdf', 'corrige.pdf']);
+  });
+
+  it('nomme le groupe pour un lecteur d’écran, accordé au nombre', async () => {
+    /**
+     * Le libellé a quitté l'écran mais pas la carte. Une liste de pastilles
+     * sans nom s'annonce « liste, deux éléments, fiche.pdf » : le lecteur
+     * saurait qu'il y a une liste sans savoir de quoi. Le nom accessible
+     * répond à ça, sans coûter la ligne que le libellé visible coûtait.
+     */
+    const deux = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: devoirAvecPieces(['a.pdf', 'b.pdf']) }, '1')
+    );
+    expect(nomGroupePieces(deux)).toContain('Pièces jointes');
+    // Et surtout : il ne s'écrit plus, sinon la ligne serait revenue.
+    expect(piecesJointes(deux)?.textContent).not.toContain('Pièces jointes');
+    const une = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: devoirAvecPieces(['a.pdf']) }, '1')
+    );
+    expect(nomGroupePieces(une)).toContain('Pièce jointe');
+    expect(elementsPieces(une).length).toBe(1);
+  });
+
+  it('n’invente aucun lien sur ce que l’intégration publie aujourd’hui', async () => {
+    // L'état réel : des noms. Aucun `a` ne doit apparaître, sinon la carte
+    // proposerait d'ouvrir ce qu'elle ne peut pas ouvrir.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: devoirAvecPieces(['fiche-revision.pdf', 'chanson.mp3']) }, '1')
+    );
+    expect(elementsPieces(el).length).toBe(2);
+    expect(liensPieces(el).length).toBe(0);
+    expect(piecesJointes(el)?.textContent).toContain('chanson.mp3');
+  });
+
+  // --- le lien, le jour ou l'adresse arrivera ---
+
+  it('ouvre la pièce quand l’intégration publie son adresse', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirAvecPieces([
+            { name: 'chanson.mp3', url: 'https://demo.example.invalid/pj/chanson.mp3' },
+          ]),
+        },
+        '1'
+      )
+    );
+    const liens = liensPieces(el);
+    expect(liens.length).toBe(1);
+    expect(liens[0]?.getAttribute('href')).toBe('https://demo.example.invalid/pj/chanson.mp3');
+    expect(liens[0]?.textContent?.trim()).toBe('chanson.mp3');
+    // Le lien EST la pastille, il n'est pas dedans : une ancre qui envelopperait
+    // un span serait une cible de clic plus petite que ce qu'elle a l'air d'etre.
+    expect(liens[0]?.classList.contains('chip')).toBe(true);
+    expect(liens[0]?.classList.contains('chip-lien')).toBe(true);
+    // Nouvel onglet, et pas de fuite de l'adresse Home Assistant en
+    // référent : le document est sur un serveur tiers.
+    expect(liens[0]?.getAttribute('target')).toBe('_blank');
+    expect(liens[0]?.getAttribute('rel')).toContain('noreferrer');
+  });
+
+  it('accepte une chaîne qui est elle-même une adresse, et la nomme lisiblement', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        { items: devoirAvecPieces(['https://demo.example.invalid/pj/le%20corrig%C3%A9.pdf']) },
+        '1'
+      )
+    );
+    const liens = liensPieces(el);
+    expect(liens.length).toBe(1);
+    // Le dernier segment, décodé : une adresse entière en guise de nom serait
+    // illisible sur une ligne de carte.
+    expect(liens[0]?.textContent?.trim()).toBe('le corrigé.pdf');
+  });
+
+  it('met un libellé générique quand l’adresse ne porte pas de nom de fichier', async () => {
+    /**
+     * Le cas réel, et il a été trouvé en regardant une adresse que le
+     * propriétaire a fournie : une pièce jointe PRONOTE s'atteint par un
+     * chemin qui se termine par « link », suivi d'un paramètre de session.
+     * Le titre du document n'apparaît nulle part dedans.
+     *
+     * La première version affichait donc « link » comme nom de document, ce
+     * qui est pire que muet. L'adresse ci-dessous est synthétique et porte la
+     * même FORME, jamais un vrai jeton — une adresse de pièce jointe ouvre le
+     * document sans demander d'identifiant.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirAvecPieces([
+            'https://demo.example.invalid/pronote/FichiersExternes/JETON/link?Session=1',
+          ]),
+        },
+        '1'
+      )
+    );
+    const liens = liensPieces(el);
+    expect(liens.length).toBe(1);
+    expect(liens[0]?.textContent?.trim()).toBe('Ouvrir la pièce jointe');
+    // Et surtout pas le dernier segment du chemin.
+    expect(liens[0]?.textContent?.trim()).not.toBe('link');
+  });
+
+  it('lit les variantes de nom de champ qu’une intégration écrit naturellement', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirAvecPieces([
+            { filename: 'par-filename.pdf', href: 'https://demo.example.invalid/a.pdf' },
+            { title: 'par-title.pdf', link: 'https://demo.example.invalid/b.pdf' },
+          ]),
+        },
+        '1'
+      )
+    );
+    expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual([
+      'par-filename.pdf',
+      'par-title.pdf',
+    ]);
+    expect(liensPieces(el).length).toBe(2);
+  });
+
+  it('dérive un nom quand l’objet n’en porte pas', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: devoirAvecPieces([{ url: 'https://demo.example.invalid/pj/sujet.pdf' }]) }, '1')
+    );
+    expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual(['sujet.pdf']);
+  });
+
+  // --- le filtre de schema ---
+
+  it('refuse tout schéma autre que http et https, et garde le nom en texte', async () => {
+    /**
+     * Le point le plus important de ce bloc. Cette valeur vient du serveur et
+     * atterrit dans un attribut `href` : un `javascript:` y exécuterait du
+     * code dans la page Home Assistant de l'utilisateur, un `data:` y
+     * servirait un document arbitraire.
+     *
+     * Le nom, lui, reste affiché : écarter le lien ne doit pas faire
+     * disparaître l'information que le devoir porte une pièce.
+     */
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirAvecPieces([
+            { name: 'piege.pdf', url: 'javascript:alert(1)' },
+            { name: 'donnee.pdf', url: 'data:text/html,<script></script>' },
+            { name: 'relative.pdf', url: '/pronote/piece.pdf' },
+          ]),
+        },
+        '1'
+      )
+    );
+    expect(liensPieces(el).length).toBe(0);
+    expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual([
+      'piege.pdf',
+      'donnee.pdf',
+      'relative.pdf',
+    ]);
+    expect(el.shadowRoot?.innerHTML).not.toContain('javascript:');
+  });
+
+  it('écarte une pièce qui ne donne ni nom ni adresse utilisable', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw(
+        {
+          items: devoirAvecPieces([{ url: 'javascript:alert(1)' }, {}, '', 42, null, 'vraie.pdf']),
+        },
+        '1'
+      )
+    );
+    expect(elementsPieces(el).map((n) => n.textContent?.trim())).toEqual(['vraie.pdf']);
+    expect(nomGroupePieces(el)).toContain('Pièce jointe');
   });
 });

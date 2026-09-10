@@ -26,7 +26,7 @@ group_by: date
 | `group_by` | `date` | `date` ou `subject`. Le tri suit le regroupement. Groupé par échéance, la date titre le groupe et n'est plus répétée en fin de chaque ligne. |
 | `limit` | *tout* | Nombre maximum de devoirs. Absent ou négatif : tout. `0` : rien — et la carte dit alors que la cause est l'option, non l'absence de devoirs. |
 | `max_lines` | *aucun repli* | Nombre de lignes d'énoncé avant repli. Voir [L'énoncé long](#lenonce-long-et-la-hauteur-de-la-carte). |
-| `show_attachments` | `true` | Nommer les pièces jointes d'un devoir. Voir [Les pièces jointes](#les-pieces-jointes). |
+| `show_attachments` | `true` | Afficher les pièces jointes d'un devoir, une pastille par pièce. Voir [Les pièces jointes](#les-pieces-jointes). |
 | `subject_colors` | — | Table matière → couleur. **En YAML uniquement**, voir plus bas. |
 
 ### Exemple complet
@@ -76,18 +76,32 @@ une moitié cachée.
 
 L'option est vide par défaut : sans elle, rien ne change.
 
-!!! note "Le repli n'est pas exact, et il se trompe exprès dans le bon sens"
+!!! note "Le repli n'est pas exact, et l'erreur dépend de la largeur"
 
     La carte décide de replier **avant** de connaître sa largeur, en comptant
-    80 caractères par ligne — plus généreux que la réalité mesurée, environ
-    66 sur une carte de 380 pixels. Elle sous-évalue donc le nombre de lignes,
-    et replie **moins** souvent qu'il ne faudrait.
+    80 caractères par ligne. Mesuré sur les mêmes vingt devoirs, à trois
+    largeurs, avec `max_lines: 3` :
 
-    C'est le sens sûr de l'erreur. Ne pas replier un énoncé qui aurait pu
-    l'être rend la carte plus haute : ça se voit, et ça ne trompe personne.
-    Replier un énoncé qui tenait déjà poserait un bloc dépliable vide, annoncé
-    comme du contenu caché à un lecteur d'écran qui irait chercher ce qui
-    n'existe pas.
+    | largeur | caractères par ligne | replis posés | replis utiles | replis inutiles |
+    |---|---|---|---|---|
+    | 380 px | ≈ 54 | 6 | 6 | 0 |
+    | 700 px | ≈ 104 | 6 | 4 | 2 |
+    | 1 100 px | ≈ 168 | 6 | 3 | 3 |
+
+    Cette page a d'abord annoncé que l'erreur allait toujours dans le même
+    sens — replier moins souvent qu'il ne faudrait. C'est vrai sur une carte
+    étroite et **faux** au-delà d'environ 550 pixels, où la constante devient
+    trop basse : la carte replie alors des énoncés qui tenaient déjà.
+
+    Ce qui reste exact à toute largeur, et c'est ce qui fait tenir le
+    mécanisme : les points de suspension sont peints par le navigateur, et
+    seulement sur un débordement réel. Un repli inutile pose donc un bloc
+    dépliable qui n'annonce rien — le canal visuel ne ment jamais. Seule la
+    sémantique se trompe, en offrant à déplier ce qui était entier.
+
+    Aucune constante ne corrige les deux bouts. Le rendre exact demande de
+    faire descendre la largeur de la carte jusqu'au rendu, ce qui touche le
+    socle et n'est pas décidé.
 
 ### La hauteur annoncée à Home Assistant
 
@@ -196,22 +210,104 @@ elle contredisait son propre bandeau sur la même page.
 
 Un devoir peut porter des documents. L'intégration les publie dans
 `attachments`, et la carte les a ignorés pendant onze versions : un devoir qui
-demandait d'ouvrir une fiche ne le disait pas. Leurs noms apparaissent
-désormais sous l'énoncé, et `show_attachments: false` les retire.
+demandait d'ouvrir une fiche ne le disait pas.
+
+Chaque pièce apparaît désormais en **pastille** sous l'énoncé, et
+`show_attachments: false` les retire. Elles restent visibles quand l'énoncé
+est replié : c'est justement le devoir dont on ne lira que les premières
+lignes, et s'il porte un document il doit continuer à le dire.
+
+La pastille n'est pas une décoration, c'est le vocabulaire de la carte
+notes, de la carte élève et de l'emploi du temps — elle prend ses couleurs
+du thème, elle passe à la ligne toute seule quand la carte est étroite, et
+elle donne une cible de clic prenable au doigt le jour où il y aura quelque
+chose à ouvrir. Une première version reprenait le gabarit du site web de
+PRONOTE, une liste à tirets précédée d'un libellé « Pièces jointes : ».
+Ce libellé coûtait une ligne entière pour ce qu'un nom de fichier dit déjà :
+il ne s'écrit plus, mais il nomme le groupe pour un lecteur d'écran, qui
+annoncerait sinon « liste, deux éléments » sans dire de quoi.
+
+Deux mesures faites dans un thème réel, parce qu'elles ont chacune renversé
+une préférence :
+
+- **la pastille lit à la taille de l'énoncé**, pas plus petit. La primitive
+  réduit de 0,8 et la ligne secondaire déjà de 0,9 : un nom de fichier tombait
+  à dix pixels, plus petit que le texte au-dessus de lui. Un nom de document
+  est du contenu, pas une étiquette d'état ;
+- **une pastille ouvrable est soulignée**, et de la même couleur que les
+  autres. La couleur d'accent du thème sur le fond de pastille donnait 2,59
+  contre 1 — la règle sur le contraste des textes demande 4,5. Le soulignement
+  ne dépend d'aucune couleur, ce qui est justement ce qu'on attend d'un lien
+  posé au milieu d'un texte. Sans adresse, pas de soulignement : c'est ce qui
+  distingue ce qui s'ouvre de ce qui se lit.
+
+Les pastilles de pièces jointes ne se confondent pas avec la pastille
+« en retard », et c'est mesuré plutôt qu'espéré : celle-ci est blanche sur
+rouge, plus petite, et posée dans la partie finale de la ligne, là où les
+pièces sont grises sur gris, sous l'énoncé. La couleur porte l'alerte, la
+taille porte la lisibilité : les deux familles n'occupent pas le même canal.
 
 Mesuré le 10 septembre 2026 sur une instance : douze pièces réparties sur neuf
 devoirs sur vingt, deux au plus par devoir.
 
-Deux précisions qui évitent une déception :
+### Ouvrir la pièce : ce qui manque, et ce qui est prêt
 
-- **ce sont des noms, pas des liens.** La carte ne peut pas ouvrir un
-  document : il faudrait un appel de service, que le projet interdit au
-  rendu et que le type refuse à la compilation. Les noms ne sont donc ni
-  soulignés ni cliquables, exprès — inviter à cliquer sur ce qui ne répond
-  pas est pire que de ne rien afficher ;
-- **ils restent visibles quand l'énoncé est replié.** C'est justement le
-  devoir dont on ne lira que les premières lignes : s'il porte un document,
-  il doit continuer à le dire.
+**La carte ne peut pas encore ouvrir un document, et ce n'est pas une limite
+de sécurité : c'est une donnée absente.** L'attribut ne porte que des noms.
+Aucune des douze pièces mesurées ne contient de schéma, ni `://`, ni même
+une barre oblique, et une recherche du 10 septembre 2026 n'a trouvé aucune
+adresse dans les soixante-sept entités de l'intégration — c'est une mesure
+à une date, pas une propriété garantie de la forme.
+
+PRONOTE, lui, a l'adresse. Mais il y en a **deux sortes**, et la différence
+décide de tout. Établi dans la source de la bibliothèque, pas déduit d'une
+adresse observée :
+
+- une pièce de type **lien** porte son adresse telle quelle — stable, sans
+  secret. Un lien vers elle vivrait ;
+- une pièce de type **fichier** n'a pas d'adresse stable du tout. Le long
+  jeton de son chemin n'identifie pas le document : c'est son numéro chiffré
+  avec la clé **et** le vecteur de la session en cours, suivi d'un paramètre
+  de session. Deux adresses du même document, obtenues depuis deux sessions,
+  n'ont aucun octet commun. Une telle adresse meurt à la connexion suivante,
+  et une session inactive est abandonnée au bout d'une heure.
+
+Ce que ça change : pour un fichier, « le lien qui échouera un jour » n'est
+pas un risque à pondérer, c'est le résultat garanti. Une pastille cliquable
+qui ouvre une page d'erreur est pire qu'un nom, parce qu'elle a promis. C'est
+pourquoi l'intégration publie des noms : ce n'est pas un oubli.
+
+La carte, elle, est prête. Dès que `attachments` portera des objets
+`{ name, url }` — ou des adresses complètes — les pastilles concernées
+deviendront des liens qui s'ouvrent dans un nouvel onglet, sans qu'une ligne
+de la carte change. Elle ne distingue pas les deux sortes et n'a pas à le
+faire : elle reçoit une adresse, ou rien.
+
+Trois précautions encadrent ce lien :
+
+- **seuls `http` et `https` sont acceptés.** Cette valeur vient du serveur et
+  atterrit dans un attribut `href` : un `javascript:` y exécuterait du code
+  dans votre page Home Assistant. Un schéma refusé laisse la pastille
+  affichée sans lien — l'information ne disparaît pas ;
+- **une adresse relative est refusée**, faute de savoir de quel hôte PRONOTE
+  elle viendrait. La résoudre contre celui de Home Assistant fabriquerait un
+  lien mort. C'est un garde et non un cas attendu : la bibliothèque préfixe
+  par le site racine, donc une adresse publiée serait absolue — le relatif
+  est un fait sur le HTML du site web, pas sur ce qui nous parviendrait ;
+- **une adresse de pièce jointe ouvre le document sans demander
+  d'identifiant.** Elle se traite comme l'URL iCal : sa place n'est ni dans le
+  dépôt, ni dans cette documentation, ni dans une capture d'écran.
+
+Un détail de forme, pour finir : le chemin d'une pièce PRONOTE ne porte pas
+de nom de fichier. Quand l'adresse ne donne aucun nom lisible, la pastille
+écrit « Ouvrir la pièce jointe » plutôt que le dernier segment du chemin,
+qui serait le même mot sous chaque devoir.
+
+Cette page a elle-même affirmé le contraire, et il vaut de le savoir pour ne
+pas le réécrire : elle disait qu'ouvrir une pièce « demanderait un appel de
+service, interdit au rendu ». C'était faux — un lien n'appelle aucun service.
+**Une limite écrite parce qu'elle arrange n'est pas une limite**, et
+`docs/limites.md` porte déjà deux leçons de ce genre.
 
 ## La case à cocher
 

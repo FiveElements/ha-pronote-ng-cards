@@ -78,8 +78,9 @@
     "limit_zero": "Nessun compito mostrato: l'opzione del limite è a zero. La rimuova, o le dia un numero.",
     "max_lines": "Righe di testo prima della piegatura",
     "max_lines_helper": "Vuoto: il testo viene mostrato per intero. Altrimenti viene piegato a questo numero di righe, con i puntini di sospensione, e un clic lo dispiega. Il testo non va mai perso.",
-    "attachments_one": "Allegato:",
-    "attachments_many": "Allegati:",
+    "attachments_one": "Allegato",
+    "attachments_many": "Allegati",
+    "attachment_open": "Aprire l'allegato",
     "show_attachments": "Mostrare gli allegati",
     "next_due": "Prossima scadenza"
   },

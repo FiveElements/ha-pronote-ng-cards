@@ -154,6 +154,41 @@ Le filet **ne porte aucune information à lui seul**. Il situe et il décore ; l
 horaires, l'intitulé et les pastilles informent. Une carte lue par quelqu'un qui
 ne distingue pas ces teintes ne perd donc rien.
 
+### La même règle s'appliquait aux pastilles, et personne ne l'avait vue
+
+Cette section n'a longtemps parlé que de la couleur venue du serveur. Or les
+pastilles d'état des cartes — « en retard », « annulé », « à jour » —
+faisaient exactement ce qu'elle interdit : du texte blanc sur un aplat de
+couleur. Mesuré dans un thème aux valeurs par défaut :
+
+| pastille | avant | après |
+| --- | --- | --- |
+| avertissement (ambre) | **1,96:1** | 4,59 en clair, 7,59 en sombre |
+| problème (rouge) | 4,29:1 | 7,23 / 5,70 |
+| succès (vert) | 3,30:1 | 6,25 / 6,46 |
+
+La règle de contraste des textes demande **4,5:1**, et les trois étaient
+dessous. Le pire n'était pas le rouge mais l'ambre, dont la luminance est
+proche de celle du blanc : à 1,96 ce n'est plus une question d'accessibilité,
+c'est difficile à lire pour tout le monde.
+
+Les pastilles colorées sont donc devenues des **teintes** : un fond de la
+couleur mélangée à celle de la carte, et un texte de la même couleur fondue
+vers celle du thème. Elles gardent leur identité de couleur et perdent leur
+aplat. Trois autres dosages ont été mesurés avant celui-là ; deux laissaient
+l'ambre sous le seuil en thème clair.
+
+Ce que ça change pour vous : une pastille est plus discrète qu'avant, et son
+libellé se lit. Le libellé portait déjà toute l'information — la couleur ne
+faisait que la répéter — donc rien ne disparaît. Un navigateur trop ancien
+pour mélanger des couleurs affiche une pastille neutre : elle perd sa teinte,
+jamais sa lisibilité.
+
+**Ce qu'il faut retenir au-delà du correctif** : la règle était écrite, elle
+était juste, et elle n'avait été appliquée qu'à la couleur pour laquelle on
+l'avait écrite. Une règle rangée sous « couleurs de matière » ne se relit
+pas quand on dessine une pastille d'état.
+
 ## Ce que l'option ne fait pas
 
 **Il n'y a pas de réglage global.** La table est une option **par carte** : un

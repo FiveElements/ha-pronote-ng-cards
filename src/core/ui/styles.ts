@@ -73,20 +73,96 @@ export const sharedStyles = css`
     -webkit-line-clamp: var(--pronote-max-lines, 3);
     overflow: hidden;
   }
-  /* Les noms des pieces jointes d'un devoir, sous l'enonce.
+  /* Les pieces jointes d'un devoir, sous l'enonce, en PASTILLES.
 
-     Du texte, jamais des liens : la carte ne peut pas ouvrir un document, il
-     faudrait un appel de service que le projet interdit au rendu. Pas de
-     sous-lignement ni de couleur d'accent, donc, qui inviteraient a cliquer
-     sur ce qui ne repond pas.
+     Le proprietaire a explicitement laisse le choix de la forme : ne pas
+     reprendre le gabarit du site web, faire ce qui va a Home Assistant.
+     Trois raisons de prendre l'idiome du depot. La pastille est deja le
+     vocabulaire de quatre cartes d'ici, donc rien n'est invente. Elle tire
+     ses couleurs des variables du theme, donc elle suit un theme sombre. Et
+     elle donne une cible de clic prenable au doigt, la ou un nom precede
+     d'un tiret n'en etait pas une.
 
-     Ni opacite reduite ni couleur plus pale : la ligne herite deja de la
-     couleur secondaire, et l'assombrir encore aurait pousse le contraste
-     sous le seuil dans un theme sombre. */
+     Le libelle << Pieces jointes : >> a disparu avec : il coutait une ligne
+     entiere et ne portait rien qu'un nom de fichier dans une pastille ne
+     porte deja. Il survit en nom accessible du groupe, sur aria-label.
+
+     Le flux enveloppe : deux pastilles tiennent cote a cote sur une carte
+     large et passent a la ligne sur une carte etroite, sans qu'aucune
+     largeur soit ecrite ici. */
   .row .secondary .devoirs-pieces {
-    display: block;
-    margin-top: 2px;
-    font-size: 0.95em;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    /* Pas de white-space: normal ici, et la raison vaut d'etre ecrite parce
+       qu'elle ne se devine pas. La regle .row .secondary porte pre-line,
+       pour que les retours a la ligne d'un enonce survivent, et il semblait
+       que l'indentation du gabarit entre deux pastilles devienne alors un
+       element flex anonyme -- la specification n'ecarte une suite de texte
+       que si elle est entierement reductible.
+
+       MESURE sur l'instance, avec le blanc impose en ligne pour qu'aucune
+       specificite ne l'emporte : les deux groupes font 156,1 pixels, soit
+       exactement les deux pastilles plus une gouttiere. Chrome ecarte donc
+       ces suites meme sous pre-line. Une declaration posee pour un danger
+       qui n'existe pas est une superstition, et la prochaine personne la
+       reproduirait ailleurs. */
+  }
+  /* La taille de la pastille, remise a celle du texte qui l'entoure.
+     MESURE sur l'instance, dans le theme du proprietaire : l'hote de la
+     carte est a 14px, .secondary la ramene a 12.6, et .chip reprend 0.8em
+     par-dessus. Un nom de fichier tombait donc a 10px, plus petit que
+     l'enonce juste au-dessus de lui -- alors qu'un nom de document est du
+     CONTENU, pas une etiquette d'etat.
+
+     La pastille d'alerte, elle, garde ses 0.8em : posee dans la partie
+     finale d'une ligne, elle part de 14px et rend a 11.2. Elle est donc
+     plus PETITE que la pastille de piece jointe, et c'est voulu -- ce qui
+     la distingue est sa couleur, blanc sur rouge, la ou une piece jointe
+     est grise sur gris. La couleur porte l'alerte, la taille porte la
+     lisibilite, et les deux familles ne se disputent pas le meme canal.
+
+     La hauteur minimale vaut pour TOUTES les pastilles de pieces jointes et
+     non pour les seules ouvrables : sinon un devoir portant une piece avec
+     adresse et une piece sans en afficherait deux de hauteurs differentes,
+     et la ligne changerait de hauteur le jour ou l'integration publierait
+     une adresse. 24px est le minimum de la regle WCAG 2.5.8 sur la taille
+     des cibles. */
+  .row .secondary .devoirs-piece .chip {
+    box-sizing: border-box;
+    min-height: 24px;
+    font-size: 1em;
+  }
+  /* La pastille qui ouvre un document : SOULIGNEE, et de la couleur du
+     texte qui l'entoure.
+
+     C'etait l'inverse au depart -- la couleur de lien du theme, et un
+     soulignement au seul survol, pour qu'une pastille soulignee ne fasse pas
+     de bruit sous un enonce. MESURE dans le theme du proprietaire, cette
+     preference perd : la couleur de lien sur le fond de pastille donne
+     2,59:1, quand la regle de contraste des textes demande 4,5:1. La couleur
+     du texte de la pastille, elle, donne 5,15:1.
+
+     Le soulignement n'est donc pas un repli, c'est le bon signal : il ne
+     depend d'aucune couleur, ce que la regle sur l'usage de la couleur
+     demande justement d'un lien pose au milieu d'un texte. Une preference de
+     calme ne se paie pas en lisibilite.
+
+     Les pastilles muettes -- un nom sans adresse, ce que l'integration
+     publie aujourd'hui -- restent sans soulignement : c'est ce qui distingue
+     ce qui s'ouvre de ce qui se lit, et rien n'invite a cliquer sur ce qui
+     ne repond pas. */
+  .row .secondary .chip-lien {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .row .secondary .chip-lien:hover,
+  .row .secondary .chip-lien:focus-visible {
+    text-decoration-thickness: 2px;
   }
   .row .trailing {
     margin-left: auto;
@@ -116,17 +192,60 @@ export const sharedStyles = css`
     background: var(--secondary-background-color);
     color: var(--secondary-text-color);
   }
+  /* Les trois tons : un fond TEINTE et un texte du ton fondu vers la couleur
+     de texte du theme -- plus un aplat sature portant du blanc.
+
+     Ce que l'aplat coutait, mesure dans le theme du proprietaire, qui garde
+     les valeurs par defaut de Home Assistant sur ces trois variables :
+
+       ton        aplat + blanc        teinte + texte fondu
+       warn       1,96:1               4,59 clair / 7,59 sombre
+       problem    4,29:1               7,23 clair / 5,70 sombre
+       ok         3,30:1               6,25 clair / 6,46 sombre
+
+     La regle de contraste des textes demande 4,5:1, et les trois etaient
+     dessous. Le pire n'etait pas le rouge mais l'ambre : du blanc sur
+     #ffa600 donne 1,96, parce que la luminance de l'ambre est proche de
+     celle du blanc. A ce niveau ce n'est plus une question d'accessibilite,
+     c'est illisible pour tout le monde. Ces trois tons sont appeles 71 fois
+     depuis dix des onze cartes -- seule la carte evaluations n'en emploie
+     aucun -- donc le defaut etait celui du vocabulaire visuel du depot.
+
+     Les dosages ne sont pas choisis au jugement : trois autres ont ete
+     mesures, et 18/65 comme 22/75 laissent warn sous le seuil en theme
+     clair. 15/55 est le seul qui passe dans les deux sens.
+
+     Deux consequences a assumer. La pastille perd son aplat, donc un peu de
+     saillance : ce qui la fait voir devient la teinte et le texte colore, et
+     non plus un pave de couleur. Et si un navigateur ne connait pas
+     color-mix, les deux declarations tombent et la pastille reste neutre --
+     elle perd sa couleur, jamais sa lisibilite, ce qui est le bon sens de
+     degradation.
+
+     C'est aussi la doctrine que le depot applique deja a la couleur de
+     matiere, pour la meme raison ecrite dans CLAUDE.md : une couleur choisie
+     pour un fond blanc casse le contraste des qu'on la met en aplat. Elle
+     valait pour la seule couleur venue du serveur ; elle vaut autant pour
+     celles du theme. */
   .chip.warn {
-    background: var(--warning-color);
-    color: var(--text-primary-color);
+    background: color-mix(in srgb, var(--warning-color) 15%, var(--card-background-color));
+    color: color-mix(in srgb, var(--warning-color) 55%, var(--primary-text-color));
   }
   .chip.problem {
-    background: var(--error-color);
-    color: var(--text-primary-color);
+    background: color-mix(in srgb, var(--error-color) 15%, var(--card-background-color));
+    color: color-mix(in srgb, var(--error-color) 55%, var(--primary-text-color));
   }
   .chip.ok {
-    background: var(--success-color, var(--state-icon-active-color));
-    color: var(--text-primary-color);
+    background: color-mix(
+      in srgb,
+      var(--success-color, var(--state-icon-active-color)) 15%,
+      var(--card-background-color)
+    );
+    color: color-mix(
+      in srgb,
+      var(--success-color, var(--state-icon-active-color)) 55%,
+      var(--primary-text-color)
+    );
   }
   .canceled {
     text-decoration: line-through;

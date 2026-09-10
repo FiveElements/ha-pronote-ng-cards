@@ -202,6 +202,22 @@ subjects[] de sensor:report_card
 `description` est du **HTML** ; `description_text` est le même énoncé en texte
 simple, avec de vrais retours à la ligne. Lisez `description_text` d'abord.
 
+`attachments` est une liste de **chaînes**, et ce sont des **noms de
+documents, jamais des adresses**. Mesuré le 10 septembre 2026 : douze pièces
+sur neuf devoirs de vingt, de treize à trente-neuf caractères, huit avec une
+extension, aucune ne contenant `://` ni même une barre oblique — et aucune
+adresse dans les soixante-sept entités. C'est une mesure à une date, pas une
+garantie de forme : `attachmentsOf` (carte devoirs) accepte donc aussi
+`{ name, url }` et une chaîne qui serait une adresse.
+
+Pourquoi l'adresse est absente, parce que la question se repose sinon : il y
+a deux sortes de pièces côté PRONOTE. Une pièce de type **lien** a une
+adresse stable et sans secret. Une pièce de type **fichier** n'en a pas : son
+chemin contient son numéro chiffré avec la clé et le vecteur de la session
+en cours, plus un paramètre de session — l'adresse meurt à la connexion
+suivante, et l'horizon réel est l'heure. Publier une telle adresse
+produirait un lien mort garanti, pas un lien fragile.
+
 `end_inferred` vaut **exactement** « le serveur n'a pas envoyé la fin » —
 vérifié dans les deux chemins de décodage de l'intégration, qui le posent tous
 deux comme un simple test d'absence du champ. Rien d'autre ne le lève. Le

@@ -396,3 +396,57 @@ describe('garde : les libellés d’options de l’éditeur', () => {
     });
   }
 });
+
+describe('garde : aucune pastille colorée ne porte du texte sur un aplat', () => {
+  /**
+   * Les trois tons de pastille ont porté pendant des semaines du blanc sur un
+   * aplat saturé : `warn` donnait **1,96:1**, `problem` 4,29 et `ok` 3,30, là
+   * où la règle de contraste des textes demande 4,5. Le pire était l'ambre,
+   * dont la luminance est proche de celle du blanc — à ce niveau ce n'est plus
+   * une question d'accessibilité, c'est illisible pour tout le monde.
+   *
+   * Ils sont appelés 71 fois depuis dix des onze cartes, donc le retour de
+   * l'aplat serait un défaut du dépôt entier et non d'une carte.
+   *
+   * Cette garde est **textuelle** et ne mesure aucun contraste : `happy-dom`
+   * ne calcule pas de style, et un test qui prétendrait mesurer ici serait un
+   * test vert répétant son hypothèse. Elle vérifie la forme qui a produit le
+   * défaut, ce qui est ce qu'une garde peut réellement tenir.
+   */
+  const styles = readFileSync(join('src', 'core', 'ui', 'styles.ts'), 'utf8');
+
+  const TONS = ['--warning-color', '--error-color', '--success-color'];
+
+  /** Le corps d'une règle .chip.<ton>, accolades comprises. */
+  const regleDe = (ton: string): string => {
+    const debut = styles.indexOf('.chip.' + ton + ' {');
+    expect(debut).toBeGreaterThan(-1);
+    return styles.slice(debut, styles.indexOf('}', debut));
+  };
+
+  it('mélange chaque ton au fond de la carte au lieu de l’étaler', () => {
+    for (const ton of TONS) {
+      // Appariement positif : le ton est bien employé.
+      expect(styles).toContain(ton);
+      // Et il n'atteint jamais un fond directement.
+      expect(styles).not.toContain('background: var(' + ton + ')');
+    }
+    for (const nom of ['warn', 'problem', 'ok']) {
+      const regle = regleDe(nom);
+      // Deux mélanges par règle : le fond et le texte.
+      expect(regle.split('color-mix(').length - 1).toBe(2);
+      expect(regle).toContain('var(--card-background-color)');
+      expect(regle).toContain('var(--primary-text-color)');
+    }
+  });
+
+  it('ne pose plus, sur une pastille, la couleur de texte prévue pour un aplat', () => {
+    // `--text-primary-color` est destinée à s'asseoir sur `--primary-color`.
+    // Sur un ton saturé elle ne garantit rien, et c'est elle qui produisait
+    // le 1,96. Elle reste légitime ailleurs, donc la garde est portée sur les
+    // trois règles et non sur le fichier.
+    for (const nom of ['warn', 'problem', 'ok']) {
+      expect(regleDe(nom)).not.toContain('--text-primary-color');
+    }
+  });
+});
