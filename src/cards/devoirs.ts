@@ -12,9 +12,20 @@ interface Config extends PronoteCardConfig {
   /**
    * Table matière → couleur, renseignée par l'utilisateur.
    *
-   * C'est le **deuxième** rang de couleur, et aujourd'hui le seul qui produise
-   * quelque chose : l'intégration décode la couleur de matière et ne la publie
-   * pas encore. Voir `subjectAccent`.
+   * C'est le **deuxième** rang de couleur, et un secours : `subjectAccent`
+   * préfère la couleur du serveur, que l'intégration publie désormais sur
+   * chaque devoir (`background_color`). Cette table ne sert donc plus qu'à
+   * colorer une matière que l'établissement laisse vide, ou à remplacer une
+   * teinte illisible dans un thème.
+   *
+   * Le commentaire précédent affirmait l'inverse : que l'intégration « ne la
+   * publie pas encore » et que cette table était le seul rang qui produise
+   * quelque chose. C'était vrai à l'écriture et faux depuis, ce qui est le
+   * pire état pour un commentaire : il conseillait de remplir la table alors
+   * que le premier rang gagne partout. Mesuré le 10 septembre 2026 sur une
+   * instance — les vingt devoirs portent `background_color`, en hexadécimal
+   * strict, six teintes distinctes. La page de documentation, elle, était à
+   * jour : elle datait la bascule de la version 0.0.13 de l'intégration.
    *
    * Absente du formulaire d'éditeur, et pour une raison : aucun sélecteur
    * `ha-form` ne rend correctement un dictionnaire ouvert dont les clés sont
@@ -90,13 +101,36 @@ const dayKey = (d: Date, timeZone: string): string =>
     day: '2-digit',
   }).format(d);
 
-/** Un devoir est en retard si son échéance (jour calendaire) est strictement avant aujourd'hui. */
-const isOverdue = (due: string | undefined, timeZone: string): boolean => {
-  const d = parseTimestamp(due);
+/**
+ * Un devoir est en retard si son échéance (jour calendaire) est strictement
+ * avant aujourd'hui **et qu'il n'est pas fait**.
+ *
+ * `done` fait partie de la définition, ce n'est pas un raffinement. Un devoir
+ * coché dont l'échéance est passée est le cas NORMAL — on coche après avoir
+ * fait, et l'échéance passe ensuite — donc l'oublier ne produit pas un défaut
+ * rare : ça produit une carte qui crie au retard sur son propre historique,
+ * et d'autant plus fort que l'élève a travaillé.
+ *
+ * Mesuré le 10 septembre 2026 sur une instance, avec `filter: all` : neuf
+ * lignes portaient la pastille pour quatre devoirs réellement en retard, et
+ * les cinq de trop étaient exactement les cinq devoirs cochés. L'intégration
+ * comptait quatre, elle, sur `count` de `binary_sensor:homework_overdue` —
+ * donc la carte et l'intégration se contredisaient sur la même page, et
+ * c'est la carte qui avait tort.
+ */
+const isOverdue = (h: Homework, timeZone: string): boolean => {
+  if (h.done === true) return false;
+  const d = parseTimestamp(h.due);
   return d !== undefined && dayKey(d, timeZone) < dayKey(new Date(), timeZone);
 };
 
-/** `limit` absent ou négatif = tout ; `limit: 0` = rien — le seul sens qui ne surprenne personne. */
+/**
+ * `limit` absent ou négatif = tout ; `limit: 0` = rien.
+ *
+ * Et « rien » a besoin d'être DIT, avec ses propres mots : voir la garde
+ * `devoirs.limit_zero` dans `render`. Zéro devoir affiché parce que la limite
+ * vaut zéro n'est pas zéro devoir à faire.
+ */
 const truncate = <T>(items: T[], limit: number | undefined): T[] =>
   limit === undefined || limit < 0 ? items : items.slice(0, limit);
 
@@ -228,6 +262,35 @@ export const SPEC: CardSpec<Config> = {
 
     const limited = truncate(sorted, ctx.config.limit);
 
+    const overdueOn = ctx.entity(OVERDUE)?.state === 'on';
+    // Passe par `listRow` plutôt que par un `div` de classe `row` écrit ici :
+    // la bannière doit réserver la gouttière comme les lignes de devoir, et
+    // `listRow` est le seul endroit qui sache la poser.
+    const overdueBanner = overdueOn
+      ? listRow({ primary: chip(ctx.t('devoirs.overdue'), 'problem'), accent: null })
+      : '';
+
+    /**
+     * `limit: 0` : la liste n'est pas vide, c'est l'affichage qui est à zéro.
+     *
+     * Sans cette garde la carte rendait une **coquille** : ni titre, ni ligne,
+     * ni message. Mesuré le 10 septembre 2026 — quatre-vingt-neuf pixels
+     * portant la seule pastille « en retard » et la ligne de prochaine
+     * échéance, au-dessus de quinze devoirs invisibles et inexpliqués.
+     *
+     * Et le message d'état vide ordinaire ne convient pas : « rien à faire »
+     * au-dessus de quinze devoirs à faire serait FAUX, du même genre que le
+     * retard qui ignorait `done`. D'où une phrase à elle, qui nomme la cause
+     * au lieu de la cacher — c'est la seule façon de rendre l'option
+     * réversible pour qui l'a posée sans y penser.
+     *
+     * La bannière et la prochaine échéance restent : elles ne dépendent pas de
+     * la liste affichée, et c'est ici qu'elles sont le plus utiles.
+     */
+    if (limited.length === 0) {
+      return html`${overdueBanner}${nextDue}${emptyState(ctx.t('devoirs.limit_zero'))}`;
+    }
+
     // La coche n'existe que si l'intégration annonce l'écriture. On lit la
     // capacité, on ne la suppose pas.
     const todoId = ctx.entityId(TODO_LIST);
@@ -250,17 +313,16 @@ export const SPEC: CardSpec<Config> = {
       }
     };
 
-    const overdueOn = ctx.entity(OVERDUE)?.state === 'on';
-    // Passe par `listRow` plutôt que par un `div` de classe `row` écrit ici :
-    // la bannière doit réserver la gouttière comme les lignes de devoir, et
-    // `listRow` est le seul endroit qui sache la poser.
-    const overdueBanner = overdueOn
-      ? listRow({ primary: chip(ctx.t('devoirs.overdue'), 'problem'), accent: null })
-      : '';
-
     const rowFor = (h: Homework): TemplateResult => {
-      const overdue = isOverdue(h.due, ctx.timeZone);
-      const dueLabel = h.due ? formatDayLabel(h.due, ctx.language, ctx.timeZone) : '';
+      const overdue = isOverdue(h, ctx.timeZone);
+      // Groupée par échéance, la date TITRE déjà le groupe : la répéter en fin
+      // de ligne la disait deux fois par devoir. Mesuré le 10 septembre 2026 :
+      // quinze lignes sur dix-sept dont la fin reprenait mot pour mot le titre
+      // juste au-dessus — et c'est le regroupement par DÉFAUT, donc le cas le
+      // plus fréquent et non un cas de coin. Groupée par matière, la date est
+      // au contraire la seule chose qui situe le devoir : elle reste.
+      const dueLabel =
+        by === 'date' ? '' : h.due ? formatDayLabel(h.due, ctx.language, ctx.timeZone) : '';
       // La couleur de matière est une gouttière à gauche, comme sur les cinq
       // autres cartes qui portent une matière. Voir `RowOptions.accent` pour
       // ses trois valeurs, et la règle `.row.empile` de `styles.ts` pour les
@@ -292,10 +354,17 @@ export const SPEC: CardSpec<Config> = {
           // Le texte simple publié par l'intégration s'il existe, sinon
           // l'énoncé HTML dévêtu ici — jamais injecté.
           secondary: h.description_text ?? plainText(h.description),
-          trailing: html`
-            ${overdue ? chip(ctx.t('devoirs.overdue'), 'problem') : ''}
-            ${dueLabel ? ctx.t('devoirs.due', { date: dueLabel }) : ''}
-          `,
+          // `undefined` et non un gabarit vide : `listRow` teste la
+          // présence de `trailing`, et un `TemplateResult` est toujours vrai
+          // — groupé par échéance, chaque ligne sans retard aurait donc posé
+          // une boîte vide dans la tête du bloc.
+          trailing:
+            overdue || dueLabel
+              ? html`
+                  ${overdue ? chip(ctx.t('devoirs.overdue'), 'problem') : ''}
+                  ${dueLabel ? ctx.t('devoirs.due', { date: dueLabel }) : ''}
+                `
+              : undefined,
         })}
       `;
     };

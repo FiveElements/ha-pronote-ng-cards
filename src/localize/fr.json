@@ -74,6 +74,7 @@
     "group_date": "Échéance",
     "group_subject": "Matière",
     "limit": "Nombre maximum",
+    "limit_zero": "Aucun devoir affiché : l'option de limite est à zéro. Retirez-la, ou donnez-lui un nombre.",
     "next_due": "Prochaine échéance"
   },
   "notes": {

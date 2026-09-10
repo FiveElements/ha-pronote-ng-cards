@@ -74,6 +74,7 @@
     "group_date": "Fecha límite",
     "group_subject": "Asignatura",
     "limit": "Número máximo",
+    "limit_zero": "Ningún deber mostrado: la opción de límite está a cero. Quítela o dele un número.",
     "next_due": "Próxima entrega"
   },
   "notes": {

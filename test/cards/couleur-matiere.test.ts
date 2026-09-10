@@ -286,7 +286,17 @@ describe('code couleur des matières — devoirs', () => {
    * entre l'alignement de la colonne et la largeur du contenu.
    */
   it('titre le bloc par la matière et donne toute la largeur à l’énoncé', async () => {
-    const el = await monter();
+    // Groupé par MATIÈRE ici, et non par échéance comme le reste du fichier.
+    // Ce test mesure OÙ se place la fin de ligne — dans la tête du bloc — et
+    // il lui faut donc une fin de ligne à placer. Groupée par échéance, la
+    // date titre déjà le groupe et la carte ne la répète plus en fin de
+    // ligne ; voir `dueLabel` dans `devoirs.ts`. Le placement mesuré ne
+    // dépend pas du regroupement, seule la PRÉSENCE d'une fin en dépend.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', filter: 'todo', group_by: 'subject' },
+      deuxDevoirs()
+    );
 
     const { tete, enonce, matiereDansTete, echeanceDansTete, enonceHorsTete } = structure(el);
     // Les deux bornes d'abord : sans elles, deux -1 se compareraient

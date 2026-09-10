@@ -23,8 +23,8 @@ group_by: date
 | Option | Défaut | Effet |
 | --- | --- | --- |
 | `filter` | `todo` | `todo` (à faire), `tomorrow` (pour demain) ou `all` (tous). Change l'entité lue. |
-| `group_by` | `date` | `date` ou `subject`. Le tri suit le regroupement. |
-| `limit` | *tout* | Nombre maximum de devoirs. Absent ou négatif : tout. `0` : rien. |
+| `group_by` | `date` | `date` ou `subject`. Le tri suit le regroupement. Groupé par échéance, la date titre le groupe et n'est plus répétée en fin de chaque ligne. |
+| `limit` | *tout* | Nombre maximum de devoirs. Absent ou négatif : tout. `0` : rien — et la carte dit alors que la cause est l'option, non l'absence de devoirs. |
 | `subject_colors` | — | Table matière → couleur. **En YAML uniquement**, voir plus bas. |
 
 ### Exemple complet
@@ -104,6 +104,28 @@ de ses évènements demanderait un appel de service, donc une collecte au
 rendu — que le projet interdit et que le type refuse à la compilation. La
 ligne « prochaine échéance » survit à l'état vide, et c'est là qu'elle sert
 le plus : rien à rendre demain, mais une échéance existe plus loin.
+
+## Ce que « en retard » veut dire, et ses deux sources
+
+La pastille apparaît à **deux** endroits, qui ne disent pas la même chose.
+
+En tête de carte, un bandeau suit `binary_sensor:homework_overdue`. Il porte
+sur l'élève entier, pas sur la fenêtre affichée : avec `filter: tomorrow`,
+vous pouvez donc le voir alors qu'aucune ligne visible n'est en retard. C'est
+voulu, et c'est même le seul endroit où l'information vous parvient dans ce
+filtre.
+
+Sur une ligne, la pastille suit la **date du devoir** : échéance passée **et**
+devoir non fait. Les deux conditions comptent. Un devoir coché dont l'échéance
+est passée est le cas normal — on coche après avoir fait, et l'échéance passe
+ensuite.
+
+Ce second point a été corrigé le 10 septembre 2026. La carte ne regardait que
+la date : mesuré sur une instance avec `filter: all`, **neuf** lignes portaient
+la pastille pour **quatre** retards réels, et les cinq de trop étaient
+exactement les cinq devoirs cochés. L'intégration, elle, comptait juste. La
+carte criait donc au retard d'autant plus fort que l'élève avait travaillé, et
+elle contredisait son propre bandeau sur la même page.
 
 ## La case à cocher
 

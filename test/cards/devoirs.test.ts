@@ -53,6 +53,24 @@ const withTodoList = (attributes: Record<string, unknown>, features: number) =>
     },
   ]);
 
+/** Le texte des pastilles de probleme, dans l'ordre du DOM. */
+const pastilles = (el: HTMLElement & MountableElement): string[] =>
+  Array.from(el.shadowRoot?.querySelectorAll('.chip.problem') ?? []).map(
+    (n) => n.textContent?.trim() ?? ''
+  );
+
+/** Les fins de ligne, celles qui portent le retard et l'echeance. */
+const fins = (el: HTMLElement & MountableElement): string[] =>
+  Array.from(el.shadowRoot?.querySelectorAll('.row .trailing') ?? []).map(
+    (n) => n.textContent?.trim() ?? ''
+  );
+
+/** Les intertitres de groupe. */
+const titres = (el: HTMLElement & MountableElement): string[] =>
+  Array.from(el.shadowRoot?.querySelectorAll('.title') ?? []).map(
+    (n) => n.textContent?.trim() ?? ''
+  );
+
 describe('carte devoirs', () => {
   // `calendar:homework` porte la prochaine échéance telle que le calendrier la
   // voit. Elle n'est lue que dans ses ATTRIBUTS : récupérer la liste de ses
@@ -494,5 +512,224 @@ describe('carte devoirs', () => {
     expect(t).toContain("Pensez à l'acheter !");
     expect(t).not.toContain('<div>');
     expect(t).not.toContain('&#039;');
+  });
+});
+
+describe('carte devoirs — le lot du 10 septembre 2026', () => {
+  /**
+   * Les trois défauts corrigés ici ont été trouvés en mesurant la carte sur
+   * une instance, pas en relisant le code : les portes étaient vertes.
+   *
+   * Ce qu'aucune fixture ne combinait avant, et qui explique que les trois
+   * soient passés : une échéance passée AVEC `done: true`, et `limit` à une
+   * autre valeur que 1.
+   */
+
+  const passeFait = {
+    id: 'h1',
+    subject: 'Maths',
+    description: 'Rendu',
+    due: '2020-01-01',
+    done: true,
+  };
+  const passeAFaire = {
+    id: 'h2',
+    subject: 'Anglais',
+    description: 'En souffrance',
+    due: '2020-01-01',
+    done: false,
+  };
+
+  // `withCalendar` et `nextEvent` vivent dans l'autre `describe` : hors de
+  // portee ici, donc le calendrier ET le capteur de retard sont montes ici,
+  // ensemble, parce que le cas `limit: 0` a besoin des deux a la fois.
+  const withCalendarEtRetard = (attributes: Record<string, unknown>) =>
+    hw(attributes, '2', [
+      {
+        key: 'calendar:homework',
+        entity_id: 'calendar.abc_devoirs',
+        device: 'dev_enfant',
+        state: 'off',
+        attributes: { message: 'DM de physique', start_time: '2026-09-15T08:00:00+02:00' },
+      },
+      {
+        key: 'binary_sensor:homework_overdue',
+        entity_id: 'binary_sensor.abc_devoirs_en_retard',
+        device: 'dev_enfant',
+        state: 'on',
+        attributes: {},
+      },
+    ]);
+
+  // --- 1. `done` fait partie de la definition du retard. ---
+
+  it('ne dit pas « en retard » d’un devoir fait dont l’échéance est passée', async () => {
+    // Le cas NORMAL, pas un cas de coin : on coche après avoir fait, et
+    // l'échéance passe ensuite. Aucun capteur de bandeau dans cette fixture,
+    // donc toute pastille vient forcément d'une LIGNE.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: [passeFait, passeAFaire] })
+    );
+    // Appariement positif : les deux devoirs sont bien rendus.
+    expect(text(el)).toContain('Rendu');
+    expect(text(el)).toContain('En souffrance');
+    // Et une seule pastille pour deux échéances également passées.
+    expect(pastilles(el)).toEqual(['en retard']);
+  });
+
+  it('pose la pastille sur la ligne du devoir non fait, et non sur sa voisine', async () => {
+    // Compter les pastilles ne suffit pas : une pastille posée sur la
+    // mauvaise ligne donnerait le même compte. On regarde donc OÙ elle est.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: [passeFait, passeAFaire] })
+    );
+    const lignes = Array.from(el.shadowRoot?.querySelectorAll('.row') ?? []);
+    const ligneRendue = lignes.find((r) => r.textContent?.includes('Rendu'));
+    const ligneSouffrante = lignes.find((r) => r.textContent?.includes('En souffrance'));
+    expect(ligneRendue).toBeDefined();
+    expect(ligneSouffrante).toBeDefined();
+    expect(ligneRendue?.querySelector('.chip.problem')).toBeNull();
+    expect(ligneSouffrante?.querySelector('.chip.problem')).not.toBeNull();
+  });
+
+  it('laisse le BANDEAU au capteur, même quand aucune ligne visible n’est en retard', async () => {
+    // La séparation des deux sources ne doit pas avoir bougé : le bandeau
+    // suit `binary_sensor:homework_overdue`, qui porte le compte de l'élève
+    // entier, pas celui de la fenêtre affichée.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: [passeFait] }, '1', [
+        {
+          key: 'binary_sensor:homework_overdue',
+          entity_id: 'binary_sensor.abc_devoirs_en_retard',
+          device: 'dev_enfant',
+          state: 'on',
+          attributes: {},
+        },
+      ])
+    );
+    // Une pastille : celle du bandeau. La ligne, elle, n'en porte pas.
+    expect(pastilles(el)).toEqual(['en retard']);
+    const ligne = Array.from(el.shadowRoot?.querySelectorAll('.row') ?? []).find((r) =>
+      r.textContent?.includes('Rendu')
+    );
+    expect(ligne?.querySelector('.chip.problem')).toBeNull();
+  });
+
+  // --- 2. `limit: 0` dit pourquoi il n'y a rien. ---
+
+  it('explique pourquoi rien ne s’affiche quand limit vaut zéro', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', limit: 0 },
+      hw({ items })
+    );
+    const t = text(el);
+    // La cause est nommée, et le remède avec elle.
+    expect(t).toContain("l'option de limite est à zéro");
+    // Et surtout PAS le message d'état vide ordinaire : « rien à faire »
+    // au-dessus de devoirs à faire serait faux.
+    expect(t).not.toContain('Rien à faire');
+    expect(t).not.toContain('Maths');
+    expect(t).not.toContain('Anglais');
+    expect(titres(el)).toEqual([]);
+  });
+
+  it('garde la prochaine échéance et le bandeau sous limit zéro', async () => {
+    // Ni l'une ni l'autre ne dépend de la liste affichée, et c'est le moment
+    // où elles servent le plus : la carte ne montre aucun devoir, donc tout ce
+    // qui reste doit porter.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', limit: 0 },
+      withCalendarEtRetard({ items })
+    );
+    const t = text(el);
+    expect(t).toContain('Prochaine échéance');
+    expect(t).toContain('DM de physique');
+    expect(t).toContain("l'option de limite est à zéro");
+    expect(pastilles(el)).toEqual(['en retard']);
+  });
+
+  it('distingue limit zéro d’une liste réellement vide', async () => {
+    // Les deux rendent zéro devoir ; ils ne disent pas la même chose, et
+    // c'est tout l'objet de la correction.
+    const zero = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', limit: 0 },
+      hw({ items })
+    );
+    const vide = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant' },
+      hw({ items: [] }, '0')
+    );
+    expect(text(zero)).toContain("l'option de limite est à zéro");
+    expect(text(vide)).toContain('Rien à faire');
+    expect(text(vide)).not.toContain("l'option de limite");
+  });
+
+  it('ne déclenche pas la garde pour une limite négative, qui veut dire « tout »', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', limit: -1 },
+      hw({ items })
+    );
+    expect(text(el)).toContain('Maths');
+    expect(text(el)).toContain('Anglais');
+    expect(text(el)).not.toContain("l'option de limite");
+  });
+
+  // --- 3. L'echeance ne se repete plus sous son propre titre. ---
+
+  it('ne répète pas l’échéance en fin de ligne quand elle titre déjà le groupe', async () => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', group_by: 'date' },
+      hw({ items })
+    );
+    // Positif : la date est bien là, une fois, en titre de groupe.
+    const t = titres(el);
+    expect(t.length).toBe(2);
+    expect(t[0]).toContain('septembre');
+    // Et nulle part ailleurs.
+    expect(fins(el).every((f) => !f.includes('septembre'))).toBe(true);
+    expect(text(el)).not.toContain('pour le');
+  });
+
+  it('garde l’échéance en fin de ligne quand le groupe est une matière', async () => {
+    // Le contrepoids : groupée par matière, la date est la seule chose qui
+    // situe le devoir. Sans ce cas, retirer `dueLabel` partout passerait le
+    // test précédent — mesuré, il passe.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', group_by: 'subject' },
+      hw({ items })
+    );
+    expect(text(el)).toContain('pour le');
+    expect(fins(el).some((f) => f.includes('septembre'))).toBe(true);
+  });
+
+  it('ne pose pas de fin de ligne vide quand il n’y a rien à y mettre', async () => {
+    // `listRow` teste la PRÉSENCE de `trailing`, et un gabarit est toujours
+    // vrai : groupée par échéance, chaque ligne sans retard aurait posé une
+    // boîte vide dans la tête du bloc.
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', group_by: 'date' },
+      hw(
+        {
+          items: [{ id: 'h1', subject: 'Maths', description: 'X', due: '2099-01-01', done: false }],
+        },
+        '1'
+      )
+    );
+    expect(text(el)).toContain('Maths');
+    expect(el.shadowRoot?.querySelectorAll('.row .trailing').length).toBe(0);
   });
 });

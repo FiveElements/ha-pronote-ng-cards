@@ -74,6 +74,7 @@
     "group_date": "Scadenza",
     "group_subject": "Materia",
     "limit": "Numero massimo",
+    "limit_zero": "Nessun compito mostrato: l'opzione del limite è a zero. La rimuova, o le dia un numero.",
     "next_due": "Prossima scadenza"
   },
   "notes": {
