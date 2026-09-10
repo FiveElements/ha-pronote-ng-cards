@@ -1,7 +1,11 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { html } from 'lit';
 import { defineCard } from '../src/core/registry';
-import { resolveTimeZone } from '../src/core/base-card';
+import {
+  REFRESH_COOLDOWN_MS,
+  REFRESH_REJECTED_COOLDOWN_MS,
+  resolveTimeZone,
+} from '../src/core/base-card';
 import type { CardSpec, RenderCtx } from '../src/core/types';
 import { makeHass } from './fixtures/hass';
 import { mountCard, text } from './fixtures/mount';
@@ -335,6 +339,8 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
     globalThis.localStorage?.clear();
   });
 
+  const CLE_GARDE = 'pronote-ng-cards:refreshed-at:dev_enfant';
+
   it('pose refreshedAt avant l’appel : le bouton se grise dès le clic, avant même la résolution du service', async () => {
     const hass = makeHass([]);
     probeRefresh(hass);
@@ -372,35 +378,45 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
     expect(text(el)).toContain('échoué');
   });
 
-  it('rend la garde quand l’appel est rejeté : le bouton redevient cliquable', async () => {
+  it('raccourcit la garde à une minute quand l’appel est rejeté', async () => {
     // Mesuré sur l'instance du propriétaire le 10 septembre 2026, avant le
     // correctif de `device_id` : le service rejetait l'appel, et la garde
-    // verrouillait quand même le bouton un quart d'heure. Un utilisateur
-    // puni pour une demande qui n'est jamais partie.
+    // verrouillait quand même le bouton un quart d'heure — un utilisateur
+    // puni pour une demande qui n'était jamais partie.
+    //
+    // Rendue, mais pas à zéro, et le milieu n'est pas une précaution : sur
+    // un palier en échec, l'intégration n'arme jamais le plafond du boost
+    // (`boost_served_at` n'est posé que dans `mark_collected`) et `request()`
+    // efface le plancher de `mark_failed`. Chaque clic accepté y achète une
+    // requête réelle. Voir `REFRESH_REJECTED_COOLDOWN_MS`.
     const hass = makeHass([]);
     probeRefresh(hass);
     hass.callService = () => Promise.reject(new Error('value should be a string'));
     const el = await mountRefreshCard(hass);
 
     btnOf(el)?.dispatchEvent(new MouseEvent('click'));
-    // Grisé dès le clic : la protection contre le double-clic ne change pas,
-    // c'est le RETOUR en arrière qui est nouveau.
+    // Grisé dès le clic : la protection contre le double-clic ne change pas.
     await el.updateComplete;
     expect(btnOf(el)?.hasAttribute('disabled')).toBe(true);
 
     await new Promise((r) => setTimeout(r, 0));
     await el.updateComplete;
-    expect(btnOf(el)?.hasAttribute('disabled')).toBe(false);
-    // Appariement positif : un bouton non grisé se rencontre aussi sur un
-    // rendu qui n'a rien vu. L'échec affiché prouve que le clic est bien
-    // allé jusqu'au bout du chemin de rejet.
+    // Toujours grisé — mais plus pour un quart d'heure. C'est le TEMPS
+    // RESTANT qui porte la mesure : un test sur `disabled` seul ne
+    // distinguerait pas une minute de quinze.
+    expect(btnOf(el)?.hasAttribute('disabled')).toBe(true);
+    const restant = REFRESH_COOLDOWN_MS - (Date.now() - Number(localStorage.getItem(CLE_GARDE)));
+    expect(restant).toBeGreaterThan(0);
+    expect(restant).toBeLessThanOrEqual(REFRESH_REJECTED_COOLDOWN_MS);
+    // Appariement positif : l'échec affiché prouve que le clic est bien allé
+    // jusqu'au bout du chemin de rejet, et pas qu'un rendu n'a rien vu.
     expect(text(el)).toContain('échoué');
   });
 
-  it('rend aussi la garde PARTAGÉE : un remontage après un rejet part libre', async () => {
+  it('raccourcit aussi la garde PARTAGÉE, celle qui survit au rechargement', async () => {
     // La garde de l'instance et celle du stockage sont deux choses, et c'est
-    // la seconde qui survit à un rechargement de page. La rendre à moitié
-    // laisserait le verrou revenir au prochain affichage.
+    // la seconde qui survit à un rechargement de page. N'en raccourcir qu'une
+    // laisserait le quart d'heure revenir au prochain affichage.
     const hass = makeHass([]);
     probeRefresh(hass);
     hass.callService = () => Promise.reject(new Error('rejet'));
@@ -409,8 +425,12 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
     await new Promise((r) => setTimeout(r, 0));
     await first.updateComplete;
 
+    const restant = REFRESH_COOLDOWN_MS - (Date.now() - Number(localStorage.getItem(CLE_GARDE)));
+    expect(restant).toBeGreaterThan(0);
+    expect(restant).toBeLessThanOrEqual(REFRESH_REJECTED_COOLDOWN_MS);
+    // Et un remontage relit cette garde-là, pas celle de l'instance perdue.
     const second = await mountRefreshCard(hass);
-    expect(btnOf(second)?.hasAttribute('disabled')).toBe(false);
+    expect(btnOf(second)?.hasAttribute('disabled')).toBe(true);
   });
 
   it('ne rend PAS la garde qu’une carte voisine a reprise entre-temps', async () => {
@@ -420,10 +440,9 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
     // pour un appel qui, lui, a réussi.
     const hass = makeHass([]);
     probeRefresh(hass);
-    const CLE = 'pronote-ng-cards:refreshed-at:dev_enfant';
     hass.callService = () => {
       // La voisine arme la garde APRÈS nous, avec un horodatage plus récent.
-      globalThis.localStorage.setItem(CLE, String(Date.now() + 1000));
+      globalThis.localStorage.setItem(CLE_GARDE, String(Date.now() + 1000));
       return Promise.reject(new Error('rejet'));
     };
     const el = await mountRefreshCard(hass);
@@ -433,7 +452,7 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
 
     // Notre instance oublie sa propre garde — c'est notre appel qui a
     // échoué — mais la garde partagée reste celle de la voisine.
-    const restee = Number(globalThis.localStorage.getItem(CLE));
+    const restee = Number(globalThis.localStorage.getItem(CLE_GARDE));
     expect(restee).toBeGreaterThan(Date.now());
     // Et un remontage la relit, donc le bouton repart grisé.
     const second = await mountRefreshCard(hass);

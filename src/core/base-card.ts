@@ -18,6 +18,44 @@ import { localize } from '../localize';
 /** Un boost est plafonné à un par palier et par intervalle côté intégration. */
 export const REFRESH_COOLDOWN_MS = 15 * 60 * 1000;
 
+/**
+ * Ce qui reste de la garde quand l'appel a été **rejeté**.
+ *
+ * Une minute, et le nombre est un compromis entre deux faits qui se sont
+ * présentés dans cet ordre.
+ *
+ * Le premier : le propriétaire a demandé, le 10 septembre 2026, qu'un appel
+ * rejeté ne verrouille plus le bouton un quart d'heure. Il l'avait payé — son
+ * clic échouait sur un défaut de forme, et la garde le punissait quand même.
+ *
+ * Le second, rapporté par la session de l'intégration puis vérifié dans son
+ * source, et qui contredit l'argument que j'avais donné au propriétaire pour
+ * emporter sa décision. J'affirmais qu'une priorité relevée deux fois ne
+ * place aucune requête. **C'est vrai d'un palier sain et faux d'un palier en
+ * échec**, pour trois raisons qui s'additionnent :
+ *
+ * - `scheduler.py` n'arme le plafond du boost (`boost_served_at`) que dans
+ *   `mark_collected`, et sous `if state.boosted`. Un palier qui échoue n'y
+ *   passe jamais, donc le plafond ne s'arme jamais, donc **chaque clic est
+ *   accepté** ;
+ * - `request()` remet `not_before = 0.0`, ce qui efface le plancher que
+ *   `mark_failed` avait posé précisément pour qu'un palier quotidien ne soit
+ *   pas rejoué à chaque tick de cinq minutes ;
+ * - et le maintien du limiteur ne rattrape pas toujours : `account.py`
+ *   appelle `coordinator.note_failure()`, jamais `limiter.note_failure()`.
+ *   Un palier qui échoue par la **forme** de la réponse n'ouvre donc aucun
+ *   maintien, et là chaque clic accepté achète une requête réelle — contre
+ *   un serveur dont la seule sanction porte sur l'adresse IP.
+ *
+ * Rendre la garde à zéro ouvrait donc un chemin de clics répétés sur
+ * exactement le cas où l'on clique plusieurs fois : celui où ça ne marche
+ * pas. Une minute retire la punition dont le propriétaire s'est plaint sans
+ * ouvrir ce chemin. Ce n'est pas la réponse complète — la question « un
+ * boost doit-il pouvoir effacer un plancher d'échec ? » se règle dans
+ * l'ordonnanceur, pas ici.
+ */
+export const REFRESH_REJECTED_COOLDOWN_MS = 60 * 1000;
+
 const ABSENT_STATES = new Set(['unknown', 'unavailable']);
 
 /**
@@ -433,6 +471,18 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
                 // 'device_id' ». Rapporte par le proprietaire le 10 septembre
                 // 2026 en appuyant sur le bouton de la carte limiteur.
                 //
+                // Le blame revient a l'integration, qui l'a corrige depuis :
+                // `ServiceRegistry.async_call` termine par
+                // `service_data.update(target)`, et une cible a deja traverse
+                // `cv.ensure_list`. Les six schemas declaraient `cv.string`,
+                // donc toute automatisation construite a la souris echouait
+                // pareil. Les deux formes sont acceptees maintenant.
+                //
+                // La forme ci-dessous ne change pas pour autant : c'est celle
+                // que `services.yaml` declare, sous `fields:` et sans bloc
+                // `target:`. Un contrat qui tolere deux formes se lit sur
+                // celle qu'il declare.
+                //
                 // C'est le MEME defaut que `tier`/`tiers` ci-dessous, et le
                 // meme mecanisme l'a cache : le test gelait la forme du code
                 // au lieu de la verifier contre `services.py`. Deux fois de
@@ -457,13 +507,32 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
             // Le rejet doit remonter à l'utilisateur, pas disparaître : la
             // carte reste seule juge de la façon de le montrer.
             this.refreshFailed = true;
-            this.refreshedAt = previousAt;
-            // La garde partagée n'est rendue que si PERSONNE ne l'a reprise
+            // Rendue, mais pas jusqu'à zéro : la garde est **anti-datée** pour
+            // qu'il n'en reste qu'une minute. Voir
+            // `REFRESH_REJECTED_COOLDOWN_MS` — sur un palier en échec, chaque
+            // clic accepté achète une requête réelle.
+            //
+            // `Math.max` avec l'état d'avant : un rejet rend du temps, il
+            // n'en donne jamais. Si un rafraîchissement avait **réussi** deux
+            // minutes plus tôt, sa garde vaut encore treize minutes, et
+            // l'échec d'un clic suivant ne doit pas la raccourcir.
+            //
+            // Aucun test ne l'épingle, et il faut le dire plutôt que d'en
+            // écrire un qui ferait semblant : par le bouton, ce cas n'est pas
+            // atteignable — pendant qu'une garde court, le bouton est grisé,
+            // donc il n'y a pas de second clic. La tentative de test passait
+            // avec ET sans le `Math.max`, pour cette raison exactement, et
+            // elle a été retirée. Ce qui reste ici est une garantie de forme,
+            // gratuite, contre un appelant futur qui n'aurait pas de bouton
+            // grisé devant lui.
+            const shortened = Date.now() - (REFRESH_COOLDOWN_MS - REFRESH_REJECTED_COOLDOWN_MS);
+            this.refreshedAt = Math.max(previousAt, shortened);
+            // La garde partagée n'est touchée que si PERSONNE ne l'a reprise
             // entre-temps. Deux cartes du même appareil peuvent être sur la
-            // même vue : restaurer sans regarder écraserait la garde qu'une
+            // même vue : écrire sans regarder raccourcirait la garde qu'une
             // voisine vient d'armer pour un appel qui, lui, a réussi.
             if (readGuard(config.device_id) === armedAt) {
-              writeGuard(config.device_id, previousStored);
+              writeGuard(config.device_id, Math.max(previousStored, shortened));
             }
           }
         },
