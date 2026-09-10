@@ -374,26 +374,65 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
         t: (path, vars) => localize(path, vars, hass.language),
         callService,
         refresh: async (tier?: string) => {
+          this.refreshFailed = false;
+          if (!config.device_id) {
+            // `device_id` est REQUIS par le service. Sans lui l'appel serait
+            // rejete par la validation, et l'utilisateur verrait une erreur
+            // brute de Home Assistant au lieu du message de la carte. Une
+            // configuration par surcharge `entities` seule est le cas ou ca
+            // arrive ; la carte dit alors que la demande n'a pas abouti, ce
+            // qui est exactement vrai.
+            //
+            // Teste AVANT la garde, et l'ordre compte : un appel qui ne part
+            // pas ne doit pas verrouiller le bouton un quart d'heure. La
+            // garde protege le budget de requetes, et rien n'a ete demande
+            // ici.
+            this.refreshFailed = true;
+            return;
+          }
           // Posé AVANT l'appel : un double-clic pendant l'attente doit
           // retomber sous le refroidissement, pas en envoyer un second — la
           // seule carte qui touche au budget de requêtes en dépend.
           this.refreshedAt = Date.now();
           writeGuard(config.device_id, this.refreshedAt);
-          this.refreshFailed = false;
           try {
             await callService(
               'pronote_ng.refresh',
-              // `tiers`, au pluriel, et une LISTE. Verifie dans le depot de
-              // l'integration : `services.py` declare
-              // `vol.Optional(ATTR_TIERS)` avec `ATTR_TIERS = "tiers"`, et le
-              // schema n'a pas d'`extra=` — voluptuous refuse donc toute cle
-              // inconnue. La carte envoyait `tier` : tout rafraichissement
-              // avec un palier configure etait rejete par la validation, sans
-              // qu'aucune requete ne parte. `cv.ensure_list` accepterait un
-              // scalaire, mais `services.yaml` declare le champ
-              // `multiple: true` : la liste est la forme du contrat.
-              tier ? { tiers: [tier] } : {},
-              config.device_id ? { device_id: config.device_id } : undefined
+              {
+                // `device_id` est un CHAMP du service, pas une CIBLE, et
+                // c'est toute la difference. `services.yaml` le declare sous
+                // `fields:` avec un selecteur `device:` — il n'y a pas de
+                // bloc `target:` — et `services.py` valide
+                // `vol.Required(ATTR_DEVICE_ID): cv.string`.
+                //
+                // Passe en quatrieme argument, il partait dans le `target` de
+                // l'appel, et `cv.TARGET_SERVICE_FIELDS` normalise le
+                // `device_id` d'une cible en LISTE avant que Home Assistant
+                // ne la fusionne dans les donnees du service. Le schema
+                // recevait donc une liste la ou il attend une chaine, et
+                // rejetait chaque clic : « value should be a string at
+                // 'device_id' ». Rapporte par le proprietaire le 10 septembre
+                // 2026 en appuyant sur le bouton de la carte limiteur.
+                //
+                // C'est le MEME defaut que `tier`/`tiers` ci-dessous, et le
+                // meme mecanisme l'a cache : le test gelait la forme du code
+                // au lieu de la verifier contre `services.py`. Deux fois de
+                // suite sur le meme appel. La forme d'un appel de service se
+                // lit dans le depot de l'integration, jamais dans le souvenir
+                // de ce qu'on a ecrit.
+                device_id: config.device_id,
+                // `tiers`, au pluriel, et une LISTE. Verifie dans le depot de
+                // l'integration : `services.py` declare
+                // `vol.Optional(ATTR_TIERS)` avec `ATTR_TIERS = "tiers"`, et
+                // le schema n'a pas d'`extra=` — voluptuous refuse donc toute
+                // cle inconnue. La carte envoyait `tier` : tout
+                // rafraichissement avec un palier configure etait rejete par
+                // la validation, sans qu'aucune requete ne parte.
+                // `cv.ensure_list` accepterait un scalaire, mais
+                // `services.yaml` declare le champ `multiple: true` : la
+                // liste est la forme du contrat.
+                ...(tier ? { tiers: [tier] } : {}),
+              }
             );
           } catch {
             // Le rejet doit remonter à l'utilisateur, pas disparaître : la

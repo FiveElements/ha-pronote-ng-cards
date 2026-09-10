@@ -216,7 +216,45 @@ describe('carte limiteur', () => {
     expect(button).not.toBeNull();
     button?.click();
     await el.updateComplete;
-    expect(spy).toHaveBeenCalledWith('pronote_ng', 'refresh', {}, { device_id: 'dev_enfant' });
+    // `device_id` va dans les DONNEES, pas dans la cible, et il n'y a pas de
+    // quatrieme argument. `services.yaml` le declare sous `fields:` avec un
+    // selecteur `device:`, sans bloc `target:`, et `services.py` valide
+    // `vol.Required(ATTR_DEVICE_ID): cv.string`.
+    //
+    // Ce test a gele la forme du code une deuxieme fois. Passe en cible, le
+    // `device_id` etait normalise en LISTE par `cv.TARGET_SERVICE_FIELDS`
+    // avant fusion dans les donnees, et le service rejetait chaque clic avec
+    // « value should be a string at 'device_id' ». Le test passait, parce
+    // qu'il recopiait ce que la carte envoyait.
+    expect(spy).toHaveBeenCalledWith('pronote_ng', 'refresh', { device_id: 'dev_enfant' }, undefined);
+  });
+
+  it("n'appelle pas le service quand la configuration n'a pas de device_id", async () => {
+    // `device_id` est requis par le service. Une configuration par surcharge
+    // `entities` seule n'en a pas : plutôt qu'un rejet de validation affiché
+    // en erreur brute par Home Assistant, la carte n'appelle rien et dit que
+    // la demande n'a pas abouti.
+    const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
+    const spy = vi.fn().mockResolvedValue(undefined);
+    hass.callService = spy;
+    const el = await mountCard(
+      'pronote-ng-limiteur',
+      { entities: { 'sensor:limiter_state': 'sensor.cpt_etat' }, show_refresh: true },
+      hass
+    );
+    const button = el.shadowRoot?.querySelector('button');
+    expect(button).not.toBeNull();
+    button?.click();
+    await el.updateComplete;
+    expect(spy).not.toHaveBeenCalled();
+    // Appariement positif : une absence d'appel passerait aussi sur un rendu
+    // cassé ou un bouton inerte. Le message d'échec prouve que le clic est
+    // bien arrivé jusqu'à `refresh`.
+    expect(text(el)).toContain("La demande n'a pas abouti");
+    // Et la garde n'est PAS armée : rien n'a été demandé, donc le bouton
+    // reste cliquable. Un quart d'heure de verrou pour un appel qui n'est
+    // jamais parti punirait l'utilisateur d'un défaut de configuration.
+    expect(button?.disabled).toBe(false);
   });
 
   it('transmet le palier choisi à pronote_ng.refresh', async () => {
@@ -240,8 +278,11 @@ describe('carte limiteur', () => {
     expect(spy).toHaveBeenCalledWith(
       'pronote_ng',
       'refresh',
-      { tiers: ['marks'] },
-      { device_id: 'dev_enfant' }
+      { device_id: 'dev_enfant', tiers: ['marks'] },
+      // Le quatrieme argument, la CIBLE, vaut undefined : ce service ne
+      // declare pas de bloc target, et une cible y remettrait le device_id
+      // sous forme de liste.
+      undefined
     );
   });
 
