@@ -60,11 +60,61 @@ renseignement de diagnostic est utile, il ne nomme que
 
 ## 2. Mettre en place l'environnement
 
+### 2.1 Node et dépendances
+
 Node **22 ou plus récent** (voir `.nvmrc`).
 
 ```bash
 npm install
 ```
+
+### 2.2 `graft`, l'index de code (facultatif)
+
+Le dépôt est indexé par [graft](https://github.com/trailhq/Graft) (licence MIT,
+publié sur npm sous `@nanonets/graft`) : un graphe du code en fiches markdown,
+une par fichier, qui nomment le `fichier:ligne` de chaque symbole et les arêtes
+« qui appelle quoi ».
+
+```bash
+npm install -g @nanonets/graft
+graft build          # construit graft/ à partir de src/ et test/
+```
+
+Ce qu'il apporte ici tient surtout à une question : `graft callers <symbole>
+--depth all` donne le rayon d'impact d'un changement **avant** de le faire.
+C'est ce qu'il faut savoir avant de toucher à `RenderCtx`, à `CardSpec` ou à la
+résolution d'entités, par où passe chaque carte sans exception — et ce qu'un
+`grep` sur un nom court comme `render` ne prouvera jamais.
+
+Quatre points sur ce que le dépôt porte réellement.
+
+**`graft/` n'est pas versionné.** L'index se régénère intégralement à partir du
+code ; le committer reviendrait à verser un artefact dérivé, à le reconstruire
+dans chaque PR et à y arbitrer des conflits. `.gitignore` l'exclut, et les
+commandes rafraîchissent le graphe d'elles-mêmes avant de répondre — y compris
+sur une modification non committée.
+
+**`.ignore` le réadmet à la recherche.** `ripgrep` lit `.ignore` avant
+`.gitignore` : sans ce fichier, un `rg` dans le dépôt ne verrait aucune fiche,
+alors qu'elles sont précisément faites pour être lues. Il ne réadmet que la
+recherche, jamais le suivi de version.
+
+**`.claude/` configure Claude Code, et rien d'autre.** `settings.json` y
+enregistre les hooks et la ligne de statut, `skills/graft/SKILL.md` dit quand
+employer laquelle des six commandes, et `.mcp.json` déclare le serveur MCP —
+que le client demande d'activer explicitement au premier lancement. Les
+préférences propres à un poste vont dans `.claude/settings.local.json`, qui
+n'est pas versionné. Les deux fichiers de `.claude/helpers/` ne sont que des
+amorces : elles cherchent le paquet installé et n'ont aucun effet en son
+absence. L'installeur y grave le chemin absolu de la machine qui l'a lancé, ce
+que ce dépôt neutralise à chaque fois — un chemin d'un autre poste n'aide
+personne, et porte un nom de compte.
+
+**Aucune porte n'en dépend.** `validate.yml` n'appelle pas graft, et rien dans
+`src/` ne le connaît. Qui ne l'installe pas travaille exactement comme avant :
+ce que le dépôt versionne, c'est la configuration, jamais l'index. graft suit
+`.gitignore`, donc il indexe `src/` et `test/`, jamais `node_modules/` ni
+`dist/`.
 
 ---
 

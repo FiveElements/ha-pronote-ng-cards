@@ -24,6 +24,31 @@ Lint ciblé : `npx oxlint src/cards/notes.ts test/cards/notes.test.ts`
 
 Node 22 ou plus (`.nvmrc`). `dist/` est ignoré par git et reconstruit par la CI.
 
+## Demander à graft avant de grepper
+
+Le dépôt est indexé par [graft](https://github.com/trailhq/Graft)
+(`npm install -g @nanonets/graft`, MIT). `graft/` contient une fiche markdown
+par fichier — chaque symbole avec sa plage, plus les arêtes « qui appelle quoi »
+— et `graft ask`, `grep`, `skeleton`, `callers` et `map` l'interrogent en moins
+d'une seconde, sans clé d'API. À consulter avant de lire une source.
+
+`graft callers <symbole> --depth all` est la commande qui compte ici : elle
+donne le rayon d'impact avant le changement. `RenderCtx`, `CardSpec` et la
+résolution d'entités sont traversés par **toutes** les cartes, et une carte qui
+cesse de rendre ne casse rien bruyamment — elle affiche simplement un des trois
+états, ce qui ressemble à une donnée manquante et pas à une régression.
+
+`graft/` est **généré et non versionné** : lancez `graft build` une fois après
+le clone. Les commandes rafraîchissent le graphe elles-mêmes, donc une
+modification non committée y figure déjà. `.ignore` réadmet les fiches à
+`ripgrep` sans les réadmettre à git, et `.mcp.json` plus `.claude/` branchent le
+même graphe dans Claude Code comme outils MCP, hooks et *skill*. Rien de tout
+cela n'est une porte : `validate.yml` n'appelle jamais graft.
+
+Une mise en garde : les plages d'une fiche sont une projection reconstruite en
+fin de tour, donc pour un fichier modifié dans le tour courant la fiche peut
+retarder. Les commandes, elles, ne retardent pas — préférez-les.
+
 ## Ce que le projet ne fera jamais
 
 Ces contraintes viennent de l'intégration `pronote_ng` et priment sur toute considération de confort. `test/guards.test.ts` les rend **exécutables** : un test échoue si l'une est enfreinte.
