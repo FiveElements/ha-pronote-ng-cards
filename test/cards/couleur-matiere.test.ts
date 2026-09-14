@@ -1,7 +1,7 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { defineCard } from '../../src/core/registry';
 import { SPEC as EDT } from '../../src/cards/emploi-du-temps';
-import { SPEC as DEVOIRS } from '../../src/cards/devoirs';
+import { SPEC as DEVOIRS, testClock } from '../../src/cards/devoirs';
 import { SPEC as NOTES } from '../../src/cards/notes';
 import { SPEC as PROCHAIN } from '../../src/cards/prochain-cours';
 import { SPEC as EVALUATIONS } from '../../src/cards/evaluations';
@@ -84,6 +84,31 @@ beforeAll(() => {
   defineCard(NOTES);
   defineCard(PROCHAIN);
   defineCard(EVALUATIONS);
+});
+
+/**
+ * L'horloge de la carte devoirs, figée au 11 septembre 2026.
+ *
+ * Sans elle, `isOverdue` comparait à `new Date()` alors que `deuxDevoirs()`
+ * porte des échéances en dur : « le devoir d'histoire est à rendre, pas en
+ * retard » était vrai le 10 septembre, jour où la CI est passée au vert, et
+ * faux dès le 11. Le fichier est devenu rouge sur toutes les branches à une
+ * date que personne n'avait choisie — une bombe à retardement, pas une
+ * régression : ni la carte ni le test n'avaient changé.
+ *
+ * Le 11 est le SEUL jour qui rend vraies les deux phrases que le test mesure
+ * sur ces échéances : maths (le 10) échu, histoire (le 11) pas encore.
+ * Déplacer l'un des deux devoirs sans déplacer cette date annule la
+ * distinction, et le test passerait alors en ne comparant plus rien.
+ *
+ * Posée à chaque test plutôt qu'une fois pour toutes : `testClock` est une
+ * variable de MODULE, qu'un test peut écraser sans que le suivant le sache.
+ * Les autres cartes de ce fichier n'en ont pas besoin — elles ne lisent pas
+ * l'heure — mais la poser pour elles ne coûte rien et évite qu'un futur test
+ * de devoirs, ajouté dans un autre `describe`, la retrouve absente.
+ */
+beforeEach(() => {
+  testClock.now = '2026-09-11T12:00:00+02:00';
 });
 
 /** Les gouttières colorées d'une carte, dans l'ordre du rendu. */
