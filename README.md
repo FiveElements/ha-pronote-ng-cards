@@ -1,9 +1,10 @@
 # Pronote NG Cards — Cartes Lovelace pour Home Assistant
 [![Version](https://img.shields.io/github/v/release/FiveElements/ha-pronote-ng-cards?style=flat-square&label=version)](https://github.com/FiveElements/ha-pronote-ng-cards/releases)
-[![Validate](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/validate.yml?branch=main&style=flat-square&label=validate)](https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/validate.yml)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/codeql.yml?branch=main&style=flat-square&label=CodeQL)](https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/codeql.yml)
 ![Home Assistant 2026.9.0 minimum](https://img.shields.io/badge/Home%20Assistant-2026.9.0%2B-41BDF5?style=flat-square&logo=homeassistant&logoColor=white)
-![MIT License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
+[![validate](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/validate.yml?branch=main&style=flat-square&label=validate)](https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/validate.yml)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/codeql.yml?branch=main&style=flat-square&label=CodeQL)](https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/codeql.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+[![HACS](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/hacs.yml?branch=main&style=flat-square&label=HACS)](https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/hacs.yml)
 
 
 [📖 Documentation](https://fiveelements.github.io/ha-pronote-ng-cards/) · [🔌 Pronote NG](https://github.com/FiveElements/ha-pronote-ng) · [🐛 Signaler un problème](https://github.com/FiveElements/ha-pronote-ng-cards/issues/new/choose)
