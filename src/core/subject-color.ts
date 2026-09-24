@@ -96,10 +96,12 @@ export function subjectColor(value: unknown): string | undefined {
  *    gouttière réservée mais transparente (voir `RowOptions.accent`).
  *
  * Le rang 1 produit depuis la version 0.0.13 de l'intégration : la couleur
- * arrive sur les créneaux d'emploi du temps et sur les devoirs — mesuré 27 sur
- * 27 et 12 sur 12 — et elle est attendue sur les moyennes par matière, palier
- * qu'aucune mesure n'a encore pu observer, la liste étant vide. Deux entités
- * ne la portent pas : le prochain cours (mesuré, la clé est absente de ses
+ * arrive sur les créneaux d'emploi du temps, sur les devoirs et sur les
+ * moyennes par matière — mesuré 27 sur 27, 12 sur 12 et 4 sur 4. Le troisième
+ * palier est longtemps resté une attente plutôt qu'une mesure : le serveur y
+ * écrit la couleur sous un autre nom de champ que sur les deux premiers, et la
+ * liste était vide aux premiers relevés. Observé le 24 septembre 2026. Deux
+ * entités ne la portent pas : le prochain cours (mesuré, la clé est absente de ses
  * attributs) et les évaluations (`_evaluations_attributes` construit ses
  * éléments en ligne, et le modèle amont ne porte pas le champ).
  *

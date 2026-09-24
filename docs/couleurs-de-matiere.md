@@ -26,16 +26,16 @@ Mais elle ne l'est pas partout, et le détail décide de ce que vous avez à
 | --- | --- | --- |
 | créneaux d'emploi du temps | **oui** | mesuré, 27 sur 27 |
 | devoirs | **oui** | mesuré, 12 sur 12 |
-| moyennes par matière | publiée, jamais observée | l'intégration pose bien la clé (vérifié deux fois dans son code) ; personne n'a encore vu la valeur, la liste étant vide |
+| moyennes par matière | **oui** | mesuré, 4 sur 4 |
 | prochain cours | **non** | mesuré : la clé est absente des attributs |
 | évaluations | **non** | lu dans le code de l'intégration, liste vide à la mesure |
 | notes individuelles, bulletin | jamais | PRONOTE colore la matière, pas la note |
 
 La distinction entre « mesuré » et « lu dans le code » n'est pas de la
-coquetterie. Les deux premières lignes ont été vérifiées sur une instance
-réelle ; les deux du milieu ne peuvent pas l'être tant que les listes sont
-vides. Une page qui rangerait les six ensemble vous ferait retirer une table
-qui sert peut-être encore.
+coquetterie. Les quatre premières lignes ont été vérifiées sur une instance
+réelle ; celle des évaluations ne peut pas l'être tant que la liste est vide,
+et la dernière tient au protocole. Une page qui rangerait les six ensemble vous
+ferait retirer une table qui sert peut-être encore.
 
 ## Écrire la table
 
@@ -65,7 +65,8 @@ La couleur d'une matière se prend dans cet ordre :
 **Le rang 1 gagne, et il rend votre table muette sans vous le dire.** Si vous
 aviez écrit une table pour compenser l'absence de couleur, elle ne s'applique
 plus qu'aux matières que le serveur ne colore pas — donc, sur l'emploi du
-temps et les devoirs d'un établissement qui colore tout, à aucune. Le bloc
+temps, les devoirs et les moyennes d'un établissement qui colore tout, à
+aucune. Le bloc
 reste dans votre YAML et ne fait plus rien : c'est le genre de configuration
 qui trompe celui qui l'édite, et il trompe dans les deux sens — vous ne voyez
 pas que votre table a cessé de servir, et vous ne voyez pas pourquoi la
@@ -78,15 +79,16 @@ Ce qu'il y a à faire, et ce qu'il ne faut **pas** faire :
   vous déplaît. Vous pouvez la retirer ;
 - **le prochain cours et les évaluations** : gardez-la. C'est le seul moyen
   d'y obtenir un accent, puisque le serveur ne colore pas ces deux entités ;
-- **les notes** : ne la retirez pas encore, et la raison mérite d'être
-  précise. Ce n'est pas l'intégration qui est en doute — elle pose la clé sur
-  les moyennes par matière comme sur les deux autres paliers. C'est le
-  **serveur** : sur ce palier-là il n'écrit pas la couleur sous le même nom de
-  champ que sur les créneaux et les devoirs, et personne n'a encore pu
-  observer un bulletin non vide pour vérifier qu'il l'écrit tout court. La
-  carte ne colore que les moyennes ; retirer la table sur une déduction la
-  laisserait entièrement grise, sans un mot. Retirez-la le jour où vous voyez
-  les moyennes colorées sans elle.
+- **les notes** : vous pouvez la retirer. Cette page conseillait jusqu'ici de
+  la garder, et le doute était fondé : il ne portait pas sur l'intégration,
+  qui pose la clé sur les moyennes par matière comme sur les deux autres
+  paliers, mais sur le **serveur**, qui n'écrit pas la couleur sous le même
+  nom de champ sur ce palier-là. Tant que la liste était vide, rien ne
+  permettait de vérifier qu'il l'écrit tout court. Mesuré le 24 septembre
+  2026 : les quatre moyennes par matière portent toutes leur couleur, en
+  hexadécimal strict. Rappel de portée — cette carte ne colore **que** les
+  moyennes par matière ; la liste des notes et le bulletin restent sans
+  couleur, avec ou sans table.
 
 **Où la couleur se place, carte par carte.** Le placement n'est pas uniforme,
 et ce n'est pas un oubli :

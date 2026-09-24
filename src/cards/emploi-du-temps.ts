@@ -13,9 +13,18 @@ interface Config extends PronoteCardConfig {
   /**
    * Table matière → couleur, renseignée par l'utilisateur.
    *
-   * C'est le **deuxième** rang de couleur, et aujourd'hui le seul qui produise
-   * quelque chose : l'intégration décode la couleur de matière et ne la publie
-   * pas encore. Voir `subjectAccent`.
+   * C'est le **deuxième** rang de couleur, et un secours : `subjectAccent`
+   * préfère la couleur du serveur, que l'intégration publie sur chaque créneau
+   * (`background_color`). Cette table ne sert donc plus qu'à colorer une
+   * matière que l'établissement laisse sans couleur, ou à remplacer une teinte
+   * illisible dans un thème.
+   *
+   * Le commentaire précédent affirmait l'inverse : que l'intégration « ne la
+   * publie pas encore » et que cette table était le seul rang qui produise
+   * quelque chose. Faux depuis la version 0.0.13 de l'intégration — mesuré le
+   * 9 septembre 2026, les vingt-sept créneaux portent la couleur. Le même
+   * commentaire figurait sur trois cartes ; `devoirs.ts` et `notes.ts` ont été
+   * corrigés avant celui-ci.
    *
    * Absente du formulaire d'éditeur, et pour une raison : aucun sélecteur
    * `ha-form` ne rend correctement un dictionnaire ouvert dont les clés sont

@@ -13,9 +13,26 @@ interface Config extends PronoteCardConfig {
   /**
    * Table matière → couleur, renseignée par l'utilisateur.
    *
-   * C'est le **deuxième** rang de couleur, et aujourd'hui le seul qui produise
-   * quelque chose : l'intégration décode la couleur de matière et ne la publie
-   * pas encore. Voir `subjectAccent`.
+   * C'est le **deuxième** rang de couleur, et un secours : `subjectAccent`
+   * préfère la couleur du serveur, que l'intégration publie désormais sur les
+   * moyennes par matière (`background_color`). Cette table ne sert donc plus
+   * qu'à colorer une matière que l'établissement laisse sans couleur, ou à
+   * remplacer une teinte illisible dans un thème.
+   *
+   * Le commentaire précédent affirmait l'inverse : que l'intégration « ne la
+   * publie pas encore » et que cette table était le seul rang qui produise
+   * quelque chose. C'était vrai à l'écriture et faux depuis, ce qui est le
+   * pire état pour un commentaire — il conseillait de remplir une table que
+   * le premier rang rend muette. `devoirs.ts` a été corrigé le 10 septembre
+   * 2026 ; cette carte a été oubliée, et a donc donné le mauvais conseil deux
+   * semaines de plus. Mesuré le 24 septembre 2026 sur une instance : les
+   * quatre moyennes par matière portent toutes `background_color`, en
+   * hexadécimal strict.
+   *
+   * La portée est plus étroite ici que sur les autres cartes : seule la
+   * section « moyennes par matière » est colorée. Les notes individuelles et
+   * le bulletin n'ont pas de couleur côté protocole, et n'en auront pas —
+   * voir `Average` et `NO_COLOR`.
    *
    * Absente du formulaire d'éditeur, et pour une raison : aucun sélecteur
    * `ha-form` ne rend correctement un dictionnaire ouvert dont les clés sont
