@@ -40,6 +40,22 @@ const paths = (d: unknown, prefix = ''): string[] =>
       )
     : [];
 
+const vars = (d: unknown): Record<string, string[]> =>
+  Object.fromEntries(
+    paths(d).map((path) => {
+      const value = path
+        .split('.')
+        .reduce<unknown>((acc, part) => (isRecord(acc) ? acc[part] : undefined), d);
+      return [
+        path,
+        sortedCopy(
+          [...String(value).matchAll(/\{(\w+)\}/g)].map((m) => m[1] ?? ''),
+          byLocale
+        ),
+      ];
+    })
+  );
+
 /**
  * Une clé présente en français et absente d'une autre langue ne se manifeste
  * qu'à l'exécution, chez un utilisateur dont personne ici ne lit la langue.
@@ -62,21 +78,6 @@ describe('parité des catalogues', () => {
     ['pt', pt],
     ['es', es],
   ])('%s reproduit les mêmes variables que le français', (_lang, catalog) => {
-    const vars = (d: unknown): Record<string, string[]> =>
-      Object.fromEntries(
-        paths(d).map((path) => {
-          const value = path
-            .split('.')
-            .reduce<unknown>((acc, part) => (isRecord(acc) ? acc[part] : undefined), d);
-          return [
-            path,
-            sortedCopy(
-              [...String(value).matchAll(/\{(\w+)\}/g)].map((m) => m[1] ?? ''),
-              byLocale
-            ),
-          ];
-        })
-      );
     expect(vars(catalog)).toEqual(vars(fr));
   });
 });
