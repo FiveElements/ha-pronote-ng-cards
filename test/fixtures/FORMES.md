@@ -272,6 +272,28 @@ propriété.** Ce qui reste vrai est la contrainte qui l'a produite — pas d'ad
 stable côté PRONOTE pour un fichier — et une contrainte peut être levée par la
 couche du dessous sans que personne ici ne le sache.
 
+**`attachment_refs`, la forme qui remplace `attachment_links`** (contrat
+convenu avec l'intégration le 24 septembre 2026, pas encore observé sur
+instance au moment d'écrire — à vérifier contre la première version qui la
+publie) :
+
+| clé | type | présente quand |
+|---|---|---|
+| `name` | chaîne | toujours |
+| `kind` | `"external"` ou `"local"` | toujours ; toute autre valeur = pièce non ouvrable |
+| `url` | chaîne, adresse **absolue** | `kind: "external"` seulement |
+| `key` | seize chiffres hexadécimaux minuscules | `kind: "local"` seulement |
+
+`key` est l'empreinte que l'intégration calcule sur l'identifiant du devoir et
+celui de la pièce ; elle n'ouvre rien seule. L'adresse d'un `local` se demande
+à `pronote_ng.get_attachment_url` (entrée `device_id` + `key`, réponse
+`{url, expires_at}`), au clic, et elle expire en cinq minutes. Deux refus
+typés, portés par `translation_key` dans l'erreur : `attachment_not_collected`
+et `attachment_unknown`.
+
+`attachment_links` reste publié **une** version, déprécié, puis disparaît. La
+carte ne le lit plus dès que `attachment_refs` est présent.
+
 `end_inferred` vaut **exactement** « le serveur n'a pas envoyé la fin » —
 vérifié dans les deux chemins de décodage de l'intégration, qui le posent tous
 deux comme un simple test d'absence du champ. Rien d'autre ne le lève. Le

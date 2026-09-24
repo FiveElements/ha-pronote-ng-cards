@@ -430,6 +430,64 @@ capteur la carte lit. Un devoir **coché fait** sort de la liste à faire par
 construction, avec sa pièce ouvrable : c'est arrivé le 10 septembre 2026, où
 `filter: all` montrait quatre liens et le réglage par défaut trois.
 
+#### L'adresse d'un fichier se demande au clic
+
+**Avec une intégration récente, l'adresse d'un fichier n'est plus publiée
+nulle part.** La pastille est un bouton : au clic, la carte ouvre un onglet,
+demande l'adresse au service `pronote_ng.get_attachment_url`, et y dirige
+l'onglet. Rien ne change à l'œil — la pastille reste soulignée.
+
+La raison est la sécurité, et c'est le propriétaire qui l'a tranchée : une
+adresse relayée ouvre le document **sans identifiant**. Publiée dans un
+attribut d'entité, elle était enregistrée dans l'historique de Home
+Assistant, envoyée à chaque navigateur abonné, et valable douze heures.
+Frappée au clic, elle n'existe que le temps d'ouvrir l'onglet, et
+l'intégration la fait expirer en cinq minutes. La carte ne la retient pas :
+un second clic en demande une autre.
+
+L'intégration publie désormais `attachment_refs` sur chaque devoir, et deux
+genres de pièces :
+
+| genre | ce qui est publié | ce que fait la carte |
+|---|---|---|
+| `external` — un lien collé par un professeur | l'adresse, absolue | un lien, ouvert directement |
+| `local` — un fichier | une empreinte, qui n'ouvre rien seule | un bouton, qui demande l'adresse au clic |
+
+Les liens externes gardent leur adresse dans l'attribut, et c'est un choix
+contesté puis **mesuré** : sur l'instance, aucune des onze adresses de ce
+genre ne pointait vers l'établissement ni ne portait de jeton de session. Ce
+sont des adresses publiques, déjà visibles de l'élève dans PRONOTE, que
+personne ne frappe. Si l'intégration voyait un jour un « lien » pointant vers
+l'établissement lui-même, elle s'est engagée à le traiter comme un fichier.
+
+Quatre choses sont vérifiées par la suite de tests, pas seulement promises :
+
+- **aucun appel à l'affichage.** Le bouton existe, le service n'est pas
+  touché tant qu'on n'a pas cliqué ;
+- **l'onglet s'ouvre avant la demande.** Dans l'ordre inverse, l'ouverture
+  arrive après l'attente de la réponse et n'est plus rattachée au clic :
+  Safari la bloque sans un mot. Si le navigateur la bloque quand même, la
+  carte le dit ;
+- **l'adresse rendue par le service passe par le même filtre** qu'une adresse
+  d'attribut — schéma, origine de l'instance. Refusée, l'onglet se referme et
+  la carte dit que la pièce n'a pas pu être ouverte ;
+- **deux refus ont chacun leur phrase** : « pas encore collecté », qui passe
+  tout seul, et « plus dans les devoirs publiés », qui se règle en
+  rafraîchissant la page.
+
+Un genre de pièce que cette carte ne connaît pas reste un nom muet : une
+intégration plus récente pourrait en publier un, et se taire vaut mieux que
+deviner. Pendant le décalage de versions, une intégration antérieure qui ne
+publie que `attachment_links` fonctionne comme avant ; dès que
+`attachment_refs` est là, l'ancienne liste n'est plus lue du tout, parce que
+c'est elle qui porte le jeton qu'on retire.
+
+Un retour sur la première des limites ci-dessous : elle affirmait qu'ouvrir
+une pièce « demanderait un appel de service ». C'était faux à l'époque, et ça
+l'est encore dans le sens où elle l'entendait — rien ne l'imposait. Qu'un
+appel de service soit **aujourd'hui** le chemin est un choix de sécurité fait
+après coup, pas la confirmation d'une limite.
+
 #### Comment les deux listes se rejoignent
 
 L'intégration publie sur chaque devoir `attachments`, les noms de toutes les

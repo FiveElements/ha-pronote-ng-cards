@@ -4,6 +4,7 @@ import type { HassEntity, HomeAssistant } from './ha-types';
 import { createResolveCache, resolveDevice } from './resolve';
 import type {
   AllowedCall,
+  AllowedResponseCall,
   CardSpec,
   EntityKey,
   EntityStatus,
@@ -390,6 +391,23 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
         await hass.callService(domain, service, data, target);
       };
 
+      // Le même découpage, pour la liste close des services à réponse. La
+      // réponse arrive sous `response` dans l'objet que le frontal résout ;
+      // tout autre forme rend `undefined`, et la carte le traite comme un
+      // échec.
+      const callForResponse = async (
+        call: AllowedResponseCall,
+        data: Record<string, unknown>
+      ): Promise<unknown> => {
+        const sep = call.indexOf('.');
+        const domain = call.slice(0, sep);
+        const service = call.slice(sep + 1);
+        const resultat = await hass.callService(domain, service, data, undefined, false, true);
+        return resultat !== null && typeof resultat === 'object' && 'response' in resultat
+          ? resultat.response
+          : undefined;
+      };
+
       return {
         hass,
         config,
@@ -411,6 +429,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
         // Site correct : hass est déjà connu ici, sa langue toujours définie.
         t: (path, vars) => localize(path, vars, hass.language),
         callService,
+        callForResponse,
         refresh: async (tier?: string) => {
           this.refreshFailed = false;
           if (!config.device_id) {

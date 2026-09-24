@@ -63,11 +63,19 @@ export interface HomeAssistant {
    * contient aussi les jetons de session : une carte n'a rien à y chercher.
    */
   hassUrl?: (path?: string) => string;
+  /**
+   * Les deux derniers paramètres sont ceux du frontal de Home Assistant.
+   * `notifyOnError` à faux laisse la carte dire l'échec elle-même, au lieu
+   * du bandeau générique ; `returnResponse` demande la réponse d'un service
+   * à réponse, rendue sous `response` dans l'objet résolu.
+   */
   callService(
     domain: string,
     service: string,
     data?: Record<string, unknown>,
-    target?: Record<string, unknown>
+    target?: Record<string, unknown>,
+    notifyOnError?: boolean,
+    returnResponse?: boolean
   ): Promise<unknown>;
 }
 

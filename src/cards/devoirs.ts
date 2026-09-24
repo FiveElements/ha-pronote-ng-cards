@@ -218,6 +218,11 @@ interface Homework {
    * n'est pas une panne.
    */
   attachment_links?: unknown;
+  /**
+   * `[{ name, kind: "external", url } | { name, kind: "local", key }]`, la
+   * forme qui remplace `attachment_links`. Voir `refsOf`.
+   */
+  attachment_refs?: unknown;
 }
 
 const TODO: EntityKey = 'sensor:homework_todo';
@@ -515,7 +520,73 @@ const lignesEstimees = (texte: string): number =>
 interface Attachment {
   name?: string;
   url?: string;
+  /**
+   * L'empreinte d'une pièce de type fichier, publiée à la place de son
+   * adresse. Elle n'ouvre rien seule : c'est ce que la carte présente au
+   * service `get_attachment_url` au moment du clic, pour obtenir une adresse
+   * signée qui n'a jamais figuré dans un attribut.
+   */
+  key?: string;
 }
+
+/**
+ * La forme d'une empreinte, telle que l'intégration la calcule : seize
+ * chiffres hexadécimaux en minuscules. Tout le reste est refusé, et la
+ * pastille reste muette plutôt que d'envoyer au service une chaîne de
+ * serveur qu'il n'a pas produite.
+ */
+const CLE_PIECE = /^[0-9a-f]{16}$/;
+
+/**
+ * Les pièces du devoir selon `attachment_refs`, la forme qui remplace
+ * `attachment_links` depuis que l'intégration ne publie plus d'adresse
+ * signée dans un attribut.
+ *
+ * Deux genres, et ils n'ont pas le même propriétaire :
+ *
+ * - `external` : un lien collé par un professeur, vers un tiers. L'adresse
+ *   reste dans l'attribut, et c'est un choix de l'intégration que j'ai
+ *   contesté puis mesuré : sur l'instance, aucune des adresses de ce genre ne
+ *   pointait vers l'établissement ni ne portait de paramètre de session. Ce
+ *   n'est pas un secret que nous frappons, et la carte peut ainsi l'ouvrir
+ *   sans aller-retour. Elle doit être **absolue** : un chemin enraciné est
+ *   le relais de l'intégration, qui ne passe plus par ici.
+ * - `local` : un fichier. Seule l'empreinte est publiée ; l'adresse se
+ *   demande au clic.
+ *
+ * Un genre inconnu se rend comme un nom muet. Une intégration plus récente
+ * pourrait en publier un que cette carte ne sait pas ouvrir : se taire est
+ * correct, deviner ne l'est pas.
+ *
+ * `undefined` quand l'attribut est absent, pour que l'appelant retombe sur
+ * l'ancienne forme pendant le décalage de versions. Une liste vide, elle,
+ * est une réponse : l'intégration dit qu'il n'y a pas de pièce.
+ */
+const refsOf = (value: unknown, origine: string | undefined): Attachment[] | undefined => {
+  if (!Array.isArray(value)) return undefined;
+  const out: Attachment[] = [];
+  for (const item of value) {
+    if (item === null || typeof item !== 'object') continue;
+    const brut = champ(item, 'name');
+    const name = typeof brut === 'string' && brut.trim() !== '' ? brut.trim() : undefined;
+    const kind = champ(item, 'kind');
+    let piece: Attachment | undefined;
+    if (kind === 'external') {
+      const adresse = champ(item, 'url');
+      const enracinee = typeof adresse === 'string' && adresse.trim().startsWith('/');
+      const url = enracinee ? undefined : openableUrl(adresse, origine);
+      if (url !== undefined) piece = { ...(name === undefined ? {} : { name }), url };
+    } else if (kind === 'local') {
+      const key = champ(item, 'key');
+      if (typeof key === 'string' && CLE_PIECE.test(key)) {
+        piece = { ...(name === undefined ? {} : { name }), key };
+      }
+    }
+    if (piece !== undefined) out.push(piece);
+    else if (name !== undefined) out.push({ name });
+  }
+  return out;
+};
 
 /**
  * Une adresse **ouvrable dans un navigateur**, ou rien.
@@ -683,6 +754,11 @@ const champ = (source: object, ...cles: string[]): unknown => {
  * pas une liste ordonnée.
  */
 const piecesOf = (h: Homework, origine: string | undefined): Attachment[] => {
+  // La forme nouvelle prime dès qu'elle est là, et `attachment_links` n'est
+  // alors plus lu du tout, même s'il est encore publié pendant sa version de
+  // dépréciation : c'est la forme qui porte le jeton qu'on cherche à retirer.
+  const refs = refsOf(h.attachment_refs, origine);
+  if (refs !== undefined) return refs;
   const noms = attachmentsOf(h.attachments, origine);
   const liens = attachmentsOf(h.attachment_links, origine);
   if (liens.length === 0) return noms;
@@ -747,6 +823,31 @@ const attachmentsOf = (value: unknown, origine: string | undefined): Attachment[
     else out.push({ name, url });
   }
   return out;
+};
+
+/**
+ * La phrase à dire quand le service refuse de rendre une adresse.
+ *
+ * Les deux clés sont un contrat avec l'intégration, qui s'est engagée à ne
+ * pas les renommer sans prévenir : Home Assistant les transmet dans l'erreur
+ * WebSocket, à côté d'un message déjà traduit dans la langue de l'instance.
+ * La carte ne réutilise pas ce message, parce qu'il ne sait pas ce qu'il faut
+ * faire ensuite ; les siens le disent.
+ *
+ * - `attachment_not_collected` : l'élève n'a pas encore d'instantané. C'est
+ *   temporaire, il n'y a rien à faire qu'attendre.
+ * - `attachment_unknown` : l'instantané existe et la pièce n'y est plus — le
+ *   devoir a tourné depuis l'affichage. Rafraîchir la carte suffit.
+ *
+ * Toute autre erreur rend une phrase générique : un code inconnu ne mérite
+ * pas une explication inventée.
+ */
+const messageDeRefus = (erreur: unknown, ctx: { t: Translate }): string => {
+  const cle =
+    erreur !== null && typeof erreur === 'object' ? champ(erreur, 'translation_key') : undefined;
+  if (cle === 'attachment_not_collected') return ctx.t('devoirs.attachment_not_collected');
+  if (cle === 'attachment_unknown') return ctx.t('devoirs.attachment_unknown');
+  return ctx.t('devoirs.attachment_failed');
 };
 
 /** `max_lines`, en entier positif, ou zéro pour « pas de repli ». */
@@ -989,6 +1090,63 @@ export const SPEC: CardSpec<Config> = {
     // Calculée une fois : c'est la base contre laquelle un chemin enraciné se
     // résout, et elle vaut pour toute la carte.
     const origineInstance = instanceOrigin(ctx.hass);
+    const appareil = typeof ctx.config.device_id === 'string' ? ctx.config.device_id : '';
+    /** Une pièce s'ouvre si elle a une adresse, ou une empreinte ET un appareil à qui la présenter. */
+    const ouvrable = (piece: Attachment): boolean =>
+      piece.url !== undefined || (piece.key !== undefined && appareil !== '');
+
+    /**
+     * Ouvre une pièce de type fichier : demande son adresse au service, au
+     * clic, et jamais avant.
+     *
+     * **L'onglet s'ouvre AVANT l'appel**, vide, puis reçoit l'adresse. Dans
+     * l'ordre inverse, `window.open` arrive après un `await` et n'est plus
+     * rattaché au geste de l'utilisateur : Safari le bloque sans un mot, et
+     * Chrome ne le tolère que quelques secondes. Ouvrir d'abord, c'est le seul
+     * ordre qui marche partout.
+     *
+     * `noopener` ne peut pas se passer à l'ouverture — `window.open` rendrait
+     * alors `null`, et on n'aurait plus d'onglet à diriger. On coupe donc le
+     * lien à la main, avant d'y écrire quoi que ce soit.
+     *
+     * L'adresse rendue repasse par `openableUrl`, exactement comme celle d'un
+     * attribut : elle vient du serveur, et elle va dans une barre d'adresse.
+     * Elle n'est retenue nulle part — ni en mémoire, ni dans le rendu — et
+     * c'est voulu : elle expire en cinq minutes, et un second clic en frappe
+     * une autre.
+     *
+     * Un échec se dit dans la ligne, sous les pastilles, dans une région
+     * `role="status"` que le gabarit rend vide et que Lit ne réécrit pas.
+     */
+    const ouvrirPiece = async (cle: string, bouton: HTMLButtonElement): Promise<void> => {
+      const etat = bouton.closest('.devoirs-pieces')?.querySelector('.devoirs-piece-etat');
+      if (etat) etat.textContent = '';
+      bouton.disabled = true;
+      const onglet = window.open('', '_blank');
+      if (onglet) onglet.opener = null;
+      let message: string;
+      try {
+        const reponse = await ctx.callForResponse('pronote_ng.get_attachment_url', {
+          device_id: appareil,
+          key: cle,
+        });
+        const url =
+          reponse !== null && typeof reponse === 'object'
+            ? openableUrl(champ(reponse, 'url'), origineInstance)
+            : undefined;
+        if (url !== undefined && onglet) {
+          onglet.location.replace(url);
+          return;
+        }
+        message = ctx.t(url === undefined ? 'devoirs.attachment_failed' : 'devoirs.attachment_blocked');
+      } catch (erreur) {
+        message = messageDeRefus(erreur, ctx);
+      } finally {
+        bouton.disabled = false;
+      }
+      onglet?.close();
+      if (etat) etat.textContent = message;
+    };
 
     const overdueOn = ctx.entity(OVERDUE)?.state === 'on';
     /**
@@ -1242,7 +1400,20 @@ export const SPEC: CardSpec<Config> = {
                       // piece n'est pas ouvrable.
                       return html`<span class="devoirs-piece" role="listitem"
                         >${
-                          piece.url === undefined
+                          piece.key !== undefined && appareil !== ''
+                            ? html`<button
+                                type="button"
+                                class="chip chip-lien chip-demande"
+                                @click=${(event: Event): void => {
+                                  const bouton = event.currentTarget;
+                                  if (bouton instanceof HTMLButtonElement && piece.key) {
+                                    void ouvrirPiece(piece.key, bouton);
+                                  }
+                                }}
+                              >
+                                ${libelle}
+                              </button>`
+                            : piece.url === undefined
                             ? html`<span class="chip">${libelle}</span>`
                             : html`<a
                                 class="chip chip-lien"
@@ -1254,6 +1425,11 @@ export const SPEC: CardSpec<Config> = {
                         }</span
                       >`;
                     })}
+                    ${
+                      pieces.some((piece) => piece.key !== undefined && appareil !== '')
+                        ? html`<span class="devoirs-piece-etat" role="status"></span>`
+                        : ''
+                    }
                   </span>`
                 : ''
             }`;
@@ -1317,7 +1493,7 @@ export const SPEC: CardSpec<Config> = {
      */
     const noteFichiers =
       ctx.config.show_attachments !== false &&
-      limited.some((h) => piecesOf(h, origineInstance).some((piece) => piece.url === undefined))
+      limited.some((h) => piecesOf(h, origineInstance).some((piece) => !ouvrable(piece)))
         ? html`<div class="notice">${ctx.t('devoirs.attachment_not_openable')}</div>`
         : '';
 
