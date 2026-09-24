@@ -1,0 +1,37 @@
+version: 2
+
+# Mises à jour de version, en complément des alertes et des correctifs de
+# sécurité activés dans les réglages du dépôt.
+#
+# Une fois par semaine et regroupées : une demande de fusion par famille, pas
+# une par paquet. `lit` reste hors groupe parce qu'il est la seule dépendance
+# d'exécution : il est empaqueté dans le bundle publié, donc sa montée change
+# ce que les utilisateurs installent, et mérite d'être lue seule.
+#
+# Dependabot écrit ses titres en anglais (« bump … from … to … ») et ne sait
+# pas faire autrement. Ce dépôt publie ses messages de commit en français :
+# retitrez à la fusion.
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore(deps)
+    groups:
+      outillage:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: chore(ci)
+    groups:
+      actions:
+        patterns: ['*']
