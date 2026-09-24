@@ -190,6 +190,27 @@ export const sharedStyles = css`
     text-decoration: underline;
     text-underline-offset: 2px;
   }
+  /* Une piece de type fichier est un BOUTON et non une ancre : son adresse
+     n'existe pas avant le clic, elle se demande au service. Il doit pourtant
+     se lire comme les autres pastilles ouvrables, donc on lui retire ce que
+     le navigateur ajoute a un bouton -- bordure, police, curseur par defaut. */
+  .row .secondary .chip-demande {
+    border: none;
+    font: inherit;
+    font-size: 1em;
+    cursor: pointer;
+  }
+  .row .secondary .chip-demande:disabled {
+    cursor: progress;
+    opacity: 0.6;
+  }
+  .row .secondary .devoirs-piece-etat:empty {
+    display: none;
+  }
+  .row .secondary .devoirs-piece-etat {
+    flex-basis: 100%;
+    color: var(--error-color);
+  }
   .row .secondary .chip-lien:hover,
   .row .secondary .chip-lien:focus-visible {
     text-decoration-thickness: 2px;

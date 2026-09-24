@@ -66,6 +66,32 @@ export type AllowedCall =
   // prix paye ici.
   | Call<'select', 'select_option'>;
 
+/**
+ * Les seuls services **à réponse** qu'une carte peut appeler. Une liste à
+ * part, et non une entrée de plus dans `AllowedCall` : un service à réponse
+ * rend une donnée à la carte, là où les trois appels ci-dessus agissent sans
+ * rien rendre. Les confondre dans un même type laisserait `refresh` demander
+ * une réponse, ou ce service-ci s'appeler sans qu'on la lise.
+ *
+ * Ajouté le 24 septembre 2026 sur accord explicite du propriétaire, pour la
+ * sécurité des flux : l'intégration cesse de publier dans un attribut
+ * d'entité l'adresse signée qui ouvre une pièce jointe de type fichier.
+ * L'attribut finissait dans l'historique, dans chaque abonnement WebSocket et
+ * dans l'état exporté, avec douze heures de validité. Frappée au clic, elle
+ * n'existe que le temps d'ouvrir l'onglet, et l'intégration la fait expirer
+ * en cinq minutes.
+ *
+ * Ce que ce service ne fait pas, et qui est ce qui l'autorise ici : il ne
+ * place **aucune** requête PRONOTE. Il retrouve la pièce dans l'instantané
+ * déjà en mémoire et signe un chemin, sans réseau. La requête vers
+ * l'établissement part à l'ouverture du document, comme avant — donc
+ * toujours d'un geste de l'utilisateur, jamais de l'affichage.
+ *
+ * Les six services à réponse que la liste ci-dessus refuse restent refusés :
+ * celui-ci n'en fait pas partie, et il n'ouvre la porte à aucun d'eux.
+ */
+export type AllowedResponseCall = Call<'pronote_ng', 'get_attachment_url'>;
+
 export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
   /** Vue en lecture : `callService` n'y figure pas (voir `HassView`). */
   hass: HassView;
@@ -93,6 +119,16 @@ export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
     data?: Record<string, unknown>,
     target?: Record<string, unknown>
   ): Promise<void>;
+  /**
+   * Appelle un service à réponse de la liste close `AllowedResponseCall` et
+   * rend sa réponse, non typée : elle vient du serveur, l'appelant la filtre.
+   *
+   * Jamais au rendu. Le seul appelant est un gestionnaire de clic, et c'est
+   * ce qui garde vraie la règle « aucun appel à l'affichage ». Les erreurs ne
+   * lèvent pas de bandeau Home Assistant : elles remontent à la carte, qui
+   * sait quoi en dire.
+   */
+  callForResponse(call: AllowedResponseCall, data: Record<string, unknown>): Promise<unknown>;
   /** Relève une priorité de collecte auprès de l'ordonnanceur. Passe par `callService`. */
   refresh(tier?: string): Promise<void>;
   /** Vrai pendant l'intervalle de garde suivant un refresh (spec §4.5). */

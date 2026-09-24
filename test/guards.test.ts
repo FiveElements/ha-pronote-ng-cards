@@ -139,6 +139,13 @@ const ALLOWED_CALLS = [
   // entité `select` quelconque de l'instance, là où les deux premières
   // restaient dans le périmètre de PRONOTE et des listes de tâches.
   'select.select_option',
+  // Ajouté le 24 septembre 2026, sur accord explicite du propriétaire : le
+  // seul service À RÉPONSE que le projet appelle, et il porte son propre type
+  // (`AllowedResponseCall`) plutôt qu'une entrée de plus dans `AllowedCall`.
+  // Il rend l'adresse signée d'une pièce jointe au moment du clic, pour que
+  // l'intégration cesse de la publier dans un attribut d'entité. Il ne place
+  // aucune requête PRONOTE.
+  'pronote_ng.get_attachment_url',
 ];
 
 describe('garde : liste blanche des appels de service', () => {
@@ -148,7 +155,10 @@ describe('garde : liste blanche des appels de service', () => {
 
   it('tout appel de service part d’un littéral de la liste blanche', () => {
     for (const [file, body] of read(walk('src', ['.ts']))) {
-      for (const m of body.matchAll(/(?<!\w)callService\(\s*([^)]{0,40})/g)) {
+      // `callForResponse` est le second pont du socle, celui des services à
+      // réponse : il obéit à la même règle, et une garde qui ne regarderait
+      // que `callService` le laisserait passer sans un mot.
+      for (const m of body.matchAll(/(?<!\w)(?:callService|callForResponse)\(\s*([^)]{0,40})/g)) {
         const head = m[1] ?? '';
         // Une DÉCLARATION, pas un appel : le premier « argument » y est un
         // paramètre annoté (`domain: string`). ha-types.ts et types.ts
@@ -162,7 +172,7 @@ describe('garde : liste blanche des appels de service', () => {
           `${file} : appel de service dont le premier argument n’est pas un littéral`
         ).toBe(true);
       }
-      for (const m of body.matchAll(/(?<!\w)callService\(\s*'([^']*)'/g)) {
+      for (const m of body.matchAll(/(?<!\w)(?:callService|callForResponse)\(\s*'([^']*)'/g)) {
         const call = m[1] ?? '';
         expect(
           ALLOWED_CALLS.includes(call),

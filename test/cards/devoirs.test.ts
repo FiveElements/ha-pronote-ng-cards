@@ -2730,3 +2730,217 @@ describe('carte devoirs — l’état et l’échéance, deux filtres indépenda
     expect(noms).not.toContain('filter');
   });
 });
+
+const devoirAvecRefs = (attachment_refs: unknown[], attachment_links?: unknown[]) => [
+  {
+    id: 'h1',
+    subject: 'Anglais',
+    description_text: 'Lire le document.',
+    due: '2099-01-01',
+    attachments: ['sujet.pdf'],
+    attachment_refs,
+    ...(attachment_links === undefined ? {} : { attachment_links }),
+  },
+];
+
+
+/** Un onglet factice : ce que `window.open` rend, réduit à ce que la carte touche. */
+const faireOnglet = () => ({
+  opener: {} as unknown,
+  location: { replace: vi.fn() },
+  close: vi.fn(),
+});
+
+/**
+ * Espionne `window.open` et lui fait rendre `onglet`.
+ *
+ * La conversion est la seule du fichier : jsdom n'ouvre pas de fenêtre, et
+ * fabriquer un `Window` complet pour trois propriétés ne testerait rien de
+ * plus. La carte ne touche que `opener`, `location.replace` et `close`.
+ */
+const espionnerOuverture = (onglet: ReturnType<typeof faireOnglet> | null) =>
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- un onglet factice réduit aux trois membres que la carte emploie ; jsdom n'ouvre aucune fenêtre réelle à rendre à la place.
+  vi.spyOn(window, 'open').mockReturnValue(onglet as unknown as Window);
+
+
+const boutonPiece = (el: HTMLElement & MountableElement): HTMLButtonElement | null => {
+  const n = el.shadowRoot?.querySelector('.devoirs-piece button');
+  return n instanceof HTMLButtonElement ? n : null;
+};
+
+
+const etatPieces = (el: HTMLElement & MountableElement): string =>
+  (el.shadowRoot?.querySelector('.devoirs-piece-etat')?.textContent ?? '').trim();
+
+
+describe('carte devoirs — l’adresse d’un fichier se demande au clic', () => {
+  /**
+   * L'intégration ne publie plus l'adresse signée d'un fichier dans un
+   * attribut : elle publie son empreinte, et la carte demande l'adresse au
+   * service `get_attachment_url` au moment du clic. Tout ce qui suit est
+   * synthétique — l'empreinte comme le chemin ; seule la FORME est réelle.
+   */
+  const CLE = '0123456789abcdef';
+  const CHEMIN =
+    '/api/pronote_ng/attachment/entree_synthetique/' + CLE + '?authSig=jeton.synthetique';
+  const ORIGINE_INSTANCE = new URL(makeHass().hassUrl?.() ?? '').origin;
+
+  const LOCALE = [{ name: 'sujet.pdf', kind: 'local', key: CLE }];
+
+  const monter = async (
+    refs: unknown[],
+    service: HomeAssistant['callService'],
+    links?: unknown[]
+  ): Promise<HTMLElement & MountableElement> => {
+    const hass = hw({ items: devoirAvecRefs(refs, links) }, '1');
+    hass.callService = service;
+    return mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+  };
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('rend un bouton pour un fichier, et n’appelle AUCUN service à l’affichage', async () => {
+    // Le cœur de la règle du projet : une carte ne déclenche rien en
+    // s'affichant. Le bouton existe, le service n'a pas été touché.
+    const service = vi.fn<HomeAssistant['callService']>().mockResolvedValue({ response: { url: CHEMIN } });
+    const el = await monter(LOCALE, service);
+    const bouton = boutonPiece(el);
+    expect(bouton?.textContent?.trim()).toBe('sujet.pdf');
+    expect(bouton?.classList.contains('chip-lien')).toBe(true);
+    expect(liensPieces(el).length).toBe(0);
+    expect(service).not.toHaveBeenCalled();
+    // Ouvrable : la note des pièces muettes ne s'affiche pas.
+    expect(text(el)).not.toContain('ne peuvent pas être ouvertes');
+  });
+
+  it('ouvre l’onglet AVANT de demander l’adresse, puis l’y dirige', async () => {
+    const onglet = faireOnglet();
+    const ouvrir = espionnerOuverture(onglet);
+    const service = vi.fn<HomeAssistant['callService']>().mockResolvedValue({
+      context: {},
+      response: { url: CHEMIN, expires_at: '2099-01-01T00:05:00Z' },
+    });
+    const el = await monter(LOCALE, service);
+    boutonPiece(el)?.click();
+    await vi.waitFor(() => {
+      expect(onglet.location.replace).toHaveBeenCalled();
+    });
+
+    expect(service).toHaveBeenCalledWith(
+      'pronote_ng',
+      'get_attachment_url',
+      { device_id: 'dev_enfant', key: CLE },
+      undefined,
+      false,
+      true
+    );
+    expect(service).toHaveBeenCalledTimes(1);
+    expect(ouvrir).toHaveBeenCalledWith('', '_blank');
+    // L'ordre est ce qui compte : un `window.open` après l'`await` n'est plus
+    // rattaché au geste de l'utilisateur, et Safari le bloque.
+    expect(ouvrir.mock.invocationCallOrder[0]).toBeLessThan(
+      service.mock.invocationCallOrder[0] ?? 0
+    );
+    expect(onglet.opener).toBeNull();
+    expect(onglet.location.replace).toHaveBeenCalledWith(ORIGINE_INSTANCE + CHEMIN);
+    expect(onglet.close).not.toHaveBeenCalled();
+    expect(etatPieces(el)).toBe('');
+  });
+
+  it.each([
+    ['protocole-relatif', '//evil.example/x'],
+    ['javascript:', 'javascript:alert(1)'],
+    ['sans schéma', 'evil.example/x'],
+    ['absente', undefined],
+  ])('refuse une adresse de service %s, ferme l’onglet et le dit', async (_nom, url) => {
+    const onglet = faireOnglet();
+    espionnerOuverture(onglet);
+    const service = vi.fn<HomeAssistant['callService']>().mockResolvedValue({ response: { url } });
+    const el = await monter(LOCALE, service);
+    boutonPiece(el)?.click();
+    await vi.waitFor(() => {
+      expect(onglet.close).toHaveBeenCalled();
+    });
+    expect(onglet.location.replace).not.toHaveBeenCalled();
+    expect(etatPieces(el)).toBe('La pièce n’a pas pu être ouverte.');
+  });
+
+  it.each([
+    ['attachment_not_collected', 'la collecte des devoirs n’a pas encore eu lieu'],
+    ['attachment_unknown', 'Rafraîchissez la page'],
+    ['autre_chose', 'La pièce n’a pas pu être ouverte.'],
+  ])('traduit le refus « %s » en une phrase qui dit quoi faire', async (translation_key, attendu) => {
+    const onglet = faireOnglet();
+    espionnerOuverture(onglet);
+    const service = vi
+      .fn()
+      .mockRejectedValue({ code: 'service_validation_error', message: 'x', translation_key });
+    const el = await monter(LOCALE, service);
+    boutonPiece(el)?.click();
+    await vi.waitFor(() => {
+      expect(etatPieces(el)).toContain(attendu);
+    });
+    expect(onglet.close).toHaveBeenCalled();
+    expect(boutonPiece(el)?.disabled).toBe(false);
+  });
+
+  it('dit que le navigateur a bloqué l’onglet, au lieu de se taire', async () => {
+    espionnerOuverture(null);
+    const service = vi.fn<HomeAssistant['callService']>().mockResolvedValue({ response: { url: CHEMIN } });
+    const el = await monter(LOCALE, service);
+    boutonPiece(el)?.click();
+    await vi.waitFor(() => {
+      expect(etatPieces(el)).toContain('bloqué');
+    });
+  });
+
+  it('ouvre directement un lien externe absolu, sans passer par le service', async () => {
+    const service = vi.fn<HomeAssistant['callService']>();
+    const el = await monter(
+      [{ name: 'video', kind: 'external', url: 'https://demo.example.invalid/video/1' }],
+      service
+    );
+    expect(liensPieces(el).map((a) => a.getAttribute('href'))).toEqual([
+      'https://demo.example.invalid/video/1',
+    ]);
+    expect(boutonPiece(el)).toBeNull();
+    expect(service).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['un externe enraciné', { name: 'sujet.pdf', kind: 'external', url: CHEMIN }],
+    ['un genre inconnu', { name: 'sujet.pdf', kind: 'futur', key: CLE }],
+    ['une empreinte mal formée', { name: 'sujet.pdf', kind: 'local', key: 'ABC' }],
+    ['un externe javascript:', { name: 'sujet.pdf', kind: 'external', url: 'javascript:alert(1)' }],
+  ])('rend muet %s, et affiche la note', async (_nom, ref) => {
+    const el = await monter([ref], vi.fn<HomeAssistant['callService']>());
+    // Contrepoids positif : la pastille est bien là, seulement muette.
+    expect(pastillesPieces(el).map((n) => n.textContent?.trim())).toEqual(['sujet.pdf']);
+    expect(liensPieces(el).length).toBe(0);
+    expect(boutonPiece(el)).toBeNull();
+    expect(text(el)).toContain('ne peuvent pas être ouvertes');
+  });
+
+  it('ignore attachment_links dès que attachment_refs est publié', async () => {
+    // Pendant sa version de dépréciation, l'intégration publie encore les
+    // deux. La carte ne doit plus lire l'ancienne : c'est elle qui porte le
+    // jeton qu'on retire des attributs.
+    const el = await monter(LOCALE, vi.fn<HomeAssistant['callService']>(), [{ name: 'sujet.pdf', url: CHEMIN }]);
+    expect(liensPieces(el).length).toBe(0);
+    expect(boutonPiece(el)?.textContent?.trim()).toBe('sujet.pdf');
+  });
+
+  it('retombe sur attachment_links quand attachment_refs est absent', async () => {
+    // Le décalage de versions dans l'autre sens : une intégration antérieure.
+    const hass = hw(
+      { items: devoirDeuxListes(['sujet.pdf'], [{ name: 'sujet.pdf', url: CHEMIN }]) },
+      '1'
+    );
+    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    expect(liensPieces(el).map((a) => a.getAttribute('href'))).toEqual([
+      ORIGINE_INSTANCE + CHEMIN,
+    ]);
+  });
+});
