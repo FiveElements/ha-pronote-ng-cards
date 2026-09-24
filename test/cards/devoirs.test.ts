@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defineCard } from '../../src/core/registry';
 import { SPEC, testClock } from '../../src/cards/devoirs';
 import { makeHass } from '../fixtures/hass';
@@ -2563,5 +2563,170 @@ describe('carte devoirs — l’élargissement du filtre d’adresses', () => {
     // classe `chip`, parce que le lien EST la pastille.
     expect(pastillesPieces(el).length).toBe(2);
     expect(pastillesPieces(el).filter((n) => !n.classList.contains('chip-lien')).length).toBe(1);
+  });
+});
+
+describe('carte devoirs — l’état et l’échéance, deux filtres indépendants', () => {
+  /**
+   * Le filtre unique mêlait deux questions, et on ne pouvait pas demander
+   * « à faire, pour demain ». Horloge figée au jeudi 10 septembre 2026 : les
+   * libellés de chaque devoir disent sa place par rapport à ce jour.
+   */
+  const AUJOURDHUI = '2026-09-10';
+  const DEVOIRS = [
+    { id: 'r', subject: 'Maths', description_text: 'devoir-en-retard', due: '2026-09-08', done: false },
+    { id: 'a', subject: 'Maths', description_text: 'devoir-aujourdhui', due: AUJOURDHUI, done: false },
+    { id: 'df', subject: 'Anglais', description_text: 'devoir-demain-fait', due: '2026-09-11', done: true },
+    { id: 'da', subject: 'Anglais', description_text: 'devoir-demain-a-faire', due: '2026-09-11', done: false },
+    { id: 'j6', subject: 'Histoire', description_text: 'devoir-j-plus-6', due: '2026-09-16', done: false },
+    { id: 'j7', subject: 'Histoire', description_text: 'devoir-j-plus-7', due: '2026-09-17', done: false },
+    { id: 'sd', subject: 'Histoire', description_text: 'devoir-sans-date', done: false },
+  ];
+  const TOUS_LES_LIBELLES = DEVOIRS.map((d) => d.description_text);
+
+  /**
+   * Les trois capteurs, remplis comme l'intégration les remplit : « tous »
+   * porte tout l'horizon, « à faire » les non faits, « pour demain » les
+   * devoirs du lendemain, faits compris.
+   */
+  const troisCapteurs = () =>
+    makeHass([
+      {
+        key: 'sensor:homework',
+        entity_id: 'sensor.abc_devoirs',
+        device: 'dev_enfant',
+        state: String(DEVOIRS.length),
+        attributes: { items: DEVOIRS },
+      },
+      {
+        key: 'sensor:homework_todo',
+        entity_id: 'sensor.abc_devoirs_a_faire',
+        device: 'dev_enfant',
+        state: '6',
+        attributes: { items: DEVOIRS.filter((d) => !d.done) },
+      },
+      {
+        key: 'sensor:homework_tomorrow',
+        entity_id: 'sensor.abc_devoirs_demain',
+        device: 'dev_enfant',
+        state: '2',
+        attributes: { items: DEVOIRS.filter((d) => d.due === '2026-09-11') },
+      },
+    ]);
+
+  /** Les libellés visibles, dans l'ordre de `DEVOIRS`. */
+  const visibles = async (config: Record<string, unknown>): Promise<string[]> => {
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', ...config },
+      troisCapteurs()
+    );
+    const contenu = text(el);
+    return TOUS_LES_LIBELLES.filter((libelle) => contenu.includes(libelle));
+  };
+
+  beforeEach(() => {
+    testClock.now = `${AUJOURDHUI}T12:00:00Z`;
+  });
+  afterEach(() => {
+    delete testClock.now;
+  });
+
+  it('à faire, pour demain : la combinaison que l’ancien filtre ne permettait pas', async () => {
+    expect(await visibles({ status: 'todo', period: 'tomorrow' })).toEqual([
+      'devoir-demain-a-faire',
+    ]);
+  });
+
+  it('tous, pour demain : le fait compris', async () => {
+    expect(await visibles({ status: 'all', period: 'tomorrow' })).toEqual([
+      'devoir-demain-fait',
+      'devoir-demain-a-faire',
+    ]);
+  });
+
+  it('à faire, demain et après : ni le retard, ni aujourd’hui, ni le fait', async () => {
+    expect(await visibles({ status: 'todo', period: 'from_tomorrow' })).toEqual([
+      'devoir-demain-a-faire',
+      'devoir-j-plus-6',
+      'devoir-j-plus-7',
+    ]);
+  });
+
+  it('tous, aujourd’hui et après : le retard et le sans-date en sont exclus', async () => {
+    expect(await visibles({ status: 'all', period: 'from_today' })).toEqual([
+      'devoir-aujourdhui',
+      'devoir-demain-fait',
+      'devoir-demain-a-faire',
+      'devoir-j-plus-6',
+      'devoir-j-plus-7',
+    ]);
+  });
+
+  it('les 7 prochains jours : aujourd’hui compris, le septième jour après exclu', async () => {
+    expect(await visibles({ status: 'todo', period: 'week' })).toEqual([
+      'devoir-aujourdhui',
+      'devoir-demain-a-faire',
+      'devoir-j-plus-6',
+    ]);
+  });
+
+  it('à faire, toutes les échéances : le retard et le sans-date restent', async () => {
+    expect(await visibles({ status: 'todo', period: 'all' })).toEqual([
+      'devoir-en-retard',
+      'devoir-aujourdhui',
+      'devoir-demain-a-faire',
+      'devoir-j-plus-6',
+      'devoir-j-plus-7',
+      'devoir-sans-date',
+    ]);
+  });
+
+  it.each([
+    ['sans filtre', {}, { status: 'todo', period: 'all' }],
+    ['filter: todo', { filter: 'todo' }, { status: 'todo', period: 'all' }],
+    ['filter: tomorrow', { filter: 'tomorrow' }, { status: 'all', period: 'tomorrow' }],
+    ['filter: all', { filter: 'all' }, { status: 'all', period: 'all' }],
+  ])('un YAML existant (%s) garde exactement son aspect', async (_nom, ancien, nouveau) => {
+    // Aucun tableau de bord ne doit changer d'aspect parce que le formulaire
+    // a changé : l'ancien réglage et sa traduction montrent la même chose.
+    const avant = await visibles(ancien);
+    expect(avant.length).toBeGreaterThan(0);
+    expect(avant).toEqual(await visibles(nouveau));
+  });
+
+  it('les nouveaux champs priment sur l’ancien, chacun pour lui-même', async () => {
+    // `filter: tomorrow` voulait dire « tous, pour demain » ; `status` n'en
+    // remplace que la moitié.
+    expect(await visibles({ filter: 'tomorrow', status: 'todo' })).toEqual([
+      'devoir-demain-a-faire',
+    ]);
+  });
+
+  it('une période inconnue retombe sur l’ancien filtre, sans rien casser', async () => {
+    expect(await visibles({ filter: 'tomorrow', period: 'demain_peut_etre' })).toEqual([
+      'devoir-demain-fait',
+      'devoir-demain-a-faire',
+    ]);
+  });
+
+  it('dit « aucun devoir sur cette période » quand la période est vide', async () => {
+    testClock.now = '2026-12-24T12:00:00Z';
+    const el = await mountCard(
+      'pronote-ng-devoirs',
+      { device_id: 'dev_enfant', status: 'all', period: 'week' },
+      troisCapteurs()
+    );
+    expect(text(el)).toContain('Aucun devoir sur cette période.');
+    // Contrepoids : la carte est bien montée et a lu ses capteurs.
+    expect(text(el)).not.toContain('devoir-aujourdhui');
+    expect(el.shadowRoot?.querySelector('ha-card')).not.toBeNull();
+  });
+
+  it('propose les deux filtres dans le formulaire, et plus l’ancien', () => {
+    const noms = SPEC.schema({ type: 'custom:pronote-ng-devoirs' }).map((champ) => champ.name);
+    expect(noms).toContain('status');
+    expect(noms).toContain('period');
+    expect(noms).not.toContain('filter');
   });
 });

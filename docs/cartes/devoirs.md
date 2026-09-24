@@ -14,7 +14,8 @@ programme.*
 ```yaml
 type: custom:pronote-ng-devoirs
 device_id: <appareil de l'enfant>
-filter: todo
+status: todo
+period: all
 group_by: date
 ```
 
@@ -22,7 +23,9 @@ group_by: date
 
 | Option | Défaut | Effet |
 | --- | --- | --- |
-| `filter` | `todo` | `todo` (à faire), `tomorrow` (pour demain) ou `all` (tous). Change l'entité lue. |
+| `status` | `todo` | `todo` (à faire) ou `all` (tous, faits compris). |
+| `period` | `all` | `all` (toutes les échéances), `from_today` (aujourd'hui et après), `tomorrow` (demain), `from_tomorrow` (demain et après) ou `week` (les 7 prochains jours). Voir [Les deux filtres](#les-deux-filtres). |
+| `filter` | — | L'ancien filtre unique, remplacé par les deux précédents. Toujours lu : voir [Les deux filtres](#les-deux-filtres). |
 | `group_by` | `date` | `date` ou `subject`. Les devoirs sont toujours ordonnés par échéance — groupés par matière, à l'intérieur de chaque matière. Voir [Ce que chaque niveau dit](#ce-que-chaque-niveau-dit). |
 | `limit` | *tout* | Nombre maximum de devoirs. Absent ou négatif : tout. `0` : rien — et la carte dit alors que la cause est l'option, non l'absence de devoirs. |
 | `max_lines` | *aucun repli* | Nombre de lignes d'énoncé avant repli. Voir [L'énoncé long](#lenonce-long-et-la-hauteur-de-la-carte). |
@@ -38,7 +41,8 @@ leur section plus bas :
 ```yaml
 type: custom:pronote-ng-devoirs
 device_id: <appareil de l'enfant>
-filter: todo
+status: todo
+period: from_tomorrow
 group_by: date
 limit: 12
 ```
@@ -115,7 +119,7 @@ Home Assistant demande à chaque carte sa hauteur pour équilibrer les colonnes
 d'une vue en maçonnerie. Celle-ci annonçait **5**, soit environ 250 pixels,
 pour 1 376 mesurés — un facteur cinq, et le plus large écart du dépôt : la
 carte la plus haute se déclarait parmi les plus courtes. Elle l'estime
-désormais d'après son `filter`, son `limit` et son `max_lines`.
+désormais d'après ses deux filtres, son `limit` et son `max_lines`.
 
 Cette estimation reste approximative, et il vaut mieux le savoir que le
 découvrir : la hauteur dépend surtout de la longueur des énoncés, qui est une
@@ -167,9 +171,9 @@ toutes dans [Les couleurs de matière](../couleurs-de-matiere.md).
 
 | Clé | Rôle |
 | --- | --- |
-| `sensor:homework_todo` | Requise avec `filter: todo`. |
-| `sensor:homework_tomorrow` | Requise avec `filter: tomorrow`. |
-| `sensor:homework` | Requise avec `filter: all`. |
+| `sensor:homework_tomorrow` | Requise avec `period: tomorrow`. |
+| `sensor:homework_todo` | Requise avec `status: todo`, pour toute autre période. |
+| `sensor:homework` | Requise avec `status: all`, pour toute autre période que demain. |
 | `binary_sensor:homework_overdue` | Optionnelle. Bandeau « en retard » en tête. |
 | `todo:homework` | Optionnelle. Rend la case à cocher possible (voir ci-dessous). |
 | `calendar:homework` | Optionnelle. Nomme la prochaine échéance, quel que soit le filtre. |
@@ -184,6 +188,49 @@ de ses évènements demanderait un appel de service, donc une collecte au
 rendu — que le projet interdit et que le type refuse à la compilation. La
 ligne « prochaine échéance » survit à l'état vide, et c'est là qu'elle sert
 le plus : rien à rendre demain, mais une échéance existe plus loin.
+
+## Les deux filtres
+
+Un devoir se filtre sur deux questions indépendantes : **est-il fait ?** et
+**quand est-il dû ?** L'ancien réglage `filter` n'en offrait qu'une à la fois
+— « à faire » ou « pour demain » — et on ne pouvait donc pas demander les
+devoirs à faire pour demain seulement. `status` et `period` se combinent
+librement :
+
+| `period` | ce qui est montré | le retard ? |
+| --- | --- | --- |
+| `all` | toutes les échéances de l'horizon | oui |
+| `from_today` | aujourd'hui et après | non |
+| `tomorrow` | le lendemain seulement | non |
+| `from_tomorrow` | demain et après | non |
+| `week` | aujourd'hui et les six jours suivants | non |
+
+Les jours se comptent dans le fuseau de la carte, comme le retard. Un devoir
+sans échéance lisible n'entre dans aucune période datée : on ne peut pas dire
+qu'il est pour demain. Il reste visible avec `period: all`.
+
+Écarter les retards de la liste ne les fait pas disparaître de la carte : le
+bandeau « en retard » en tête compte à part, sur le capteur de l'intégration,
+quelle que soit la période.
+
+**Un tableau de bord existant ne change pas d'aspect.** `filter` est toujours
+lu quand `status` ou `period` manque, et chacune de ses valeurs se traduit
+exactement :
+
+| ancien réglage | équivaut à |
+| --- | --- |
+| *(aucun)* ou `filter: todo` | `status: todo`, `period: all` |
+| `filter: tomorrow` | `status: all`, `period: tomorrow` |
+| `filter: all` | `status: all`, `period: all` |
+
+Les deux nouveaux champs priment, chacun pour lui-même : `filter: tomorrow`
+avec `status: todo` donne les devoirs à faire pour demain. Le formulaire ne
+propose plus `filter`, et le remplace dès qu'on touche l'un des deux.
+
+Sous le capot, la carte lit toujours le capteur le plus étroit qui contienne
+ce qu'elle va montrer — celui « pour demain », celui « à faire », ou celui de
+tous les devoirs — puis trie elle-même. Sur le capteur « à faire », elle ne
+retrie pas l'état : c'est l'intégration qui sait ce qu'est un devoir fait.
 
 ## Ce que « en retard » veut dire, et ses deux sources
 
