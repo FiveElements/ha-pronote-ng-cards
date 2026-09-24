@@ -32,6 +32,24 @@ const published = () =>
     ...ROOT_DOCS,
   ]).filter(([f]) => !f.includes('superpowers'));
 
+/**
+ * Les appels de service autorisés ont la forme `domaine.service`, que la
+ * règle `HARDCODED` de la garde ci-dessous ne sait pas distinguer d'un
+ * identifiant d'entité. Ce sont
+ * pourtant deux choses opposées : un identifiant d'entité varie d'une
+ * installation à l'autre — c'est tout l'objet de cette garde — alors qu'un
+ * nom de service est fixe et fait partie du contrat de Home Assistant.
+ *
+ * On les retire donc du texte avant de chercher, plutôt que de contorsionner
+ * le code appelant pour esquiver la règle : une garde qui force à écrire
+ * `'todo.' + 'update_item'` ne protège plus rien, elle déplace le problème là
+ * où plus personne ne le lit. La liste reste volontairement fermée et
+ * identique à `AllowedCall` (src/core/types.ts) : tout autre couple
+ * `domaine.service` continue d'être signalé.
+ */
+const withoutAllowedCalls = (body: string): string =>
+  ALLOWED_CALLS.reduce((acc, call) => acc.split(call).join(''), body);
+
 describe("garde : aucun identifiant d'entité en dur", () => {
   /**
    * La liste des domaines est volontairement large, et non limitée à ceux que
@@ -66,23 +84,6 @@ describe("garde : aucun identifiant d'entité en dur", () => {
   const HARDCODED = new RegExp(
     String.raw`\b(?:${DOMAINS.join('|')})\.[a-z0-9_]{2,}(?![A-Za-z0-9_])`
   );
-
-  /**
-   * Les appels de service autorisés ont la forme `domaine.service`, que la
-   * règle ci-dessus ne sait pas distinguer d'un identifiant d'entité. Ce sont
-   * pourtant deux choses opposées : un identifiant d'entité varie d'une
-   * installation à l'autre — c'est tout l'objet de cette garde — alors qu'un
-   * nom de service est fixe et fait partie du contrat de Home Assistant.
-   *
-   * On les retire donc du texte avant de chercher, plutôt que de contorsionner
-   * le code appelant pour esquiver la règle : une garde qui force à écrire
-   * `'todo.' + 'update_item'` ne protège plus rien, elle déplace le problème là
-   * où plus personne ne le lit. La liste reste volontairement fermée et
-   * identique à `AllowedCall` (src/core/types.ts) : tout autre couple
-   * `domaine.service` continue d'être signalé.
-   */
-  const withoutAllowedCalls = (body: string): string =>
-    ALLOWED_CALLS.reduce((acc, call) => acc.split(call).join(''), body);
 
   /**
    * On ne cherche que dans les CHAÎNES du fichier, jamais dans le code nu.
@@ -246,6 +247,15 @@ describe('garde : src/ ne dépend d’aucun module Node natif', () => {
   });
 });
 
+const scanned = () =>
+  read([
+    ...walk('src', ['.ts', '.json']),
+    ...walk('test', ['.ts']),
+    ...walk('docs', ['.md']),
+    ...walk('.github', ['.yml', '.md']),
+    ...ROOT_DOCS,
+  ]).filter(([f]) => !f.includes('superpowers'));
+
 describe('garde : aucune donnée réelle', () => {
   // Liste blanche délibérée : élargir ici, jamais en affaiblissant la garde.
   const ALLOWED_HOSTS = new Set([
@@ -267,15 +277,6 @@ describe('garde : aucune donnée réelle', () => {
     // le propriétaire et le nom du dépôt public.
     'my.home-assistant.io',
   ]);
-
-  const scanned = () =>
-    read([
-      ...walk('src', ['.ts', '.json']),
-      ...walk('test', ['.ts']),
-      ...walk('docs', ['.md']),
-      ...walk('.github', ['.yml', '.md']),
-      ...ROOT_DOCS,
-    ]).filter(([f]) => !f.includes('superpowers'));
 
   it('toutes les URL citées pointent vers un hôte autorisé', () => {
     // Tous les manquants d'un coup, et non le premier.
@@ -348,6 +349,28 @@ const catalogueOf = (lang: string): unknown => {
 };
 
 /**
+ * Les couples (racine de catalogue, nom d'option) déclarés par les cartes,
+ * relevés dans le source plutôt qu'en important les `SPEC` : `schema()` est
+ * une fonction de la configuration, et l'appeler ici demanderait d'inventer
+ * une configuration par carte — donc de deviner laquelle révèle toutes les
+ * options. Le source, lui, les porte toutes.
+ */
+const declared = (): { key: string; option: string; file: string }[] => {
+  const out: { key: string; option: string; file: string }[] = [];
+  for (const [file, body] of read(walk(join('src', 'cards'), ['.ts']))) {
+    const keyMatch = /^\s*key: '([a-z_]+)',$/m.exec(body);
+    if (!keyMatch?.[1]) continue;
+    const key = keyMatch[1];
+    // Les entrées de schéma s'écrivent toutes `{ name: '<option>', selector: …`.
+    for (const m of body.matchAll(/\{\s*name: '([a-z_]+)',\s*selector:/g)) {
+      const option = m[1];
+      if (option !== undefined) out.push({ key, option, file });
+    }
+  }
+  return out;
+};
+
+/**
  * Chaque option d'éditeur doit avoir son libellé, dans les quatre langues.
  *
  * L'éditeur générique résout les libellés sous la racine de catalogue de la
@@ -363,28 +386,6 @@ const catalogueOf = (lang: string): unknown => {
  */
 describe('garde : les libellés d’options de l’éditeur', () => {
   const CATALOGUES = ['fr', 'it', 'pt', 'es'] as const;
-
-  /**
-   * Les couples (racine de catalogue, nom d'option) déclarés par les cartes,
-   * relevés dans le source plutôt qu'en important les `SPEC` : `schema()` est
-   * une fonction de la configuration, et l'appeler ici demanderait d'inventer
-   * une configuration par carte — donc de deviner laquelle révèle toutes les
-   * options. Le source, lui, les porte toutes.
-   */
-  const declared = (): { key: string; option: string; file: string }[] => {
-    const out: { key: string; option: string; file: string }[] = [];
-    for (const [file, body] of read(walk(join('src', 'cards'), ['.ts']))) {
-      const keyMatch = /^\s*key: '([a-z_]+)',$/m.exec(body);
-      if (!keyMatch?.[1]) continue;
-      const key = keyMatch[1];
-      // Les entrées de schéma s'écrivent toutes `{ name: '<option>', selector: …`.
-      for (const m of body.matchAll(/\{\s*name: '([a-z_]+)',\s*selector:/g)) {
-        const option = m[1];
-        if (option !== undefined) out.push({ key, option, file });
-      }
-    }
-    return out;
-  };
 
   it('relève bien des options à vérifier — sinon la garde ne garde rien', () => {
     // Une garde dont l'extraction rend zéro élément passe toujours. Le seuil

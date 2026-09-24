@@ -63,6 +63,26 @@ const day = (attributes: Record<string, unknown>, state = '3') =>
     },
   ]);
 
+// `binary_sensor:in_class` a un droit de veto sur le surlignage, jamais
+// celui de désigner un créneau : le capteur sait SI un cours a lieu, les
+// horodatages savent LEQUEL.
+const dayWithInClass = (state: string) =>
+  makeHass([
+    {
+      key: 'sensor:lessons_today',
+      entity_id: 'sensor.abc_cours_du_jour',
+      device: 'dev_enfant',
+      state: '3',
+      attributes: { lessons },
+    },
+    {
+      key: 'binary_sensor:in_class',
+      entity_id: 'binary_sensor.abc_en_cours',
+      device: 'dev_enfant',
+      state,
+    },
+  ]);
+
 describe('carte emploi-du-temps', () => {
   it('liste les cours par ordre chronologique avec heure et salle, quel que soit leur ordre en entrée', async () => {
     const el = await mountCard(
@@ -412,26 +432,6 @@ describe('carte emploi-du-temps', () => {
     );
     expect(text(el)).toContain('en cours');
   });
-
-  // `binary_sensor:in_class` a un droit de veto sur le surlignage, jamais
-  // celui de désigner un créneau : le capteur sait SI un cours a lieu, les
-  // horodatages savent LEQUEL.
-  const dayWithInClass = (state: string) =>
-    makeHass([
-      {
-        key: 'sensor:lessons_today',
-        entity_id: 'sensor.abc_cours_du_jour',
-        device: 'dev_enfant',
-        state: '3',
-        attributes: { lessons },
-      },
-      {
-        key: 'binary_sensor:in_class',
-        entity_id: 'binary_sensor.abc_en_cours',
-        device: 'dev_enfant',
-        state,
-      },
-    ]);
 
   it('ne surligne aucun créneau quand `in_class` vaut `off`, même à une heure de cours', async () => {
     testClock.now = '2026-09-08T08:30:00+02:00';

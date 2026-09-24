@@ -221,21 +221,21 @@ const devoirAvecPieces = (attachments: unknown[]) => [
   },
 ];
 
-describe('carte devoirs', () => {
-  // `calendar:homework` porte la prochaine échéance telle que le calendrier la
-  // voit. Elle n'est lue que dans ses ATTRIBUTS : récupérer la liste de ses
-  // évènements demanderait un appel de service, donc une collecte au rendu.
-  const withCalendar = (attributes: Record<string, unknown>, calendar: Record<string, unknown>) =>
-    hw(attributes, '2', [
-      {
-        key: 'calendar:homework',
-        entity_id: 'calendar.abc_devoirs',
-        device: 'dev_enfant',
-        state: 'off',
-        attributes: calendar,
-      },
-    ]);
+// `calendar:homework` porte la prochaine échéance telle que le calendrier la
+// voit. Elle n'est lue que dans ses ATTRIBUTS : récupérer la liste de ses
+// évènements demanderait un appel de service, donc une collecte au rendu.
+const withCalendar = (attributes: Record<string, unknown>, calendar: Record<string, unknown>) =>
+  hw(attributes, '2', [
+    {
+      key: 'calendar:homework',
+      entity_id: 'calendar.abc_devoirs',
+      device: 'dev_enfant',
+      state: 'off',
+      attributes: calendar,
+    },
+  ]);
 
+describe('carte devoirs', () => {
   const nextEvent = { message: 'DM de physique', start_time: '2026-09-15T08:00:00+02:00' };
 
   it('nomme la prochaine échéance depuis le calendrier, que le filtre masque', async () => {
@@ -665,6 +665,27 @@ describe('carte devoirs', () => {
   });
 });
 
+// Le calendrier ET le capteur de retard, montes ensemble parce que le cas
+// `limit: 0` a besoin des deux a la fois -- `withCalendar` ne monte que le
+// premier.
+const withCalendarEtRetard = (attributes: Record<string, unknown>) =>
+  hw(attributes, '2', [
+    {
+      key: 'calendar:homework',
+      entity_id: 'calendar.abc_devoirs',
+      device: 'dev_enfant',
+      state: 'off',
+      attributes: { message: 'DM de physique', start_time: '2026-09-15T08:00:00+02:00' },
+    },
+    {
+      key: 'binary_sensor:homework_overdue',
+      entity_id: 'binary_sensor.abc_devoirs_en_retard',
+      device: 'dev_enfant',
+      state: 'on',
+      attributes: {},
+    },
+  ]);
+
 describe('carte devoirs — le lot du 10 septembre 2026', () => {
   /**
    * Les trois défauts corrigés ici ont été trouvés en mesurant la carte sur
@@ -689,27 +710,6 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
     due: '2020-01-01',
     done: false,
   };
-
-  // `withCalendar` et `nextEvent` vivent dans l'autre `describe` : hors de
-  // portee ici, donc le calendrier ET le capteur de retard sont montes ici,
-  // ensemble, parce que le cas `limit: 0` a besoin des deux a la fois.
-  const withCalendarEtRetard = (attributes: Record<string, unknown>) =>
-    hw(attributes, '2', [
-      {
-        key: 'calendar:homework',
-        entity_id: 'calendar.abc_devoirs',
-        device: 'dev_enfant',
-        state: 'off',
-        attributes: { message: 'DM de physique', start_time: '2026-09-15T08:00:00+02:00' },
-      },
-      {
-        key: 'binary_sensor:homework_overdue',
-        entity_id: 'binary_sensor.abc_devoirs_en_retard',
-        device: 'dev_enfant',
-        state: 'on',
-        attributes: {},
-      },
-    ]);
 
   // --- 1. `done` fait partie de la definition du retard. ---
 
@@ -1987,6 +1987,25 @@ describe('carte devoirs — l’ordre à l’intérieur d’un groupe de matièr
   });
 });
 
+/** Le capteur de retard à `on`, plus un capteur de fenêtre vide. */
+const videPlusRetard = (count: number, etat: 'on' | 'off') =>
+  hw({ items: [] }, '0', [
+    {
+      key: 'binary_sensor:homework_overdue',
+      entity_id: 'binary_sensor.abc_devoirs_en_retard',
+      device: 'dev_enfant',
+      state: etat,
+      attributes: { count },
+    },
+    {
+      key: 'sensor:homework_tomorrow',
+      entity_id: 'sensor.abc_devoirs_demain',
+      device: 'dev_enfant',
+      state: '0',
+      attributes: { items: [] },
+    },
+  ]);
+
 describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', () => {
   // L'horloge figée est une variable de module : la laisser posée fausserait
   // tous les tests suivants, y compris ceux des autres blocs.
@@ -2001,25 +2020,6 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
    * lint et `tsc` aussi. C'est la raison d'être de ce bloc : chaque cas y
    * combine ce qui n'était testé que séparément.
    */
-
-  /** Le capteur de retard à `on`, plus un capteur de fenêtre vide. */
-  const videPlusRetard = (count: number, etat: 'on' | 'off') =>
-    hw({ items: [] }, '0', [
-      {
-        key: 'binary_sensor:homework_overdue',
-        entity_id: 'binary_sensor.abc_devoirs_en_retard',
-        device: 'dev_enfant',
-        state: etat,
-        attributes: { count },
-      },
-      {
-        key: 'sensor:homework_tomorrow',
-        entity_id: 'sensor.abc_devoirs_demain',
-        device: 'dev_enfant',
-        state: '0',
-        attributes: { items: [] },
-      },
-    ]);
 
   // --- 1. le bandeau de retard et la liste vide ---
 
@@ -2369,6 +2369,13 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
   });
 });
 
+const avecAdresse = async (url: unknown, nom = 'sujet.pdf') =>
+  mountCard(
+    'pronote-ng-devoirs',
+    { device_id: 'dev_enfant' },
+    hw({ items: devoirDeuxListes([nom], [{ name: nom, url }]) }, '1')
+  );
+
 /**
  * Le tableau d'entrées hostiles, figé. Chaque ligne a été **mesurée** dans un
  * navigateur avant d'être écrite ici, et deux d'entre elles ont changé la
@@ -2400,13 +2407,6 @@ describe('carte devoirs — l’élargissement du filtre d’adresses', () => {
     '.bGFfc2lnbmF0dXJlX2NpX2Rlc3NvdXNfZXN0X3N5bnRoZXRpcXVlX3Bhc191bmVfdnJhaWU';
   const CHEMIN_SIGNE =
     '/api/pronote_ng/attachment/0123456789abcdef/a1b2c3d4e5f60718?authSig=' + SIGNATURE;
-
-  const avecAdresse = async (url: unknown, nom = 'sujet.pdf') =>
-    mountCard(
-      'pronote-ng-devoirs',
-      { device_id: 'dev_enfant' },
-      hw({ items: devoirDeuxListes([nom], [{ name: nom, url }]) }, '1')
-    );
 
   /** L'origine de l'instance telle que la fixture la publie. */
   const ORIGINE_INSTANCE = new URL(makeHass().hassUrl?.() ?? '').origin;
@@ -2773,6 +2773,16 @@ const etatPieces = (el: HTMLElement & MountableElement): string =>
   (el.shadowRoot?.querySelector('.devoirs-piece-etat')?.textContent ?? '').trim();
 
 
+const monter = async (
+  refs: unknown[],
+  service: HomeAssistant['callService'],
+  links?: unknown[]
+): Promise<HTMLElement & MountableElement> => {
+  const hass = hw({ items: devoirAvecRefs(refs, links) }, '1');
+  hass.callService = service;
+  return mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+};
+
 describe('carte devoirs — l’adresse d’un fichier se demande au clic', () => {
   /**
    * L'intégration ne publie plus l'adresse signée d'un fichier dans un
@@ -2786,16 +2796,6 @@ describe('carte devoirs — l’adresse d’un fichier se demande au clic', () =
   const ORIGINE_INSTANCE = new URL(makeHass().hassUrl?.() ?? '').origin;
 
   const LOCALE = [{ name: 'sujet.pdf', kind: 'local', key: CLE }];
-
-  const monter = async (
-    refs: unknown[],
-    service: HomeAssistant['callService'],
-    links?: unknown[]
-  ): Promise<HTMLElement & MountableElement> => {
-    const hass = hw({ items: devoirAvecRefs(refs, links) }, '1');
-    hass.callService = service;
-    return mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
-  };
 
   afterEach(() => {
     vi.restoreAllMocks();
