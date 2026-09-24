@@ -1,0 +1,53 @@
+name: CodeQL
+
+# Analyse statique de sécurité, native GitHub : aucun compte tiers, aucun
+# secret. Les alertes vont dans l'onglet Security du dépôt, visible des seuls
+# mainteneurs.
+#
+# Ce que le badge du README dit, et ce qu'il ne dit pas : il suit le statut de
+# ce workflow, donc « l'analyse a tourné jusqu'au bout ». Il reste vert avec
+# des alertes ouvertes — l'étape d'analyse n'échoue pas sur une alerte. Un
+# badge qui affirmerait « aucune faille » serait plausible et faux ; celui-ci
+# n'affirme que ce qu'il sait.
+#
+# Le point qui justifie l'analyse ici : `subjectColor` est la seule valeur
+# venue du serveur qui atteigne un attribut `style`. Le reste du rendu passe
+# par Lit, qui échappe le texte interpolé, et `src/` n'emploie aucune
+# directive qui le contourne.
+#
+# La planification hebdomadaire relance l'analyse sans nouveau commit : les
+# requêtes CodeQL évoluent, et une faille nouvellement décrite doit être
+# cherchée dans le code déjà publié, pas seulement dans le prochain.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '17 4 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyse (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        # `actions` analyse les workflows eux-mêmes : c'est par eux que passe
+        # la publication du bundle.
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
