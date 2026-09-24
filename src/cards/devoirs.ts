@@ -12,8 +12,26 @@ import { listAttr, sortedBy } from '../core/list';
 import { formatDayLabel, parseTimestamp, plainText } from '../core/format';
 import { subjectAccent } from '../core/subject-color';
 
+/** Ce qu'on montre selon l'état du devoir. */
+type Statut = 'todo' | 'all';
+/**
+ * Ce qu'on montre selon l'échéance. « Aujourd'hui et après », « demain et
+ * après » et « 7 prochains jours » écartent les devoirs en retard — le
+ * bandeau de retard, lui, reste, puisqu'il compte à part.
+ */
+type Periode = 'all' | 'from_today' | 'tomorrow' | 'from_tomorrow' | 'week';
+
 interface Config extends PronoteCardConfig {
+  /**
+   * L'ancien filtre unique, qui mêlait deux questions : l'état du devoir
+   * (« à faire ») et son échéance (« pour demain »). On ne pouvait donc pas
+   * demander « à faire, pour demain ». Remplacé par `status` et `period`,
+   * indépendants, et toujours lu pour qu'aucun tableau de bord existant ne
+   * change d'aspect : voir `statutOf` et `periodeOf`.
+   */
   filter?: 'todo' | 'tomorrow' | 'all';
+  status?: Statut;
+  period?: Periode;
   group_by?: 'date' | 'subject';
   limit?: number;
   /**
@@ -225,15 +243,48 @@ const CALENDAR: EntityKey = 'calendar:homework';
  */
 const UPDATE_ITEM = 4;
 
-const keyFor = (c: Config): EntityKey =>
-  c.filter === 'tomorrow' ? TOMORROW : c.filter === 'all' ? ALL : TODO;
+const PERIODES: readonly Periode[] = ['all', 'from_today', 'tomorrow', 'from_tomorrow', 'week'];
 
-const emptyFor = (c: Config): string =>
-  c.filter === 'tomorrow'
-    ? 'devoirs.empty_tomorrow'
-    : c.filter === 'all'
-      ? 'devoirs.empty_all'
-      : 'devoirs.empty_todo';
+/**
+ * L'état demandé. `status` s'il est valide, sinon ce que l'ancien `filter`
+ * voulait dire : « pour demain » et « tous » montraient les devoirs faits,
+ * « à faire » — et l'absence de filtre, qui valait « à faire » — non.
+ */
+const statutOf = (c: Config): Statut =>
+  c.status === 'todo' || c.status === 'all'
+    ? c.status
+    : c.filter === 'tomorrow' || c.filter === 'all'
+      ? 'all'
+      : 'todo';
+
+/** La période demandée. `period` si elle est valide, sinon celle de l'ancien `filter`. */
+const periodeOf = (c: Config): Periode => {
+  // Cherchée dans la liste plutôt que convertie : `period` vient du YAML, et
+  // une valeur inconnue doit retomber sur l'ancien filtre, pas passer.
+  const valide = PERIODES.find((p) => p === c.period);
+  if (valide !== undefined) return valide;
+  return c.filter === 'tomorrow' ? 'tomorrow' : 'all';
+};
+
+/**
+ * Le capteur lu : le plus étroit qui contienne à coup sûr tout ce qu'on va
+ * montrer. Le tri fin se fait ensuite ici, par `retenu`.
+ *
+ * Ce n'est pas une optimisation, c'est ce qui garde l'ancien comportement à
+ * l'identique : les trois réglages de `filter` retombent exactement sur les
+ * trois capteurs qu'ils lisaient. Et le capteur « à faire » est déjà filtré
+ * par l'intégration, qui sait mieux que la carte ce qu'est un devoir fait.
+ * Les trois contiennent tous l'horizon d'affichage, donc demain y est.
+ */
+const keyFor = (c: Config): EntityKey =>
+  periodeOf(c) === 'tomorrow' ? TOMORROW : statutOf(c) === 'todo' ? TODO : ALL;
+
+const emptyFor = (c: Config): string => {
+  const periode = periodeOf(c);
+  if (periode === 'tomorrow') return 'devoirs.empty_tomorrow';
+  if (periode !== 'all') return 'devoirs.empty_period';
+  return statutOf(c) === 'todo' ? 'devoirs.empty_todo' : 'devoirs.empty_all';
+};
 
 /** Clé de jour calendaire (AAAA-MM-JJ) dans le fuseau donné : compare des jours, pas des instants. */
 /**
@@ -339,11 +390,51 @@ const basculeEnonce = (event: Event): void => {
  */
 export const testClock: { now?: string } = {};
 
+const maintenant = (): Date => parseTimestamp(testClock.now) ?? new Date();
+
 const isOverdue = (h: Homework, timeZone: string): boolean => {
   if (h.done === true) return false;
   const jour = dueDayKey(h.due, timeZone);
-  const now = parseTimestamp(testClock.now) ?? new Date();
-  return jour !== undefined && jour < dayKey(now, timeZone);
+  return jour !== undefined && jour < dayKey(maintenant(), timeZone);
+};
+
+/**
+ * Le jour `n` jours après `cle`, en `AAAA-MM-JJ`.
+ *
+ * Calculé en UTC sur la date seule, jamais en ajoutant 24 heures à un
+ * instant : un passage à l'heure d'été ferait sauter ou doubler un jour.
+ */
+const decalerJour = (cle: string, n: number): string => {
+  const d = new Date(`${cle}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
+
+/**
+ * Le devoir passe-t-il les deux filtres ?
+ *
+ * Tout se compare en jours calendaires du fuseau de la carte, comme le
+ * retard. Un devoir sans échéance lisible ne tombe dans aucune période
+ * datée : on ne peut pas dire qu'il est pour demain.
+ */
+const retenu = (h: Homework, statut: Statut, periode: Periode, timeZone: string): boolean => {
+  if (statut === 'todo' && h.done === true) return false;
+  if (periode === 'all') return true;
+  const jour = dueDayKey(h.due, timeZone);
+  if (jour === undefined) return false;
+  const aujourdhui = dayKey(maintenant(), timeZone);
+  const demain = decalerJour(aujourdhui, 1);
+  switch (periode) {
+    case 'from_today':
+      return jour >= aujourdhui;
+    case 'tomorrow':
+      return jour === demain;
+    case 'from_tomorrow':
+      return jour >= demain;
+    default:
+      // 'week' : aujourd'hui et les six jours suivants.
+      return jour >= aujourdhui && jour <= decalerJour(aujourdhui, 6);
+  }
 };
 
 /**
@@ -729,14 +820,17 @@ export const SPEC: CardSpec<Config> = {
    * Assistant n'a besoin que d'un classement entre cartes.
    */
   size: (c: Config) => {
+    const periode = periodeOf(c);
     const devoirs =
       c.limit !== undefined && c.limit >= 0
         ? c.limit
-        : c.filter === 'tomorrow'
+        : periode === 'tomorrow'
           ? 6
-          : c.filter === 'all'
-            ? 20
-            : 15;
+          : periode === 'week'
+            ? 10
+            : statutOf(c) === 'all'
+              ? 20
+              : 15;
     /**
      * Le coût d'un devoir, en **centièmes** d'unité.
      *
@@ -759,20 +853,34 @@ export const SPEC: CardSpec<Config> = {
     // Le plancher de trois couvre `limit: 0`, qui ne rend qu'une phrase.
     return Math.max(3, Math.round((200 + devoirs * parDevoir) / 100));
   },
-  stub: { filter: 'todo', group_by: 'date' },
+  stub: { status: 'todo', period: 'all', group_by: 'date' },
   requires: (c) => [keyFor(c)],
   optional: () => [OVERDUE, TODO_LIST, CALENDAR],
   schema: (_config: Config, t?: Translate) => [
+    // Deux listes indépendantes, là où `filter` en mêlait deux. L'ancien
+    // champ n'est plus proposé, mais reste lu : un YAML qui le porte garde
+    // son aspect, et le formulaire le remplace dès qu'on touche l'un des deux.
     {
-      name: 'filter',
+      name: 'status',
       selector: {
         select: {
           mode: 'dropdown',
           options: [
-            { value: 'todo', label: t ? t('devoirs.filter_todo') : 'À faire' },
-            { value: 'tomorrow', label: t ? t('devoirs.filter_tomorrow') : 'Pour demain' },
-            { value: 'all', label: t ? t('devoirs.filter_all') : 'Tous' },
+            { value: 'todo', label: t ? t('devoirs.status_todo') : 'À faire' },
+            { value: 'all', label: t ? t('devoirs.status_all') : 'Tous' },
           ],
+        },
+      },
+    },
+    {
+      name: 'period',
+      selector: {
+        select: {
+          mode: 'dropdown',
+          options: PERIODES.map((value) => ({
+            value,
+            label: t ? t(`devoirs.period_${value}`) : value,
+          })),
         },
       },
     },
@@ -798,7 +906,16 @@ export const SPEC: CardSpec<Config> = {
   ],
   render(ctx: RenderCtx<Config>) {
     const key = keyFor(ctx.config);
-    const raw = listAttr<Homework>(ctx.attr(key, 'items'));
+    const statut = statutOf(ctx.config);
+    const periode = periodeOf(ctx.config);
+    // Le capteur « à faire » a déjà trié l'état, et c'est l'intégration qui
+    // fait foi : un devoir qu'elle y laisse s'affiche, comme avant l'arrivée
+    // des deux filtres. La carte ne retrie l'état que sur les capteurs qui ne
+    // l'ont pas fait — « pour demain » et « tous ».
+    const statutATrier: Statut = key === TODO ? 'all' : statut;
+    const raw = listAttr<Homework>(ctx.attr(key, 'items')).filter((h) =>
+      retenu(h, statutATrier, periode, ctx.timeZone)
+    );
 
     /**
      * La prochaine échéance vue par le calendrier.
@@ -813,7 +930,7 @@ export const SPEC: CardSpec<Config> = {
      * sa première entrée.
      */
     const nextDue = ((): TemplateResult | '' => {
-      if (ctx.config.filter === 'all' || ctx.status(CALENDAR) !== 'ok') return '';
+      if ((statut === 'all' && periode === 'all') || ctx.status(CALENDAR) !== 'ok') return '';
       const message = ctx.attr<string>(CALENDAR, 'message');
       const startsAt = ctx.attr<string>(CALENDAR, 'start_time');
       const when = startsAt ? formatDayLabel(startsAt, ctx.language, ctx.timeZone) : '';
