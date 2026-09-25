@@ -14,8 +14,11 @@ si des paliers sont en attente.
 ## À quoi elle sert
 
 L'intégration collecte selon un ordonnanceur et un budget de requêtes, et elle
-s'arrête pendant les **heures calmes** — une fenêtre nocturne où elle ne
-demande plus rien au serveur PRONOTE. Ce réglage vit dans les options de
+suspend ses collectes automatiques pendant les **heures calmes** — une fenêtre
+nocturne où elle ne demande plus rien au serveur PRONOTE **de sa propre
+initiative**. Un geste humain passe quand même depuis la version 0.0.28 de
+l'intégration : ouvrir une pièce jointe, cocher un devoir, presser un bouton
+de rafraîchissement. Les heures calmes ne sont pas une déconnexion. Ce réglage vit dans les options de
 l'intégration, à trois niveaux de menu, et le sauvegarder **recharge
 l'intégration**.
 

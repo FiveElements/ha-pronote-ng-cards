@@ -396,12 +396,28 @@ vers un tiers — un site de vente, une vidéo, un éditeur scolaire — et
 lève sur un chemin enraciné, et le filtre traitait cette exception comme un
 refus. Cinq de ces pastilles muettes étaient visibles dans la vue par défaut.
 
-Une nuance de disponibilité, rapportée par la session de l'intégration et
-**non mesurée ici** — nous ne téléchargeons pas de pièce pour vérifier, parce
-que chaque requête compte contre l'adresse IP de la maison : le relais réserve
-les heures creuses. Entre 22 h et 6 h, un document **jamais ouvert** peut
-répondre « pas maintenant » plutôt que s'afficher ; un document déjà ouvert
-sort du cache et s'affiche. « Pas maintenant » n'est pas « introuvable ».
+**Un clic ouvre le document à toute heure, heures calmes comprises**, depuis
+la version 0.0.28 de l'intégration. Avant elle, le relais traitait le
+téléchargement comme une collecte ordinaire : entre 22 h et 6 h, un document
+jamais ouvert répondait « deferred by the rate limiter: quiet_hours » au lieu
+de s'afficher. Le propriétaire l'a résumé en une phrase, qui est devenue la
+règle : **heure calme ne signifie pas déconnecté.** Les heures calmes arrêtent
+les collectes automatiques ; un geste humain — ce clic, la case d'un devoir,
+un rafraîchissement demandé — passe, parce qu'il ne coûte qu'une requête et
+que quelqu'un l'attend.
+
+Il reste soumis au reste des protections de l'intégration : le budget du jour,
+l'espacement entre requêtes, et le cache — un document déjà ouvert ne repart
+pas vers l'établissement. Si l'une d'elles refuse, l'onglet affiche une
+réponse brute de l'intégration, en anglais, avec un délai après lequel
+réessayer. Ce n'est pas « introuvable » : c'est « pas maintenant ».
+
+Ce paragraphe disait l'inverse, en l'attribuant à l'intégration et en
+précisant « non mesuré ici ». La précaution était juste, la phrase aussi à
+l'époque — et c'est le propriétaire qui l'a trouvée fausse **à l'usage**, en
+voulant vérifier un devoir un soir. Une limite rapportée par une
+autre couche est datée comme une forme d'attribut : elle dure tant que cette
+couche ne change pas d'avis.
 
 **Une phrase en bas de carte dit pourquoi**, une seule fois, dès qu'au moins
 une pièce affichée ne s'ouvre pas. Sans ça la carte ressemble à une panne, et
