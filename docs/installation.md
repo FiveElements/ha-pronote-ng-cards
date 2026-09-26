@@ -91,7 +91,7 @@ Cette documentation, elle, reste uniquement en français.
 
 ## Deux options communes à toutes les cartes
 
-Les dix cartes acceptent deux réglages qui n'apparaissent sur la page
+Les onze cartes acceptent deux réglages qui n'apparaissent sur la page
 d'aucune d'entre elles, parce qu'ils ne dépendent pas de la carte.
 
 `title` remplace l'intitulé affiché en tête. Sans lui, la carte n'affiche

@@ -1,0 +1,128 @@
+/*
+ * Identité visuelle « Carnet scolaire » du site de documentation.
+ *
+ * Elle ne vaut QUE pour ce site. Les cartes, elles, n'ont aucune couleur en
+ * dur et suivent le thème de Home Assistant (voir CLAUDE.md) : cette palette
+ * ne doit jamais entrer dans src/.
+ *
+ * Palette : noir profond #080C10 (fond), or néon #FFC83B (accent chaud),
+ * cyan émeraude #00E5A3 (accent froid), bronze laiton #8A7039 (structure),
+ * blanc cassé #F1F5F9 (texte).
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap");
+
+:root {
+  --carnet-noir: #080c10;
+  --carnet-noir-releve: #0f151b;
+  --carnet-or: #ffc83b;
+  --carnet-emeraude: #00e5a3;
+  --carnet-bronze: #8a7039;
+  --carnet-blanc: #f1f5f9;
+  --md-heading-font: "Cormorant Garamond", Georgia, serif;
+}
+
+/* ---- Mode sombre : l'identité telle qu'elle a été dessinée ---- */
+
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: var(--carnet-noir);
+  --md-default-fg-color: var(--carnet-blanc);
+  --md-default-fg-color--light: rgba(241, 245, 249, 0.72);
+  --md-default-fg-color--lighter: rgba(241, 245, 249, 0.42);
+  --md-default-fg-color--lightest: rgba(138, 112, 57, 0.35);
+  --md-typeset-color: var(--carnet-blanc);
+  --md-typeset-a-color: var(--carnet-emeraude);
+  --md-accent-fg-color: var(--carnet-or);
+  --md-primary-fg-color: var(--carnet-noir);
+  --md-primary-bg-color: var(--carnet-blanc);
+  --md-code-bg-color: var(--carnet-noir-releve);
+  --md-footer-bg-color: var(--carnet-noir);
+  --md-footer-bg-color--dark: var(--carnet-noir);
+  --md-typeset-table-color: rgba(138, 112, 57, 0.45);
+}
+
+[data-md-color-scheme="slate"] .md-header,
+[data-md-color-scheme="slate"] .md-tabs {
+  background-color: var(--carnet-noir);
+  border-bottom: 1px solid var(--carnet-bronze);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h1 {
+  color: var(--carnet-or);
+  text-shadow: 0 0 18px rgba(255, 200, 59, 0.35);
+}
+
+[data-md-color-scheme="slate"] .md-typeset h2 {
+  color: var(--carnet-emeraude);
+  border-bottom: 1px solid var(--carnet-bronze);
+  padding-bottom: 0.2em;
+}
+
+[data-md-color-scheme="slate"] .md-typeset h3,
+[data-md-color-scheme="slate"] .md-typeset h4 {
+  color: var(--carnet-or);
+}
+
+[data-md-color-scheme="slate"] .md-nav__link--active,
+[data-md-color-scheme="slate"] .md-nav__link:is(:hover, :focus) {
+  color: var(--carnet-or);
+}
+
+[data-md-color-scheme="slate"] .md-typeset a:is(:hover, :focus) {
+  color: var(--carnet-or);
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background-color: var(--carnet-noir-releve);
+  color: var(--carnet-or);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .admonition,
+[data-md-color-scheme="slate"] .md-typeset details {
+  background-color: var(--carnet-noir-releve);
+}
+
+/* ---- Mode clair : même structure, accents lisibles sur fond blanc ----
+ * L'émeraude et l'or néon n'atteignent pas le contraste 4,5:1 sur blanc :
+ * les liens y prennent le bronze, et l'en-tête reste noir profond.
+ */
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--carnet-noir);
+  --md-primary-bg-color: var(--carnet-blanc);
+  --md-typeset-a-color: var(--carnet-bronze);
+  --md-accent-fg-color: #006b4c;
+}
+
+[data-md-color-scheme="default"] .md-header,
+[data-md-color-scheme="default"] .md-tabs {
+  border-bottom: 1px solid var(--carnet-bronze);
+}
+
+/* ---- Commun ---- */
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-header__title {
+  font-family: var(--md-heading-font);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.md-typeset h1 {
+  font-weight: 700;
+}
+
+.md-header__title {
+  font-size: 1.05rem;
+}
+
+/* La bannière d'accueil : pleine largeur du contenu, coins adoucis. */
+.md-typeset img.carnet-banniere {
+  display: block;
+  width: 100%;
+  border-radius: 0.4rem;
+  border: 1px solid var(--carnet-bronze);
+  margin: 0 0 1.5rem;
+}
