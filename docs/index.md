@@ -1,6 +1,8 @@
 # Carnet scolaire — Cartes
 
-Une bibliothèque de dix cartes Lovelace pour afficher, dans un
+![Carnet scolaire](assets/banniere.jpg){ .carnet-banniere }
+
+Une bibliothèque de onze cartes Lovelace pour afficher, dans un
 tableau de bord Home Assistant, les données scolaires collectées par
 l'intégration [Carnet scolaire](https://github.com/FiveElements/ha-carnet-scolaire) :
 emploi du temps, devoirs, notes, cantine, vie scolaire.
@@ -9,13 +11,13 @@ Chaque carte se configure avec un seul réglage : l'appareil de
 l'enfant. Aucune ne demande d'identifiant d'entité — voir
 [Installation](installation.md) pour comprendre pourquoi.
 
-![Trois des dix cartes : prochain cours, devoirs et vie scolaire](assets/apercu.svg)
+![Trois des onze cartes : prochain cours, devoirs et vie scolaire](assets/apercu.svg)
 
 *Illustration synthétique : rien n'y vient d'un élève réel. Les dates, les
 horaires et les valeurs sont inventés ; les matières sont des matières de
 programme.*
 
-## Les dix cartes
+## Les onze cartes
 
 | Carte | À quoi elle sert |
 | --- | --- |
@@ -29,6 +31,7 @@ programme.*
 | [Cantine](cartes/menu.md) | Le menu du jour ou du lendemain, plat par plat |
 | [Vie scolaire](cartes/vie-scolaire.md) | Absences, retards et punitions |
 | [Limiteur](cartes/limiteur.md) | Budget d'appels, état du limiteur, bouton de rafraîchissement |
+| [Mode de collecte](cartes/mode-collecte.md) | Le mode de récupération en vigueur, et de quoi le forcer à la main |
 
 ## Pour commencer
 

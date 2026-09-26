@@ -6,11 +6,22 @@ theme:
   language: fr
   logo: assets/logo.png
   favicon: assets/logo.png
+  # Le sombre d'abord : l'identite « Carnet scolaire » est dessinee sur fond
+  # noir profond. Couleurs dans docs/stylesheets/carnet.css.
   palette:
-    - scheme: default
-      toggle: { icon: material/brightness-7, name: Mode sombre }
     - scheme: slate
+      primary: custom
+      accent: custom
       toggle: { icon: material/brightness-4, name: Mode clair }
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle: { icon: material/brightness-7, name: Mode sombre }
+  font:
+    text: Source Sans 3
+    code: JetBrains Mono
+extra_css:
+  - stylesheets/carnet.css
 exclude_docs: |
   superpowers/
 
@@ -27,6 +38,8 @@ exclude_docs: |
 # la page publiee plutot que le depot.
 markdown_extensions:
   - admonition
+  # Pour la classe de la banniere d'accueil : `![...](...){ .carnet-banniere }`.
+  - attr_list
 nav:
   - Accueil: index.md
   - Installation: installation.md
