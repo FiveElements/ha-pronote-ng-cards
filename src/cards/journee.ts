@@ -10,7 +10,7 @@ import { subjectAccent } from '../core/subject-color';
  * La journée en grille : un filet de couleur, une colonne d'horaires, la
  * matière.
  *
- * C'est un portage d'apparence d'une ancienne carte de l'ancien format. Elle
+ * C'est un portage d'apparence d'une carte de l'ancien format. Elle
  * ouvre sur **aujourd'hui**, et deux flèches permettent de parcourir les
  * autres jours de la semaine déjà collectée. Pas de sélecteur de semaine :
  * au-delà de la fenêtre collectée il n'y a rien à afficher, et la carte
