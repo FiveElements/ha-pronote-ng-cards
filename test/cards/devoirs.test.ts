@@ -408,6 +408,30 @@ describe('carte devoirs', () => {
     expect(text(el)).toContain('Maths');
   });
 
+  it('garde la case cochée quand la minuterie repeint avant la réponse', async () => {
+    // La carte se repeint chaque minute (tickMs) pour passer minuit. Un repeint
+    // qui tomberait entre le clic et la mise à jour de l'entité ne doit pas
+    // décocher la case : Lit ne repose `.checked` que si la valeur liée a
+    // changé, et elle n'a pas changé tant que l'intégration n'a rien publié.
+    vi.useFakeTimers();
+    try {
+      const hass = withTodoList({ items }, 4);
+      hass.callService = vi.fn<HomeAssistant['callService']>(() => new Promise(() => {}));
+      const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+      const box = el.shadowRoot?.querySelector('input');
+      expect(box).not.toBeNull();
+      if (box) {
+        box.checked = true;
+        box.dispatchEvent(new Event('change'));
+      }
+      vi.advanceTimersByTime(60_000);
+      await el.updateComplete;
+      expect(el.shadowRoot?.querySelector('input')?.checked).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // --- Critique n°2 : désignation du devoir par id, pas par énoncé libre. ---
 
   it("appelle todo.update_item avec l'identifiant du devoir, pas son énoncé", async () => {
@@ -2630,6 +2654,31 @@ describe('carte devoirs — l’état et l’échéance, deux filtres indépenda
   });
   afterEach(() => {
     delete testClock.now;
+  });
+
+  it('passe minuit tout seul sur un tableau de bord laissé ouvert', async () => {
+    // L'objectif est un tableau de bord permanent. La nuit, aucune collecte
+    // n'a lieu, donc aucun état d'entité ne change : seule l'horloge avance.
+    // Sans minuterie déclarative (tickMs), le devoir « de demain » restait
+    // affiché comme tel au réveil, alors qu'il est dû aujourd'hui.
+    vi.useFakeTimers();
+    try {
+      const el = await mountCard(
+        'pronote-ng-devoirs',
+        { device_id: 'dev_enfant', status: 'todo', period: 'from_tomorrow' },
+        troisCapteurs()
+      );
+      expect(text(el)).toContain('devoir-demain-a-faire');
+
+      testClock.now = '2026-09-11T12:00:00Z';
+      vi.advanceTimersByTime(60_000);
+      await el.updateComplete;
+
+      expect(text(el)).not.toContain('devoir-demain-a-faire');
+      expect(text(el)).toContain('devoir-j-plus-6');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('à faire, pour demain : la combinaison que l’ancien filtre ne permettait pas', async () => {
