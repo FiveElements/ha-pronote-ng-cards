@@ -8,7 +8,7 @@ import type {
   CardSpec,
   EntityKey,
   EntityStatus,
-  PronoteCardConfig,
+  CarnetCardConfig,
   RenderCtx,
   Translate,
 } from './types';
@@ -150,11 +150,11 @@ const writeGuard = (deviceId: string | undefined, at: number): void => {
 };
 
 export function makeCardClass(spec: CardSpec): CustomElementConstructor {
-  class PronoteCardBase extends LitElement {
+  class CarnetCardBase extends LitElement {
     static styles = sharedStyles;
 
     @property({ attribute: false }) hass?: HomeAssistant;
-    @state() private config?: PronoteCardConfig;
+    @state() private config?: CarnetCardConfig;
     @state() private refreshedAt = 0;
     @state() private refreshFailed = false;
     // Bascule à chaque tour de la minuterie déclarative (spec.tickMs) : sa
@@ -201,7 +201,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       }
     }
 
-    setConfig(config: PronoteCardConfig): void {
+    setConfig(config: CarnetCardConfig): void {
       if (!config || typeof config !== 'object' || typeof config.type !== 'string') {
         throw new Error(this.t('common.bad_config'));
       }
@@ -230,11 +230,11 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       return el;
     }
 
-    static getStubConfig(): Partial<PronoteCardConfig> {
+    static getStubConfig(): Partial<CarnetCardConfig> {
       return { type: `custom:${spec.type}`, ...spec.stub };
     }
 
-    private entityKeys(config: PronoteCardConfig): {
+    private entityKeys(config: CarnetCardConfig): {
       required: EntityKey[];
       any: EntityKey[];
       all: EntityKey[];
@@ -297,7 +297,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
 
     private resolveAll(
       hass: HomeAssistant,
-      config: PronoteCardConfig,
+      config: CarnetCardConfig,
       keys: EntityKey[]
     ): Map<EntityKey, string> {
       return this.resolveCache.resolve(hass, config.device_id, spec.scope, keys, config.entities);
@@ -371,7 +371,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
       return id ? this.hass?.states[id] : undefined;
     }
 
-    private makeCtx(hass: HomeAssistant, config: PronoteCardConfig): RenderCtx {
+    private makeCtx(hass: HomeAssistant, config: CarnetCardConfig): RenderCtx {
       const deviceId = resolveDevice(hass, config.device_id, spec.scope);
       const device = deviceId ? hass.devices[deviceId] : undefined;
 
@@ -573,5 +573,5 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
     }
   }
 
-  return PronoteCardBase;
+  return CarnetCardBase;
 }

@@ -3,7 +3,7 @@ import type {
   CardSpec,
   EntityKey,
   HassView,
-  PronoteCardConfig,
+  CarnetCardConfig,
   RenderCtx,
   Translate,
 } from '../core/types';
@@ -21,7 +21,7 @@ type Statut = 'todo' | 'all';
  */
 type Periode = 'all' | 'from_today' | 'tomorrow' | 'from_tomorrow' | 'week';
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   /**
    * L'ancien filtre unique, qui mêlait deux questions : l'état du devoir
    * (« à faire ») et son échéance (« pour demain »). On ne pouvait donc pas

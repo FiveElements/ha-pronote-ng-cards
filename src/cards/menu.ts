@@ -1,9 +1,9 @@
 import { html, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx, Translate } from '../core/types';
 import { emptyState, listRow } from '../core/ui/parts';
 import { listAttr } from '../core/list';
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   day?: 'today' | 'tomorrow';
 }
 

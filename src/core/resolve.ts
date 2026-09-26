@@ -1,4 +1,4 @@
-import type { CardScope, EntityKey, PronoteCardConfig } from './types';
+import type { CardScope, EntityKey, CarnetCardConfig } from './types';
 import type { HomeAssistant } from './ha-types';
 
 export const PLATFORM = 'carnet_scolaire';
@@ -89,7 +89,7 @@ export interface ResolveCache {
     deviceId: string | undefined,
     scope: CardScope,
     keys: EntityKey[],
-    overrides: PronoteCardConfig['entities']
+    overrides: CarnetCardConfig['entities']
   ): Map<EntityKey, string>;
 }
 
@@ -99,7 +99,7 @@ export function createResolveCache(): ResolveCache {
         entities: HomeAssistant['entities'];
         devices: HomeAssistant['devices'];
         deviceId: string | undefined;
-        overrides: PronoteCardConfig['entities'];
+        overrides: CarnetCardConfig['entities'];
         keys: string;
         result: Map<EntityKey, string>;
       }

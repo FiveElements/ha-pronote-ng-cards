@@ -1,5 +1,5 @@
 import { html, nothing, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx, Translate } from '../core/types';
 import { formatDayLabel, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
@@ -93,7 +93,7 @@ import { subjectAccent } from '../core/subject-color';
  * fenêtre revient donc au jour de repos.
  */
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   /**
    * Table matière → couleur, renseignée par l'utilisateur.
    *
@@ -197,7 +197,7 @@ interface Config extends PronoteCardConfig {
 /**
  * Couture de test pour la mise en avant « en cours », qui dépend de
  * `Date.now()`. En variable de module et non dans `Config` : l'index de
- * signature ouvert de `PronoteCardConfig` rendrait sinon un `now:` posé dans
+ * signature ouvert de `CarnetCardConfig` rendrait sinon un `now:` posé dans
  * le YAML d'un tableau de bord capable de figer la mise en avant pour de bon.
  */
 export const testClock: { now?: string } = {};

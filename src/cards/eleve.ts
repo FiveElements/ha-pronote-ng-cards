@@ -1,9 +1,9 @@
 import { html, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx } from '../core/types';
 import { formatTime } from '../core/format';
 import { chip, listRow } from '../core/ui/parts';
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   show_photo?: boolean;
   /** Faux par défaut : une carte est une surface partageable. */
   show_establishment?: boolean;

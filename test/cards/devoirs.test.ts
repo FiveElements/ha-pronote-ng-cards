@@ -76,7 +76,7 @@ const titres = (el: HTMLElement & MountableElement): string[] =>
  * La hauteur annoncee, prise sur le `CardSpec` plutot que sur l'element.
  *
  * Le parametre est type explicitement plutot que force depuis un objet de
- * cles libres : `PronoteCardConfig` porte une signature d'index, donc une
+ * cles libres : `CarnetCardConfig` porte une signature d'index, donc une
  * assertion aurait retreci un type large vers `Config` sans que rien ne
  * verifie les valeurs. Ici `filter` est contraint a ses trois valeurs.
  */

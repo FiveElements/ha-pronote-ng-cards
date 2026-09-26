@@ -15,7 +15,7 @@
 
   **Carnet scolaire — Cartes** est un ensemble de **cartes Lovelace personnalisées pour Home Assistant**, conçu pour afficher de manière claire et moderne les données scolaires fournies par l'intégration **[Carnet scolaire](https://github.com/FiveElements/ha-carnet-scolaire)**.
 
- Les cartes permettent de transformer les données PRONOTE en un véritable **tableau de bord scolaire dans Home Assistant**.
+ Les cartes permettent de transformer ces données en un véritable **tableau de bord scolaire dans Home Assistant**.
 
  Vous pouvez notamment afficher :
 
@@ -79,7 +79,7 @@ côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github
 
  ### 🗓️ [Emploi du temps](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/emploi-du-temps/)
 
- Affiche l'emploi du temps PRONOTE dans Home Assistant.
+ Affiche l'emploi du temps de l'élève dans Home Assistant.
 
  La carte permet de visualiser les cours à venir et leur contexte directement depuis le tableau de bord.
 
@@ -87,7 +87,7 @@ côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github
 
  ### 📝 [Devoirs](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/devoirs/)
 
- Affiche les devoirs récupérés depuis PRONOTE.
+ Affiche les devoirs récupérés par l'intégration Carnet scolaire.
 
  Les informations peuvent notamment inclure :
 
@@ -107,7 +107,7 @@ côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github
 
  ### 🎯 [Évaluations](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/evaluations/)
 
- Permet d'afficher les évaluations et les informations de compétences fournies par PRONOTE.
+ Permet d'afficher les évaluations et les informations de compétences fournies par l'établissement.
 
 ---
 
@@ -119,7 +119,7 @@ côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github
 
  ### 🏫 [Vie scolaire](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/vie-scolaire/)
 
- Permet de visualiser les informations liées à la vie scolaire, notamment les absences et autres événements disponibles dans PRONOTE.
+ Permet de visualiser les informations liées à la vie scolaire, notamment les absences et autres événements publiés par l'établissement.
 
 ---
 
@@ -134,7 +134,7 @@ côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github
 - l'état du limiteur
 - le rafraîchissement des données
 
- Elle est particulièrement utile pour comprendre l'activité de l'intégration PRONOTE.
+ Elle est particulièrement utile pour comprendre l'activité de l'intégration Carnet scolaire.
 
 ---
 
@@ -182,14 +182,14 @@ reste qu'à **Télécharger**, puis à recharger la page du navigateur.
 
  Vous devez donc avoir installé et configuré :
 
- **[Carnet scolaire — Intégration PRONOTE pour Home Assistant](https://github.com/FiveElements/ha-carnet-scolaire)**
+ **[Carnet scolaire — Intégration pour Home Assistant](https://github.com/FiveElements/ha-carnet-scolaire)**
 
- L'intégration Carnet scolaire fournit les données PRONOTE.
+ L'intégration Carnet scolaire récupère les données de l'établissement, depuis PRONOTE ou EcoleDirecte.
 
  Les cartes se chargent ensuite de les présenter dans votre interface Lovelace.
 
 ```
-PRONOTE
+PRONOTE · EcoleDirecte
    │
    ▼
 Carnet scolaire
@@ -326,13 +326,13 @@ côté intégration.
 
  ## ⚙️ Architecture
 
- Les cartes sont volontairement séparées de l'intégration PRONOTE.
+ Les cartes sont volontairement séparées de l'intégration Carnet scolaire.
 
  Cela permet de garder deux responsabilités distinctes :
 
  ### Carnet scolaire
 
- Récupère et expose les données PRONOTE dans Home Assistant. Le [catalogue de ses entités et services](https://fiveelements.github.io/ha-carnet-scolaire/annexe-a-entites/) donne, pour chaque champ publié, d'où il vient — c'est le contrat que ces cartes lisent.
+ Récupère les données de l'établissement, depuis PRONOTE ou EcoleDirecte, et les expose dans Home Assistant. Le [catalogue de ses entités et services](https://fiveelements.github.io/ha-carnet-scolaire/annexe-a-entites/) donne, pour chaque champ publié, d'où il vient — c'est le contrat que ces cartes lisent.
 
  ### Carnet scolaire — Cartes
 
@@ -340,7 +340,7 @@ côté intégration.
 
  Cette séparation permet d'utiliser Carnet scolaire sans installer les cartes personnalisées.
 
- Inversement, les cartes peuvent évoluer indépendamment de la récupération des données PRONOTE.
+ Inversement, les cartes peuvent évoluer indépendamment de la récupération des données.
 
 ---
 
@@ -351,7 +351,7 @@ côté intégration.
  Lorsque vous partagez une capture d'écran ou un exemple de configuration, veillez toutefois à ne jamais publier :
 
  - nom ou prénom d'un élève
-- identifiant PRONOTE
+- identifiant PRONOTE ou EcoleDirecte
 - établissement
 - adresse
 - informations personnelles d'un enseignant
@@ -363,7 +363,7 @@ côté intégration.
 
  Ces cartes sont uniquement une interface d'affichage.
 
- Elles ne remplacent pas l'intégration Carnet scolaire et ne communiquent pas directement avec PRONOTE.
+ Elles ne remplacent pas l'intégration Carnet scolaire et ne communiquent jamais directement avec PRONOTE ni EcoleDirecte.
 
  Les limitations liées à la récupération des données, au protocole PRONOTE ou au rate limiting sont donc principalement gérées par **[Carnet scolaire](https://github.com/FiveElements/ha-carnet-scolaire)** — son [annexe sur le limiteur de requêtes](https://fiveelements.github.io/ha-carnet-scolaire/annexe-b-rate-limit/) en donne le détail.
 
@@ -424,11 +424,11 @@ npm test
 
  ## ⚠️ Important
 
- **Les cartes Carnet scolaire ne sont pas développées, maintenues ou officiellement supportées par Index Éducation / PRONOTE.**
+ **Les cartes Carnet scolaire ne sont pas développées, maintenues ou officiellement supportées par Index Éducation (PRONOTE) ni par l'éditeur d'EcoleDirecte.**
 
- PRONOTE est un service tiers.
+ PRONOTE et EcoleDirecte sont des services tiers.
 
- Le fonctionnement des cartes dépend des données exposées par l'intégration Carnet scolaire et peut évoluer lorsque PRONOTE ou Home Assistant évoluent.
+ Le fonctionnement des cartes dépend des données exposées par l'intégration Carnet scolaire et peut évoluer lorsque PRONOTE, EcoleDirecte ou Home Assistant évoluent.
 
 ---
 
@@ -448,4 +448,4 @@ npm test
 - 📖 contribuez à la documentation
 - 📣 partagez le projet avec d'autres utilisateurs de Home Assistant
 
- Chaque étoile et chaque contribution aide d'autres utilisateurs à découvrir les **cartes Lovelace PRONOTE pour Home Assistant**.
+ Chaque étoile et chaque contribution aide d'autres utilisateurs à découvrir les **cartes Lovelace Carnet scolaire pour Home Assistant**.

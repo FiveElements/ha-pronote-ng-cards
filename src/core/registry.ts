@@ -1,5 +1,5 @@
 import { makeCardClass } from './base-card';
-import { PronoteCardEditor } from './editor';
+import { CarnetCardEditor } from './editor';
 import type { CardSpec } from './types';
 
 interface CustomCardEntry {
@@ -20,7 +20,7 @@ const DOCS = 'https://fiveelements.github.io/ha-carnet-scolaire-cards/';
 
 export function defineCard(spec: CardSpec): void {
   if (!customElements.get('carnet-scolaire-card-editor')) {
-    customElements.define('carnet-scolaire-card-editor', PronoteCardEditor);
+    customElements.define('carnet-scolaire-card-editor', CarnetCardEditor);
   }
   if (!customElements.get(spec.type)) {
     customElements.define(spec.type, makeCardClass(spec));

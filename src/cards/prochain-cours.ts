@@ -1,10 +1,10 @@
 import { html } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx } from '../core/types';
 import { formatDayLabel, formatRelative, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { subjectAccent } from '../core/subject-color';
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   show_wake_up?: boolean;
   show_end_of_day?: boolean;
   show_next_test?: boolean;

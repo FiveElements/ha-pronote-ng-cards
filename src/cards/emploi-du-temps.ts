@@ -1,12 +1,12 @@
 import { html, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx, Translate } from '../core/types';
 import { formatDayLabel, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { listAttr, sortedBy } from '../core/list';
 import { isCanceled, statusLabel, teachersOf, type Lesson } from '../core/lesson';
 import { subjectAccent } from '../core/subject-color';
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   range?: 'today' | 'tomorrow' | 'week';
   show_rooms?: boolean;
   show_teachers?: boolean;
@@ -37,7 +37,7 @@ interface Config extends PronoteCardConfig {
 /**
  * Couture de test pour le surlignage « en cours », qui dépend de
  * `Date.now()`. Elle vit ici, en variable de module, plutôt que dans
- * `Config` : `PronoteCardConfig` porte un index de signature ouvert
+ * `Config` : `CarnetCardConfig` porte un index de signature ouvert
  * (`[option: string]: unknown`), donc tout champ ajouté à `Config` reste
  * atteignable depuis le YAML d'un tableau de bord — un `now:` posé à la
  * main y figerait le surlignage sur un instant arbitraire, en permanence.

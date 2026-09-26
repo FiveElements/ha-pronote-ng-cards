@@ -2,16 +2,16 @@ import { LitElement, html, nothing, type TemplateResult } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { HaFormSchema, HomeAssistant } from './ha-types';
 import { createResolveCache, isChildDevice } from './resolve';
-import type { CardSpec, EntityKey, PronoteCardConfig, Translate } from './types';
+import type { CardSpec, EntityKey, CarnetCardConfig, Translate } from './types';
 import { sharedStyles } from './ui/styles';
 import { localize } from '../localize';
 
-export class PronoteCardEditor extends LitElement {
+export class CarnetCardEditor extends LitElement {
   static styles = sharedStyles;
 
   @property({ attribute: false }) hass?: HomeAssistant;
   @property({ attribute: false }) spec?: CardSpec;
-  @state() private config?: PronoteCardConfig;
+  @state() private config?: CarnetCardConfig;
 
   private t: Translate = (path, vars) => localize(path, vars, this.hass?.language);
 
@@ -20,11 +20,11 @@ export class PronoteCardEditor extends LitElement {
   // mise à jour d'état de la maison tant qu'il reste ouvert.
   private resolveCache = createResolveCache();
 
-  setConfig(config: PronoteCardConfig): void {
+  setConfig(config: CarnetCardConfig): void {
     this.config = config;
   }
 
-  private formSchema(config: PronoteCardConfig): HaFormSchema[] {
+  private formSchema(config: CarnetCardConfig): HaFormSchema[] {
     return [
       {
         name: 'device_id',
@@ -97,7 +97,7 @@ export class PronoteCardEditor extends LitElement {
     `;
   }
 
-  private valueChanged = (ev: CustomEvent<{ value?: PronoteCardConfig }>): void => {
+  private valueChanged = (ev: CustomEvent<{ value?: CarnetCardConfig }>): void => {
     const value = ev.detail?.value;
     if (!value) return;
     // ha-form remonte l'objet complet : remplacer, pas fusionner, sinon un
@@ -119,7 +119,7 @@ export class PronoteCardEditor extends LitElement {
   private diagnosis(
     hass: HomeAssistant,
     spec: CardSpec,
-    config: PronoteCardConfig
+    config: CarnetCardConfig
   ): TemplateResult | typeof nothing {
     if (!config.device_id) return nothing;
 

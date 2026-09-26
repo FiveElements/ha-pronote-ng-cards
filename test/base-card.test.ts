@@ -95,7 +95,7 @@ beforeAll(() => {
   defineCard(SPEC_ANY);
 });
 
-describe('PronoteCardBase — les trois états', () => {
+describe('CarnetCardBase — les trois états', () => {
   it('rend la carte quand la donnée est là', async () => {
     const hass = makeHass([
       {
