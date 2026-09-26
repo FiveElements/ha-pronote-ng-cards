@@ -899,6 +899,12 @@ export const SPEC: CardSpec<Config> = {
   description: 'Les devoirs à faire, avec échéance et matière.',
   key: 'devoirs',
   scope: 'child',
+  // « En retard » et les périodes (demain, 7 prochains jours…) se comptent en
+  // jours depuis Date.now(). La nuit, aucune collecte n'a lieu, donc aucun
+  // état d'entité ne change : sans repeint périodique, un tableau de bord
+  // laissé ouvert affichait encore au réveil le « demain » de la veille. Une
+  // minute suffit, le socle pose et retire lui-même la minuterie.
+  tickMs: 60_000,
   /**
    * La hauteur annoncée à Home Assistant, qui s'en sert pour équilibrer les
    * colonnes d'une vue en maconnerie.
