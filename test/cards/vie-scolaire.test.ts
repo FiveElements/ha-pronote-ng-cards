@@ -7,7 +7,7 @@ import type { MountableElement } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-vie-scolaire': HTMLElement & MountableElement;
+    'carnet-scolaire-vie-scolaire': HTMLElement & MountableElement;
   }
 }
 
@@ -52,7 +52,7 @@ const full = () =>
 
 describe('carte vie-scolaire', () => {
   it('affiche absences, retards et punitions', async () => {
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, full());
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, full());
     const t = text(el);
     expect(t).toContain('Absences');
     expect(t).toContain('non justifiée');
@@ -67,7 +67,7 @@ describe('carte vie-scolaire', () => {
       entity_id: 'binary_sensor.abc_absence_en_cours',
       device_id: 'dev_enfant',
       labels: [],
-      platform: 'pronote_ng',
+      platform: 'carnet_scolaire',
       translation_key: 'absence_in_progress',
     };
     hass.states['binary_sensor.abc_absence_en_cours'] = {
@@ -77,7 +77,7 @@ describe('carte vie-scolaire', () => {
       last_changed: '2026-09-08T07:00:00+00:00',
       last_updated: '2026-09-08T07:00:00+00:00',
     };
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('Absence en cours');
   });
 
@@ -97,7 +97,7 @@ describe('carte vie-scolaire', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-vie-scolaire',
+      'carnet-scolaire-vie-scolaire',
       { device_id: 'dev_enfant', limit: 1 },
       hass
     );
@@ -108,7 +108,7 @@ describe('carte vie-scolaire', () => {
 
   it('restreint aux blocs choisis via sections', async () => {
     const el = await mountCard(
-      'pronote-ng-vie-scolaire',
+      'carnet-scolaire-vie-scolaire',
       { device_id: 'dev_enfant', sections: ['punishments'] },
       full()
     );
@@ -128,7 +128,7 @@ describe('carte vie-scolaire', () => {
         attributes: { items: [] },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Rien à signaler');
     expect(t).not.toContain('pas encore collectée');
@@ -143,13 +143,13 @@ describe('carte vie-scolaire', () => {
         state: 'unavailable',
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('pas encore collectée');
   });
 
   it("dit « introuvable » quand aucune clé n'existe", async () => {
     const el = await mountCard(
-      'pronote-ng-vie-scolaire',
+      'carnet-scolaire-vie-scolaire',
       { device_id: 'dev_enfant' },
       makeHass([])
     );
@@ -174,7 +174,7 @@ describe('carte vie-scolaire', () => {
       entity_id: 'binary_sensor.abc_absence_en_cours',
       device_id: 'dev_enfant',
       labels: [],
-      platform: 'pronote_ng',
+      platform: 'carnet_scolaire',
       translation_key: 'absence_in_progress',
     };
     hass.states['binary_sensor.abc_absence_en_cours'] = {
@@ -184,7 +184,7 @@ describe('carte vie-scolaire', () => {
       last_changed: '2026-09-08T07:00:00+00:00',
       last_updated: '2026-09-08T07:00:00+00:00',
     };
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Absence en cours');
     expect(t).toContain('Rien à signaler');
@@ -200,7 +200,7 @@ describe('carte vie-scolaire', () => {
         attributes: { items: { 0: 'inattendu' } },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('Rien à signaler');
   });
 
@@ -214,7 +214,7 @@ describe('carte vie-scolaire', () => {
         attributes: { items: 'x' },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('Rien à signaler');
   });
 
@@ -228,7 +228,7 @@ describe('carte vie-scolaire', () => {
         attributes: { items: [null] },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('Rien à signaler');
   });
 
@@ -264,7 +264,7 @@ describe('carte vie-scolaire', () => {
         },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
 
     // Les dates sont mises en toutes lettres : c'est le libellé rendu qu'on
@@ -297,7 +297,7 @@ describe('carte vie-scolaire', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-vie-scolaire',
+      'carnet-scolaire-vie-scolaire',
       { device_id: 'dev_enfant', limit: 0 },
       hass
     );
@@ -318,7 +318,7 @@ describe('carte vie-scolaire', () => {
         state: '2',
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).not.toContain('introuvable');
     expect(t).toContain('Absences non justifiées');
@@ -331,7 +331,7 @@ describe('carte vie-scolaire', () => {
       entity_id: 'binary_sensor.abc_punition_a_venir',
       device_id: 'dev_enfant',
       labels: [],
-      platform: 'pronote_ng',
+      platform: 'carnet_scolaire',
       translation_key: 'punishment_upcoming',
     };
     hass.states['binary_sensor.abc_punition_a_venir'] = {
@@ -341,7 +341,7 @@ describe('carte vie-scolaire', () => {
       last_changed: '2026-09-08T07:00:00+00:00',
       last_updated: '2026-09-08T07:00:00+00:00',
     };
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Punition à venir');
     expect(t).not.toContain('Prochaine punition');
@@ -353,7 +353,7 @@ describe('carte vie-scolaire', () => {
       entity_id: 'binary_sensor.abc_punition_a_venir',
       device_id: 'dev_enfant',
       labels: [],
-      platform: 'pronote_ng',
+      platform: 'carnet_scolaire',
       translation_key: 'punishment_upcoming',
     };
     hass.states['binary_sensor.abc_punition_a_venir'] = {
@@ -367,7 +367,7 @@ describe('carte vie-scolaire', () => {
       entity_id: 'sensor.abc_prochaine_punition',
       device_id: 'dev_enfant',
       labels: [],
-      platform: 'pronote_ng',
+      platform: 'carnet_scolaire',
       translation_key: 'next_punishment',
     };
     hass.states['sensor.abc_prochaine_punition'] = {
@@ -377,7 +377,7 @@ describe('carte vie-scolaire', () => {
       last_changed: '2026-09-08T07:00:00+00:00',
       last_updated: '2026-09-08T07:00:00+00:00',
     };
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Prochaine punition');
     expect(t).toContain('septembre');
@@ -403,7 +403,7 @@ describe('carte vie-scolaire', () => {
         attributes: { items: [{ date: '2026-09-02', minutes: 10, justified: false }] },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('non justifiée');
     expect(t).toContain('non justifié');
@@ -462,7 +462,7 @@ describe('carte vie-scolaire', () => {
         },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('7 septembre');
     expect(t).toContain('14:00');
@@ -492,7 +492,7 @@ describe('carte vie-scolaire', () => {
         },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('2h00');
     expect(t).not.toContain('NaN');
@@ -512,7 +512,7 @@ describe('carte vie-scolaire', () => {
         },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('2 h');
     expect(t).not.toContain('NaN');
@@ -539,7 +539,7 @@ describe('carte vie-scolaire', () => {
         },
       },
     ]);
-    const el = await mountCard('pronote-ng-vie-scolaire', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-vie-scolaire', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Retenue');
     // La somme des deux créneaux : 90 minutes.

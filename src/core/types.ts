@@ -47,7 +47,7 @@ type Call<Domain extends string, Service extends string> = `${Domain}.${Service}
  * sans passer par cette liste, revue en revue de code.
  */
 export type AllowedCall =
-  | Call<'pronote_ng', 'refresh'>
+  | Call<'carnet_scolaire', 'refresh'>
   | Call<'todo', 'update_item'>
   // La bascule de mode de collecte, ajoutee le 10 septembre 2026 sur demande
   // du proprietaire. C'est un ELARGISSEMENT de la seule garantie que
@@ -55,7 +55,7 @@ export type AllowedCall =
   //
   // Ce qu'elle ne casse pas : l'invariant est qu'une carte ne declenche
   // jamais de collecte A L'AFFICHAGE, pas qu'elle ne puisse rien declencher.
-  // `pronote_ng.refresh` etait deja un geste delibere de l'utilisateur. Un
+  // `carnet_scolaire.refresh` etait deja un geste delibere de l'utilisateur. Un
   // clic sur un mode a la meme forme.
   //
   // Ce qu'elle change vraiment : le domaine `select` n'est pas celui de
@@ -90,7 +90,7 @@ export type AllowedCall =
  * Les six services à réponse que la liste ci-dessus refuse restent refusés :
  * celui-ci n'en fait pas partie, et il n'ouvre la porte à aucun d'eux.
  */
-export type AllowedResponseCall = Call<'pronote_ng', 'get_attachment_url'>;
+export type AllowedResponseCall = Call<'carnet_scolaire', 'get_attachment_url'>;
 
 export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
   /** Vue en lecture : `callService` n'y figure pas (voir `HassView`). */

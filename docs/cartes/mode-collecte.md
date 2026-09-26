@@ -46,7 +46,7 @@ carte [limiteur](limiteur.md).
     regarde ses cartes.
 
 D'ici là, pour changer le mode : **Paramètres → Appareils et services →
-Pronote NG → Configurer → Limitation de débit**. Et sachez qu'enregistrer cette
+Carnet scolaire → Configurer → Limitation de débit**. Et sachez qu'enregistrer cette
 page recharge l'intégration, donc vide temporairement les cartes. C'est
 précisément ce que cette carte servira à éviter.
 
@@ -57,7 +57,7 @@ précisément ce que cette carte servira à éviter.
 | `show_note` | `true` | Affiche l'avertissement sous les boutons. |
 
 ```yaml
-type: custom:pronote-ng-mode-collecte
+type: custom:carnet-scolaire-mode-collecte
 device_id: <appareil de l'enfant>
 show_note: true
 ```

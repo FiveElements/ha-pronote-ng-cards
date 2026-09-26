@@ -1,17 +1,19 @@
-# Pronote NG Cards — Cartes Lovelace pour Home Assistant
-[![Version](https://img.shields.io/github/v/release/FiveElements/ha-pronote-ng-cards?style=flat-square&label=version)](https://github.com/FiveElements/ha-pronote-ng-cards/releases)
+![Carnet scolaire](docs/assets/banniere.jpg)
+
+# Carnet scolaire — Cartes Lovelace pour Home Assistant
+[![Version](https://img.shields.io/github/v/release/FiveElements/ha-carnet-scolaire-cards?style=flat-square&label=version)](https://github.com/FiveElements/ha-carnet-scolaire-cards/releases)
 ![Home Assistant 2026.9.0 minimum](https://img.shields.io/badge/Home%20Assistant-2026.9.0%2B-41BDF5?style=flat-square&logo=homeassistant&logoColor=white)
-[![validate](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/validate.yml?branch=main&style=flat-square&label=validate)](https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/validate.yml)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/codeql.yml?branch=main&style=flat-square&label=CodeQL)](https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/codeql.yml)
+[![validate](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-carnet-scolaire-cards/validate.yml?branch=main&style=flat-square&label=validate)](https://github.com/FiveElements/ha-carnet-scolaire-cards/actions/workflows/validate.yml)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-carnet-scolaire-cards/codeql.yml?branch=main&style=flat-square&label=CodeQL)](https://github.com/FiveElements/ha-carnet-scolaire-cards/actions/workflows/codeql.yml)
 [![MIT License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
-[![HACS](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-pronote-ng-cards/hacs.yml?branch=main&style=flat-square&label=HACS)](https://github.com/FiveElements/ha-pronote-ng-cards/actions/workflows/hacs.yml)
+[![HACS](https://img.shields.io/github/actions/workflow/status/FiveElements/ha-carnet-scolaire-cards/hacs.yml?branch=main&style=flat-square&label=HACS)](https://github.com/FiveElements/ha-carnet-scolaire-cards/actions/workflows/hacs.yml)
 
 
-[📖 Documentation](https://fiveelements.github.io/ha-pronote-ng-cards/) · [🔌 Pronote NG](https://github.com/FiveElements/ha-pronote-ng) · [🐛 Signaler un problème](https://github.com/FiveElements/ha-pronote-ng-cards/issues/new/choose)
+[📖 Documentation](https://fiveelements.github.io/ha-carnet-scolaire-cards/) · [🔌 Carnet scolaire](https://github.com/FiveElements/ha-carnet-scolaire) · [🐛 Signaler un problème](https://github.com/FiveElements/ha-carnet-scolaire-cards/issues/new/choose)
 
 ---
 
-  **Pronote NG Cards** est un ensemble de **cartes Lovelace personnalisées pour Home Assistant**, conçu pour afficher de manière claire et moderne les données scolaires fournies par l'intégration **[Pronote NG](https://github.com/FiveElements/ha-pronote-ng)**.
+  **Carnet scolaire — Cartes** est un ensemble de **cartes Lovelace personnalisées pour Home Assistant**, conçu pour afficher de manière claire et moderne les données scolaires fournies par l'intégration **[Carnet scolaire](https://github.com/FiveElements/ha-carnet-scolaire)**.
 
  Les cartes permettent de transformer les données PRONOTE en un véritable **tableau de bord scolaire dans Home Assistant**.
 
@@ -27,7 +29,7 @@
 - 👨‍🎓 les informations de l'élève
 - 🚦 le budget de requêtes PRONOTE
 
- > **Pronote NG Cards nécessite l'intégration [Pronote NG](https://github.com/FiveElements/ha-pronote-ng)** — voir son [guide de l'utilisateur](https://fiveelements.github.io/ha-pronote-ng/GUIDE-UTILISATEUR/) pour l'installer et la connecter.
+ > **Ces cartes nécessitent l'intégration [Carnet scolaire](https://github.com/FiveElements/ha-carnet-scolaire)** — voir son [guide de l'utilisateur](https://fiveelements.github.io/ha-carnet-scolaire/GUIDE-UTILISATEUR/) pour l'installer et la connecter.
 
 ---
 
@@ -36,13 +38,13 @@
  Chaque carte a sa page : aperçu, options, exemple complet à copier,
 entités consommées, et ce qu'elle ne peut pas savoir.
 
- ### 👨‍🎓 [Élève](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/eleve/)
+ ### 👨‍🎓 [Élève](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/eleve/)
 
  Une carte de synthèse permettant d'afficher les principales informations concernant l'élève.
 
 ---
 
- ### 🕐 [Prochain cours](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/prochain-cours/)
+ ### 🕐 [Prochain cours](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/prochain-cours/)
 
  Affiche rapidement le prochain cours :
 
@@ -56,7 +58,7 @@ entités consommées, et ce qu'elle ne peut pas savoir.
 
 ---
 
- ### 📅 [Vue journée](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/journee/)
+ ### 📅 [Vue journée](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/journee/)
 
  Une représentation graphique de la journée avec :
 
@@ -70,12 +72,12 @@ entités consommées, et ce qu'elle ne peut pas savoir.
  Cette carte est particulièrement adaptée à un tableau de bord principal.
 
  L'option `day_offset` décale le jour de la carte : plusieurs cartes côte à
-côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/journee/#plusieurs-jours-cote-a-cote)**
+côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/journee/#plusieurs-jours-cote-a-cote)**
 — chacune sur son jour, chacune avec sa date dans son en-tête.
 
 ---
 
- ### 🗓️ [Emploi du temps](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/emploi-du-temps/)
+ ### 🗓️ [Emploi du temps](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/emploi-du-temps/)
 
  Affiche l'emploi du temps PRONOTE dans Home Assistant.
 
@@ -83,7 +85,7 @@ côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github
 
 ---
 
- ### 📝 [Devoirs](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/devoirs/)
+ ### 📝 [Devoirs](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/devoirs/)
 
  Affiche les devoirs récupérés depuis PRONOTE.
 
@@ -97,33 +99,33 @@ côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github
 
 ---
 
- ### 📊 [Notes](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/notes/)
+ ### 📊 [Notes](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/notes/)
 
  Affiche les notes et informations associées dans une présentation adaptée à Home Assistant.
 
 ---
 
- ### 🎯 [Évaluations](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/evaluations/)
+ ### 🎯 [Évaluations](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/evaluations/)
 
  Permet d'afficher les évaluations et les informations de compétences fournies par PRONOTE.
 
 ---
 
- ### 🍽️ [Cantine](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/menu/)
+ ### 🍽️ [Cantine](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/menu/)
 
  Affiche les menus de cantine directement dans le tableau de bord Home Assistant.
 
 ---
 
- ### 🏫 [Vie scolaire](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/vie-scolaire/)
+ ### 🏫 [Vie scolaire](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/vie-scolaire/)
 
  Permet de visualiser les informations liées à la vie scolaire, notamment les absences et autres événements disponibles dans PRONOTE.
 
 ---
 
- ### 🚦 [Limiteur](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/limiteur/)
+ ### 🚦 [Limiteur](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/limiteur/)
 
- Affiche l'état du limiteur de requêtes de Pronote NG.
+ Affiche l'état du limiteur de requêtes de Carnet scolaire.
 
  Cette carte permet notamment de suivre :
 
@@ -148,9 +150,9 @@ côte font une **[fenêtre glissante sur la semaine](https://fiveelements.github
 
  ### Avec HACS
 
- Pronote NG Cards s'installe depuis **HACS** en tant que dépôt personnalisé.
+ Les cartes s'installent depuis **HACS** en tant que dépôt personnalisé.
 
-[![Ouvrir ce dépôt dans HACS sur votre Home Assistant](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=FiveElements&repository=ha-pronote-ng-cards&category=plugin)
+[![Ouvrir ce dépôt dans HACS sur votre Home Assistant](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=FiveElements&repository=ha-carnet-scolaire-cards&category=plugin)
 
  Ce bouton ouvre **votre** Home Assistant sur la fiche du dépôt dans HACS. Il ne
 reste qu'à **Télécharger**, puis à recharger la page du navigateur.
@@ -160,9 +162,9 @@ reste qu'à **Télécharger**, puis à recharger la page du navigateur.
 
 1. Ouvrez **HACS**
 2. Ouvrez le menu **⋮** puis **Dépôts personnalisés**
-3. Ajoutez `https://github.com/FiveElements/ha-pronote-ng-cards`
+3. Ajoutez `https://github.com/FiveElements/ha-carnet-scolaire-cards`
 4. Sélectionnez la catégorie **Lovelace**, puis **Ajouter**
-5. Installez **Pronote NG Cards** et rechargez la page
+5. Installez **Carnet scolaire — Cartes** et rechargez la page
 
 </details>
 
@@ -170,27 +172,27 @@ reste qu'à **Télécharger**, puis à recharger la page du navigateur.
  >
  > Sur un tableau de bord en **mode YAML**, la ressource doit en revanche être
  > déclarée à la main — c'est le seul cas où une carte n'apparaît même pas
- > dans le catalogue. La procédure est dans [Installation](https://fiveelements.github.io/ha-pronote-ng-cards/installation/).
+ > dans le catalogue. La procédure est dans [Installation](https://fiveelements.github.io/ha-carnet-scolaire-cards/installation/).
 
 ---
 
  ## 🔌 Prérequis
 
- Pronote NG Cards est une extension d'affichage.
+ Ces cartes sont une extension d'affichage.
 
  Vous devez donc avoir installé et configuré :
 
- **[Pronote NG — Intégration PRONOTE pour Home Assistant](https://github.com/FiveElements/ha-pronote-ng)**
+ **[Carnet scolaire — Intégration PRONOTE pour Home Assistant](https://github.com/FiveElements/ha-carnet-scolaire)**
 
- L'intégration Pronote NG fournit les données PRONOTE.
+ L'intégration Carnet scolaire fournit les données PRONOTE.
 
- Pronote NG Cards se charge ensuite de les présenter dans votre interface Lovelace.
+ Les cartes se chargent ensuite de les présenter dans votre interface Lovelace.
 
 ```
 PRONOTE
    │
    ▼
-Pronote NG
+Carnet scolaire
    │
    ├── Sensors
    ├── Events
@@ -199,7 +201,7 @@ Pronote NG
    └── autres entités
           │
           ▼
-   Pronote NG Cards
+   Carnet scolaire — Cartes
           │
           ▼
    Tableau de bord Home Assistant
@@ -211,7 +213,7 @@ Pronote NG
 
  Après installation, ajoutez une carte depuis l'éditeur de tableau de bord Home Assistant.
 
- Les cartes Pronote NG sont disponibles comme cartes Lovelace personnalisées.
+ Les cartes Carnet scolaire sont disponibles comme cartes Lovelace personnalisées.
 
  Pour chaque carte, la documentation fournit :
 
@@ -222,7 +224,7 @@ Pronote NG
 - les entités nécessaires
 - les possibilités de personnalisation
 
- 👉 **[Consulter la documentation complète](https://fiveelements.github.io/ha-pronote-ng-cards/)**
+ 👉 **[Consulter la documentation complète](https://fiveelements.github.io/ha-carnet-scolaire-cards/)**
 
 ---
 
@@ -263,7 +265,7 @@ agendas.
 identifiants d'entité : ils sont dérivés du nom de l'appareil, donc propres à
 votre installation.
 
- 👉 **[L'agenda natif de Home Assistant](https://fiveelements.github.io/ha-pronote-ng-cards/ha-calendar/)**
+ 👉 **[L'agenda natif de Home Assistant](https://fiveelements.github.io/ha-carnet-scolaire-cards/ha-calendar/)**
 détaille chaque option, ce que contiennent les trois agendas, deux tableaux de
 bord complets, et la seule chose qui surprend : **jusqu'où l'agenda sait**.
 
@@ -299,7 +301,7 @@ que les cartes de ce dépôt savent, et c'est la seule raison de les installer.
 
  👉 Le tour complet des deux chemins — quelle carte native pour quelle
 donnée, et les trois choses qu'aucune carte ne montrera — est dans
-[Afficher les données](https://fiveelements.github.io/ha-pronote-ng/AFFICHER-LES-DONNEES/)
+[Afficher les données](https://fiveelements.github.io/ha-carnet-scolaire/AFFICHER-LES-DONNEES/)
 côté intégration.
 
 ---
@@ -308,35 +310,35 @@ côté intégration.
 
  La documentation complète est disponible ici :
 
- **[📖 Documentation Pronote NG Cards](https://fiveelements.github.io/ha-pronote-ng-cards/)**
+ **[📖 Documentation des cartes Carnet scolaire](https://fiveelements.github.io/ha-carnet-scolaire-cards/)**
 
  Vous y trouverez notamment :
 
- - [Guide d'installation](https://fiveelements.github.io/ha-pronote-ng-cards/installation/)
-- [Assembler un tableau de bord](https://fiveelements.github.io/ha-pronote-ng-cards/tableaux-de-bord/)
-- [Documentation de chaque carte](https://fiveelements.github.io/ha-pronote-ng-cards/cartes/eleve/) — une page par carte
+ - [Guide d'installation](https://fiveelements.github.io/ha-carnet-scolaire-cards/installation/)
+- [Assembler un tableau de bord](https://fiveelements.github.io/ha-carnet-scolaire-cards/tableaux-de-bord/)
+- [Documentation de chaque carte](https://fiveelements.github.io/ha-carnet-scolaire-cards/cartes/eleve/) — une page par carte
 - Exemples YAML — un exemple complet sur la page de chaque carte
-- [Personnalisation des couleurs de matière](https://fiveelements.github.io/ha-pronote-ng-cards/couleurs-de-matiere/)
-- [Limites connues](https://fiveelements.github.io/ha-pronote-ng-cards/limites/)
+- [Personnalisation des couleurs de matière](https://fiveelements.github.io/ha-carnet-scolaire-cards/couleurs-de-matiere/)
+- [Limites connues](https://fiveelements.github.io/ha-carnet-scolaire-cards/limites/)
 - [Guide pour les contributeurs](CONTRIBUTING.md)
 
 ---
 
  ## ⚙️ Architecture
 
- Pronote NG Cards est volontairement séparé de l'intégration PRONOTE.
+ Les cartes sont volontairement séparées de l'intégration PRONOTE.
 
  Cela permet de garder deux responsabilités distinctes :
 
- ### Pronote NG
+ ### Carnet scolaire
 
- Récupère et expose les données PRONOTE dans Home Assistant. Le [catalogue de ses entités et services](https://fiveelements.github.io/ha-pronote-ng/annexe-a-entites/) donne, pour chaque champ publié, d'où il vient — c'est le contrat que ces cartes lisent.
+ Récupère et expose les données PRONOTE dans Home Assistant. Le [catalogue de ses entités et services](https://fiveelements.github.io/ha-carnet-scolaire/annexe-a-entites/) donne, pour chaque champ publié, d'où il vient — c'est le contrat que ces cartes lisent.
 
- ### Pronote NG Cards
+ ### Carnet scolaire — Cartes
 
  Présente ces données dans l'interface Lovelace.
 
- Cette séparation permet d'utiliser Pronote NG sans installer les cartes personnalisées.
+ Cette séparation permet d'utiliser Carnet scolaire sans installer les cartes personnalisées.
 
  Inversement, les cartes peuvent évoluer indépendamment de la récupération des données PRONOTE.
 
@@ -361,11 +363,11 @@ côté intégration.
 
  Ces cartes sont uniquement une interface d'affichage.
 
- Elles ne remplacent pas l'intégration Pronote NG et ne communiquent pas directement avec PRONOTE.
+ Elles ne remplacent pas l'intégration Carnet scolaire et ne communiquent pas directement avec PRONOTE.
 
- Les limitations liées à la récupération des données, au protocole PRONOTE ou au rate limiting sont donc principalement gérées par **[Pronote NG](https://github.com/FiveElements/ha-pronote-ng)** — son [annexe sur le limiteur de requêtes](https://fiveelements.github.io/ha-pronote-ng/annexe-b-rate-limit/) en donne le détail.
+ Les limitations liées à la récupération des données, au protocole PRONOTE ou au rate limiting sont donc principalement gérées par **[Carnet scolaire](https://github.com/FiveElements/ha-carnet-scolaire)** — son [annexe sur le limiteur de requêtes](https://fiveelements.github.io/ha-carnet-scolaire/annexe-b-rate-limit/) en donne le détail.
 
- 👉 Consultez la page **[Limites](https://fiveelements.github.io/ha-pronote-ng-cards/limites/)** pour connaître précisément le comportement des cartes.
+ 👉 Consultez la page **[Limites](https://fiveelements.github.io/ha-carnet-scolaire-cards/limites/)** pour connaître précisément le comportement des cartes.
 
 ---
 
@@ -407,12 +409,12 @@ npm test
 - 🧪 ajoutant des tests
 - 💻 proposant une Pull Request
 
- 👉 **[Voir les issues](https://github.com/FiveElements/ha-pronote-ng-cards/issues)**
+ 👉 **[Voir les issues](https://github.com/FiveElements/ha-carnet-scolaire-cards/issues)**
 
  Lorsque vous signalez un problème, indiquez si possible :
 
- - version de Pronote NG
-- version de Pronote NG Cards
+ - version de Carnet scolaire
+- version des cartes Carnet scolaire
 - version de Home Assistant
 - carte concernée
 - configuration YAML utilisée
@@ -422,23 +424,23 @@ npm test
 
  ## ⚠️ Important
 
- **Pronote NG Cards n'est pas développé, maintenu ou officiellement supporté par Index Éducation / PRONOTE.**
+ **Les cartes Carnet scolaire ne sont pas développées, maintenues ou officiellement supportées par Index Éducation / PRONOTE.**
 
  PRONOTE est un service tiers.
 
- Le fonctionnement des cartes dépend des données exposées par l'intégration Pronote NG et peut évoluer lorsque PRONOTE ou Home Assistant évoluent.
+ Le fonctionnement des cartes dépend des données exposées par l'intégration Carnet scolaire et peut évoluer lorsque PRONOTE ou Home Assistant évoluent.
 
 ---
 
  ## 📄 Licence
 
- Pronote NG Cards est distribué sous licence **MIT**.
+ Les cartes Carnet scolaire sont distribuées sous licence **MIT**.
 
 ---
 
  ## ⭐ Le projet vous est utile ?
 
- Si Pronote NG Cards vous permet de construire votre tableau de bord scolaire dans Home Assistant :
+ Si les cartes Carnet scolaire vous permettent de construire votre tableau de bord scolaire dans Home Assistant :
 
  - ⭐ ajoutez une étoile au projet
 - 🐛 signalez les problèmes

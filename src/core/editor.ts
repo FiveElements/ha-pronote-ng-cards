@@ -29,7 +29,7 @@ export class PronoteCardEditor extends LitElement {
       {
         name: 'device_id',
         required: true,
-        selector: { device: { integration: 'pronote_ng' } },
+        selector: { device: { integration: 'carnet_scolaire' } },
       },
       { name: 'title', selector: { text: {} } },
       ...(this.spec?.schema(config, this.t) ?? []),

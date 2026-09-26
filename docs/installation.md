@@ -1,8 +1,8 @@
 # Installation
 
 Cette bibliothèque de cartes ne fonctionne qu'avec l'intégration
-**Pronote NG** (domaine `pronote_ng`, dépôt
-[`FiveElements/ha-pronote-ng`](https://github.com/FiveElements/ha-pronote-ng)).
+**Carnet scolaire** (domaine `carnet_scolaire`, dépôt
+[`FiveElements/ha-carnet-scolaire`](https://github.com/FiveElements/ha-carnet-scolaire)).
 Installez et configurez d'abord cette intégration : les cartes se
 contentent de lire les entités qu'elle crée, elles ne collectent rien
 par elles-mêmes.
@@ -15,7 +15,7 @@ le fichier `hacs.json` du dépôt, et HACS refuse l'installation en deçà.
 Cette bibliothèque n'est pas dans le magasin par défaut de HACS.
 
 1. Dans HACS, ouvrez le menu, puis **Dépôts personnalisés**, et ajoutez
-   l'URL `https://github.com/FiveElements/ha-pronote-ng-cards` avec la
+   l'URL `https://github.com/FiveElements/ha-carnet-scolaire-cards` avec la
    catégorie **Lovelace / greffon**.
 2. Installez le dépôt qui apparaît, puis rechargez Home Assistant (ou
    au moins le cache du navigateur).
@@ -33,7 +33,7 @@ faut déclarer la ressource vous-même.
 1. Allez dans **Paramètres → Tableaux de bord**, ouvrez le menu (les
    trois points en haut à droite), puis choisissez **Ressources**.
 2. Cliquez sur **Ajouter une ressource**.
-3. Renseignez l'URL `/hacsfiles/ha-pronote-ng-cards/pronote-ng-cards.js`
+3. Renseignez l'URL `/hacsfiles/ha-carnet-scolaire-cards/carnet-scolaire-cards.js`
    et choisissez le type **Module JavaScript**.
 4. Rechargez la page, ou tout le navigateur, avant de chercher les
    cartes.
@@ -46,7 +46,7 @@ URL.
 ## Ajouter une carte
 
 Dans l'éditeur de tableau de bord, ajoutez une carte, cherchez
-« Pronote NG » : les cartes de cette bibliothèque apparaissent.
+« Carnet scolaire » : les cartes de cette bibliothèque apparaissent.
 Choisissez-en une, puis choisissez l'enfant dans le sélecteur
 d'appareil qui apparaît.
 
@@ -60,7 +60,7 @@ l'enfant, comme pour les sept autres cartes — jamais le compte.
 
 ## Pourquoi aucun identifiant d'entité n'apparaît nulle part
 
-Les identifiants d'entités de l'intégration Pronote NG dérivent du nom
+Les identifiants d'entités de l'intégration Carnet scolaire dérivent du nom
 affiché de l'enfant dans Home Assistant : ils sont donc propres à
 chaque installation, et une simple correction orthographique du nom
 affiché les change — silencieusement. Un identifiant copié depuis un
@@ -100,7 +100,7 @@ Assistant, qui identifie l'enfant partout où c'est utile. Mettez-en un
 quand vous empilez plusieurs cartes du même type dans une colonne.
 
 ```yaml
-type: custom:pronote-ng-notes
+type: custom:carnet-scolaire-notes
 device_id: <appareil de l'enfant>
 title: Notes du premier trimestre
 ```
@@ -113,7 +113,7 @@ pour les cas où la résolution automatique ne peut pas aboutir — une entité
 que vous avez déplacée sur un autre appareil, par exemple.
 
 ```yaml
-type: custom:pronote-ng-notes
+type: custom:carnet-scolaire-notes
 device_id: <appareil de l'enfant>
 entities:
   sensor:overall_average: sensor.un_identifiant_choisi_par_vous

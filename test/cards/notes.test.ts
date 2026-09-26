@@ -6,7 +6,7 @@ import { mountCard, text, type MountableElement } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-notes': HTMLElement & MountableElement;
+    'carnet-scolaire-notes': HTMLElement & MountableElement;
   }
 }
 
@@ -58,7 +58,7 @@ const base = () =>
 describe('carte notes', () => {
   it('affiche la moyenne générale, les dernières notes et les moyennes par matière', async () => {
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['average', 'latest', 'subjects'] },
       base()
     );
@@ -92,7 +92,7 @@ describe('carte notes', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['latest', 'subjects'] },
       hass
     );
@@ -113,7 +113,7 @@ describe('carte notes', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['subjects'] },
       hass
     );
@@ -137,7 +137,7 @@ describe('carte notes', () => {
         },
       ]);
       const el = await mountCard(
-        'pronote-ng-notes',
+        'carnet-scolaire-notes',
         { device_id: 'dev_enfant', sections: ['latest'] },
         hass
       );
@@ -165,7 +165,7 @@ describe('carte notes', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['latest'] },
       hass
     );
@@ -183,7 +183,7 @@ describe('carte notes', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['latest'] },
       hass
     );
@@ -202,7 +202,7 @@ describe('carte notes', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['latest'] },
       hass
     );
@@ -210,7 +210,7 @@ describe('carte notes', () => {
   });
 
   it("dit « introuvable » quand aucune des clés requiresAny n'existe", async () => {
-    const el = await mountCard('pronote-ng-notes', { device_id: 'dev_enfant' }, makeHass([]));
+    const el = await mountCard('carnet-scolaire-notes', { device_id: 'dev_enfant' }, makeHass([]));
     expect(text(el)).toContain('introuvable');
   });
 
@@ -237,7 +237,7 @@ describe('carte notes', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['average'] },
       hass
     );
@@ -266,7 +266,7 @@ describe('carte notes', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['average'] },
       hass
     );
@@ -313,7 +313,7 @@ describe('carte notes', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['report_card'] },
       hass
     );
@@ -348,7 +348,7 @@ describe('carte notes', () => {
     ]);
     // Aucune section précisée : `sectionsOf` retombe sur les trois valeurs
     // par défaut, qui n'incluent pas le bulletin.
-    const el = await mountCard('pronote-ng-notes', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-notes', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).not.toContain('Bulletin');
     // Assertion positive : les sections par défaut restent bien rendues.
@@ -375,7 +375,7 @@ describe('carte notes', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['latest'] },
       hass
     );

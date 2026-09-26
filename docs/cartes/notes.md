@@ -11,7 +11,7 @@ programme.*
 ## Configuration
 
 ```yaml
-type: custom:pronote-ng-notes
+type: custom:carnet-scolaire-notes
 device_id: <appareil de l'enfant>
 sections:
   - average
@@ -36,7 +36,7 @@ n'aide personne.
 Toutes les options renseignées, les quatre sections comprises :
 
 ```yaml
-type: custom:pronote-ng-notes
+type: custom:carnet-scolaire-notes
 device_id: <appareil de l'enfant>
 sections:
   - average
@@ -71,7 +71,7 @@ d'emploi du temps, et une note reste sans accent — ce n'est pas un défaut
 de collecte.
 
 ```yaml
-type: custom:pronote-ng-notes
+type: custom:carnet-scolaire-notes
 device_id: <appareil de l'enfant>
 subject_colors:
   MATHEMATIQUES: '#1e88e5'

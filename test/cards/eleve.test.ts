@@ -7,7 +7,7 @@ import type { MountableElement } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-eleve': HTMLElement & MountableElement;
+    'carnet-scolaire-eleve': HTMLElement & MountableElement;
   }
 }
 
@@ -33,7 +33,7 @@ const base = (
 
 describe('carte eleve', () => {
   it("affiche le nom de l'appareil et la classe", async () => {
-    const el = await mountCard('pronote-ng-eleve', { device_id: 'dev_enfant' }, base());
+    const el = await mountCard('carnet-scolaire-eleve', { device_id: 'dev_enfant' }, base());
     const t = text(el);
     expect(t).toContain('Enfant'); // nom de l'appareil dans la fixture
     expect(t).toContain('4e B');
@@ -41,7 +41,7 @@ describe('carte eleve', () => {
 
   it("n'affiche pas l'établissement par défaut", async () => {
     const el = await mountCard(
-      'pronote-ng-eleve',
+      'carnet-scolaire-eleve',
       { device_id: 'dev_enfant' },
       base({ establishment: 'Établissement synthétique' })
     );
@@ -50,7 +50,7 @@ describe('carte eleve', () => {
 
   it("affiche l'établissement uniquement si l'option est activée", async () => {
     const el = await mountCard(
-      'pronote-ng-eleve',
+      'carnet-scolaire-eleve',
       { device_id: 'dev_enfant', show_establishment: true },
       base({ establishment: 'Établissement synthétique' })
     );
@@ -59,7 +59,7 @@ describe('carte eleve', () => {
 
   it('dit « pas encore collectée » quand l’entité est indisponible', async () => {
     const el = await mountCard(
-      'pronote-ng-eleve',
+      'carnet-scolaire-eleve',
       { device_id: 'dev_enfant' },
       base({}, 'unavailable')
     );
@@ -67,13 +67,13 @@ describe('carte eleve', () => {
   });
 
   it("dit « introuvable » quand l'entité manque", async () => {
-    const el = await mountCard('pronote-ng-eleve', { device_id: 'dev_enfant' }, makeHass([]));
+    const el = await mountCard('carnet-scolaire-eleve', { device_id: 'dev_enfant' }, makeHass([]));
     expect(text(el)).toContain('sensor:class_name');
   });
 
   it('affiche « En cours » et signale le prochain cours et la période', async () => {
     const el = await mountCard(
-      'pronote-ng-eleve',
+      'carnet-scolaire-eleve',
       { device_id: 'dev_enfant' },
       base({}, '4e B', [
         {
@@ -105,7 +105,7 @@ describe('carte eleve', () => {
 
   it('affiche « Vacances » quand le capteur binaire correspondant est actif', async () => {
     const el = await mountCard(
-      'pronote-ng-eleve',
+      'carnet-scolaire-eleve',
       { device_id: 'dev_enfant' },
       base({}, '4e B', [
         {
@@ -123,13 +123,13 @@ describe('carte eleve', () => {
     // Sans binary_sensor:holidays / in_class / school_day résolus (tous
     // `optional`, un mercredi matin par exemple), la carte ne doit pas
     // affirmer « Pas de cours aujourd'hui » : elle tait ce qu'elle ignore.
-    const el = await mountCard('pronote-ng-eleve', { device_id: 'dev_enfant' }, base());
+    const el = await mountCard('carnet-scolaire-eleve', { device_id: 'dev_enfant' }, base());
     expect(el.shadowRoot?.querySelector('.chip')).toBeNull();
   });
 
   it("rend la pastille d'état dès qu'un seul des trois capteurs binaires est résolu", async () => {
     const el = await mountCard(
-      'pronote-ng-eleve',
+      'carnet-scolaire-eleve',
       { device_id: 'dev_enfant' },
       base({}, '4e B', [
         {
@@ -146,7 +146,7 @@ describe('carte eleve', () => {
 
   it("n'affiche aucune photo par défaut, même si l'entité image est disponible", async () => {
     const el = await mountCard(
-      'pronote-ng-eleve',
+      'carnet-scolaire-eleve',
       { device_id: 'dev_enfant' },
       base({}, '4e B', [
         {
@@ -163,7 +163,7 @@ describe('carte eleve', () => {
 
   it("affiche l'entity_picture de l'entité image uniquement si show_photo est activé", async () => {
     const el = await mountCard(
-      'pronote-ng-eleve',
+      'carnet-scolaire-eleve',
       { device_id: 'dev_enfant', show_photo: true },
       base({}, '4e B', [
         {
@@ -194,11 +194,11 @@ describe('carte eleve', () => {
     // raison de replier. Une suppression `next-line` ne couvre que la ligne
     // suivante — un repli la décale et la rend muette, ce qui est déjà arrivé.
     type CardConstructor = { getStubConfig(): Record<string, unknown> };
-    const ctor = customElements.get('pronote-ng-eleve');
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- getStubConfig est un statique propre aux cartes Pronote NG, absent de l'interface DOM générique CustomElementConstructor ; la suppression est posée sous une forme que le formateur ne peut pas décaler.
+    const ctor = customElements.get('carnet-scolaire-eleve');
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- getStubConfig est un statique propre aux cartes Carnet scolaire, absent de l'interface DOM générique CustomElementConstructor ; la suppression est posée sous une forme que le formateur ne peut pas décaler.
     const stubConfig = (ctor as unknown as CardConstructor).getStubConfig();
     const el = await mountCard(
-      'pronote-ng-eleve',
+      'carnet-scolaire-eleve',
       // Comme le ferait Home Assistant : la config du sélecteur, seulement
       // complétée du device_id que l'éditeur pose ensuite — jamais une
       // config écrite à la main par le test.

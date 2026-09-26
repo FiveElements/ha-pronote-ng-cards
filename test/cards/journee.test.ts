@@ -6,7 +6,7 @@ import { mountCard, text } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-journee': HTMLElement & {
+    'carnet-scolaire-journee': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
@@ -67,7 +67,7 @@ const jour = (lessons: unknown[], language = 'fr') =>
   );
 
 const monter = (config: Record<string, unknown>, lessons: unknown[] = JOURNEE) =>
-  mountCard('pronote-ng-journee', { device_id: 'dev_enfant', ...config }, jour(lessons));
+  mountCard('carnet-scolaire-journee', { device_id: 'dev_enfant', ...config }, jour(lessons));
 
 /** Les lignes de la grille, dans l'ordre du rendu. */
 const lignes = (el: HTMLElement) =>
@@ -200,7 +200,7 @@ const monterSemaine = (
   semaine: unknown[] = SEMAINE
 ) =>
   mountCard(
-    'pronote-ng-journee',
+    'carnet-scolaire-journee',
     { device_id: 'dev_enfant', ...config },
     hassSemaine(jourCourant, semaine)
   );
@@ -218,7 +218,7 @@ const fleches = (el: HTMLElement) =>
  * lui-même : un test qui clique une flèche éteinte et constate que rien n'a
  * bougé mesure donc bien le `disabled`, pas une coïncidence.
  */
-type Carte = HTMLElementTagNameMap['pronote-ng-journee'];
+type Carte = HTMLElementTagNameMap['carnet-scolaire-journee'];
 
 const cliquer = async (el: Carte, index: number) => {
   const boutons = [...(el.shadowRoot?.querySelectorAll('.jour-fleche') ?? [])];
@@ -531,7 +531,7 @@ describe('carte vue journée — le cours en cours', () => {
         state: 'off',
       },
     ]);
-    const el = await mountCard('pronote-ng-journee', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-journee', { device_id: 'dev_enfant' }, hass);
     expect(lignes(el).filter((x) => x.courant)).toHaveLength(0);
     // Appariement positif : la journée s'affiche quand même.
     expect(lignes(el).length).toBeGreaterThan(0);
@@ -569,7 +569,7 @@ describe('carte vue journée — le reste', () => {
         attributes: { lessons: 'pas un tableau' },
       },
     ]);
-    const el = await mountCard('pronote-ng-journee', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-journee', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain("Aucun cours aujourd'hui");
   });
 
@@ -648,7 +648,7 @@ describe('carte vue journée — la salle et le professeur', () => {
     // Le mot vient du catalogue. Un `Salle` code en dur passerait les tests
     // francais et resterait francais pour tout le monde.
     const el = await mountCard(
-      'pronote-ng-journee',
+      'carnet-scolaire-journee',
       { device_id: 'dev_enfant' },
       jour([JOURNEE[0]], 'it')
     );
@@ -668,7 +668,7 @@ describe('carte vue journée — la salle et le professeur', () => {
 describe('carte vue journée — l’en-tête de journée', () => {
   it('affiche la date et les bornes publiées par l’intégration', async () => {
     const el = await mountCard(
-      'pronote-ng-journee',
+      'carnet-scolaire-journee',
       { device_id: 'dev_enfant' },
       jourAvecBornes(JOURNEE, '2026-09-09T08:00:00+02:00', '2026-09-09T14:30:00+02:00')
     );
@@ -682,7 +682,7 @@ describe('carte vue journée — l’en-tête de journée', () => {
     // etre deduite — sans que l'attribut le dise. La carte va chercher le
     // drapeau sur le creneau qui porte cette fin.
     const el = await mountCard(
-      'pronote-ng-journee',
+      'carnet-scolaire-journee',
       { device_id: 'dev_enfant' },
       jourAvecBornes(
         [{ ...JOURNEE[0], end: '2026-09-09T09:00:00+02:00', end_inferred: true }],
@@ -701,7 +701,7 @@ describe('carte vue journée — l’en-tête de journée', () => {
     // Un creneau deduit AILLEURS dans la journee ne doit pas contaminer la
     // borne : seul celui qui porte `last_end` compte.
     const el = await mountCard(
-      'pronote-ng-journee',
+      'carnet-scolaire-journee',
       { device_id: 'dev_enfant' },
       jourAvecBornes(
         [
@@ -735,7 +735,7 @@ describe('carte vue journée — l’en-tête de journée', () => {
 
   it('se désactive entièrement sur demande', async () => {
     const el = await mountCard(
-      'pronote-ng-journee',
+      'carnet-scolaire-journee',
       { device_id: 'dev_enfant', show_header: false },
       jourAvecBornes(JOURNEE, '2026-09-09T08:00:00+02:00', '2026-09-09T14:30:00+02:00')
     );
@@ -871,7 +871,7 @@ describe('carte vue journée — la navigation d’un jour à l’autre', () => 
     const el = await monterSemaine();
     await cliquer(el, 1);
     expect(entete(el)?.date).toBe('jeudi 10 septembre');
-    el.setConfig({ type: 'custom:pronote-ng-journee', device_id: 'dev_enfant', show_meal: false });
+    el.setConfig({ type: 'custom:carnet-scolaire-journee', device_id: 'dev_enfant', show_meal: false });
     await el.updateComplete;
     expect(entete(el)?.date).toBe('mercredi 9 septembre');
   });

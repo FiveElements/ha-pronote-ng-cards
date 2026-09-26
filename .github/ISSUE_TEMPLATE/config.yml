@@ -8,20 +8,20 @@ blank_issues_enabled: false
 
 contact_links:
   - name: 📖 Documentation
-    url: https://fiveelements.github.io/ha-pronote-ng-cards/
+    url: https://fiveelements.github.io/ha-carnet-scolaire-cards/
     about: >-
       Installation, catalogue des cartes, options d'éditeur et un tableau de
       dépannage symptôme → cause → remède. La réponse y est souvent déjà.
 
-  - name: 🧩 Intégration Pronote NG
-    url: https://github.com/FiveElements/ha-pronote-ng
+  - name: 🧩 Intégration Carnet scolaire
+    url: https://github.com/FiveElements/ha-carnet-scolaire
     about: >-
       Le dépôt sœur qui fournit les entités : capteurs, calendriers, listes
       de tâches. Une entité absente ou une donnée fausse se règle souvent là,
       pas dans une carte.
 
   - name: 🤝 Guide de contribution
-    url: https://github.com/FiveElements/ha-pronote-ng-cards/blob/main/CONTRIBUTING.md
+    url: https://github.com/FiveElements/ha-carnet-scolaire-cards/blob/main/CONTRIBUTING.md
     about: >-
       Comment monter l'environnement, faire tourner la suite de tests, et les
       règles non négociables sur les identifiants.

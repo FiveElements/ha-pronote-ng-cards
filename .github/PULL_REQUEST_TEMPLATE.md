@@ -19,14 +19,14 @@ réel avec des entités synthétiques. -->
 - [ ] `npm run lint`
 - [ ] `npm run typecheck`
 - [ ] `npm test`
-- [ ] `npm run build` — `dist/pronote-ng-cards.js` se génère sans erreur
+- [ ] `npm run build` — `dist/carnet-scolaire-cards.js` se génère sans erreur
 
 ## Vérifications propres à ce dépôt
 
 - [ ] **Aucun identifiant d'entité en dur** : `sensor.<enfant>_prochain_cours`,
       jamais un identifiant complet plausible — ni dans le code, ni dans les
       tests, ni dans la documentation, ni dans les messages de commit.
-- [ ] **Aucun appel à un service autre que `pronote_ng.refresh`** depuis une
+- [ ] **Aucun appel à un service autre que `carnet_scolaire.refresh`** depuis une
       carte, et seulement sur action explicite de l'utilisateur — jamais au
       montage ni au rendu.
 - [ ] **Aucune donnée réelle** : nom d'élève, nom d'établissement,
@@ -38,7 +38,7 @@ réel avec des entités synthétiques. -->
       un gabarit Lit.
 - [ ] Rien de ce que j'ai écrit — code, documentation, message de commit —
       ne recommande d'activer le journaliseur `pronotepy` ; seul
-      `custom_components.pronote_ng` peut l'être.
+      `custom_components.carnet_scolaire` peut l'être.
 
 ## Issues liées
 

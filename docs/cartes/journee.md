@@ -19,7 +19,7 @@ programme.*
 ## Configuration
 
 ```yaml
-type: custom:pronote-ng-journee
+type: custom:carnet-scolaire-journee
 device_id: <appareil de l'enfant>
 show_meal: true
 show_rooms: true
@@ -61,7 +61,7 @@ ont eu lieu. `auto_advance` la fait passer au **prochain jour de cours** une
 fois le dernier cours terminé, plus le délai de `auto_advance_after`.
 
 ```yaml
-type: custom:pronote-ng-journee
+type: custom:carnet-scolaire-journee
 device_id: <appareil de l'enfant>
 auto_advance: true
 auto_advance_after: 30
@@ -189,13 +189,13 @@ la même vue font une fenêtre glissante :
 ```yaml
 type: vertical-stack
 cards:
-  - type: custom:pronote-ng-journee
+  - type: custom:carnet-scolaire-journee
     device_id: VOTRE_ENFANT
     day_offset: 0
-  - type: custom:pronote-ng-journee
+  - type: custom:carnet-scolaire-journee
     device_id: VOTRE_ENFANT
     day_offset: 1
-  - type: custom:pronote-ng-journee
+  - type: custom:carnet-scolaire-journee
     device_id: VOTRE_ENFANT
     day_offset: 2
 ```
@@ -333,7 +333,7 @@ couleur » plutôt que de laisser un vide qu'on lirait comme un défaut
 d'affichage.
 
 ```yaml
-type: custom:pronote-ng-journee
+type: custom:carnet-scolaire-journee
 device_id: <appareil de l'enfant>
 subject_colors:
   MATHEMATIQUES: '#1e88e5'
@@ -366,7 +366,7 @@ Toutes les options renseignées, `subject_colors` compris — c'est la seule
 option de la bibliothèque qui ne s'écrit qu'en YAML :
 
 ```yaml
-type: custom:pronote-ng-journee
+type: custom:carnet-scolaire-journee
 device_id: <appareil de l'enfant>
 show_header: true
 show_nav: true

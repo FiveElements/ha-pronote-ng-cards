@@ -12,7 +12,7 @@ programme.*
 ## Configuration
 
 ```yaml
-type: custom:pronote-ng-emploi-du-temps
+type: custom:carnet-scolaire-emploi-du-temps
 device_id: <appareil de l'enfant>
 range: today
 show_rooms: true
@@ -37,7 +37,7 @@ de travers.
 Toutes les options renseignées, copiable tel quel :
 
 ```yaml
-type: custom:pronote-ng-emploi-du-temps
+type: custom:carnet-scolaire-emploi-du-temps
 device_id: <appareil de l'enfant>
 range: week
 show_rooms: true
@@ -60,7 +60,7 @@ déplaît — et le serveur **gagne** sur votre table, donc une entrée qui
 double une couleur reçue ne fait plus rien.
 
 ```yaml
-type: custom:pronote-ng-emploi-du-temps
+type: custom:carnet-scolaire-emploi-du-temps
 device_id: <appareil de l'enfant>
 subject_colors:
   MATHEMATIQUES: '#1e88e5'

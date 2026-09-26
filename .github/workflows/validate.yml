@@ -25,5 +25,5 @@ jobs:
       - run: npm audit --audit-level=high
       - uses: actions/upload-artifact@v7
         with:
-          name: pronote-ng-cards
-          path: dist/pronote-ng-cards.js
+          name: carnet-scolaire-cards
+          path: dist/carnet-scolaire-cards.js

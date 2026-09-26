@@ -209,5 +209,5 @@ portée des deux.
 
 Le tour complet des cartes natives — quelle carte pour quelle donnée, au-delà
 de l'agenda — est dans
-[Afficher les données](https://fiveelements.github.io/ha-pronote-ng/AFFICHER-LES-DONNEES/),
+[Afficher les données](https://fiveelements.github.io/ha-carnet-scolaire/AFFICHER-LES-DONNEES/),
 côté intégration.

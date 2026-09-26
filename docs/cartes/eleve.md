@@ -13,7 +13,7 @@ horaires et les valeurs sont inventés ; la matière et la classe sont ordinaire
 Un seul réglage obligatoire : l'appareil de l'enfant.
 
 ```yaml
-type: custom:pronote-ng-eleve
+type: custom:carnet-scolaire-eleve
 device_id: <appareil de l'enfant>
 ```
 
@@ -29,7 +29,7 @@ device_id: <appareil de l'enfant>
 Toutes les options renseignées, copiable tel quel :
 
 ```yaml
-type: custom:pronote-ng-eleve
+type: custom:carnet-scolaire-eleve
 device_id: <appareil de l'enfant>
 show_photo: true
 show_establishment: false

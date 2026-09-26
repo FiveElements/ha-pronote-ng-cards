@@ -57,7 +57,7 @@ import { chip, listRow } from '../core/ui/parts';
  * ## L'invariant n'est pas cassé, et la réponse naïve est « oui »
  *
  * L'invariant du projet est qu'une carte ne déclenche jamais de collecte **à
- * l'affichage**, pas qu'elle ne puisse rien déclencher : `pronote_ng.refresh`
+ * l'affichage**, pas qu'elle ne puisse rien déclencher : `carnet_scolaire.refresh`
  * est dans la liste blanche depuis toujours et c'est bien un geste délibéré.
  * Une bascule de mode a la même forme — un clic explicite, jamais un rendu.
  *
@@ -119,8 +119,8 @@ const TONES: Record<string, 'ok' | 'warn' | 'problem'> = {
 };
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-mode-collecte',
-  name: 'Pronote NG — Mode de collecte',
+  type: 'carnet-scolaire-mode-collecte',
+  name: 'Carnet scolaire — Mode de collecte',
   description: 'Le mode de récupération en vigueur, et de quoi le forcer à la main.',
   key: 'mode_collecte',
   // Les entités de diagnostic vivent sur l'appareil de compte. L'utilisateur

@@ -40,7 +40,7 @@ ferait retirer une table qui sert peut-être encore.
 ## Écrire la table
 
 ```yaml
-type: custom:pronote-ng-journee
+type: custom:carnet-scolaire-journee
 device_id: <appareil de l'enfant>
 subject_colors:
   MATHEMATIQUES: '#1e88e5'

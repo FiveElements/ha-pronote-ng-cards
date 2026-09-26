@@ -6,7 +6,7 @@ import { mountCard, text } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-prochain-cours': HTMLElement & {
+    'carnet-scolaire-prochain-cours': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
@@ -37,7 +37,7 @@ describe('carte prochain-cours', () => {
       teachers: ['M. Dupont'],
       canceled: false,
     });
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Mathématiques');
     expect(t).toContain('08:30');
@@ -50,13 +50,13 @@ describe('carte prochain-cours', () => {
       subject: 'Histoire',
       teachers: 'Mme Martin',
     });
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('Mme Martin');
   });
 
   it('signale un cours annulé sans le masquer', async () => {
     const hass = lesson('2026-09-08T08:30:00+02:00', { subject: 'Anglais', canceled: true });
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Anglais');
     expect(t).toContain('annulé');
@@ -66,7 +66,7 @@ describe('carte prochain-cours', () => {
     // L'intégration expose 'none' — distinct de 'unknown'/'unavailable', qui
     // restent du ressort du socle — quand il n'y a plus de cours à venir.
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant' },
       lesson('none')
     );
@@ -82,7 +82,7 @@ describe('carte prochain-cours', () => {
       classroom: 'B204',
       teachers: ['M. Dupont'],
     });
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Mathématiques');
     expect(t).toContain('B204');
@@ -95,7 +95,7 @@ describe('carte prochain-cours', () => {
       subject: 'Mathématiques',
       end: '2026-09-08T09:25:00+02:00',
     });
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('08:30');
     expect(t).toContain('09:25');
@@ -103,7 +103,7 @@ describe('carte prochain-cours', () => {
 
   it('dit « pas encore collectée » quand l’entité est indisponible', async () => {
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant' },
       lesson('unavailable')
     );
@@ -112,7 +112,7 @@ describe('carte prochain-cours', () => {
 
   it("dit « introuvable » et nomme la clé quand l'entité manque", async () => {
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant' },
       makeHass([])
     );
@@ -144,7 +144,7 @@ describe('carte prochain-cours', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant', show_wake_up: true, show_end_of_day: true },
       hass
     );
@@ -169,7 +169,7 @@ describe('carte prochain-cours', () => {
         state: '2026-09-15T09:00:00+02:00',
       },
     ]);
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).not.toContain('Prochain contrôle');
   });
 
@@ -184,7 +184,7 @@ describe('carte prochain-cours', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant', show_next_test: true },
       hass
     );
@@ -213,7 +213,7 @@ describe('carte prochain-cours', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant', show_next_test: true },
       hass
     );
@@ -230,7 +230,7 @@ describe('carte prochain-cours', () => {
   // personne ne peut tenir.
   it('marque une heure de fin deduite', async () => {
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant' },
       makeHass([
         {
@@ -256,7 +256,7 @@ describe('carte prochain-cours', () => {
 
   it('ne marque rien quand l’heure de fin vient du serveur', async () => {
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant' },
       makeHass([
         {
@@ -279,7 +279,7 @@ describe('carte prochain-cours', () => {
 
   it("n'affiche aucune pastille « en cours » quand binary_sensor:in_class est absent", async () => {
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant' },
       lesson('2026-09-08T08:30:00+02:00', { subject: 'Mathématiques' })
     );
@@ -305,7 +305,7 @@ describe('carte prochain-cours', () => {
         state: 'off',
       },
     ]);
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).not.toContain('Cours en ce moment');
     expect(t).toContain('Mathématiques');
@@ -327,7 +327,7 @@ describe('carte prochain-cours', () => {
         state: 'on',
       },
     ]);
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Cours en ce moment');
     // Le cours affiché reste celui d'après : la pastille ajoute un repère,
@@ -347,7 +347,7 @@ describe('carte prochain-cours', () => {
     // Sans pastille, il n'y a aucune ambiguïté à lever : l'intitulé ne serait
     // qu'une redite du nom de la carte.
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant' },
       makeHass([
         {
@@ -368,7 +368,7 @@ describe('carte prochain-cours', () => {
 
   it("n'affiche aucune notice de journée quand binary_sensor:lessons_canceled est absent", async () => {
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant' },
       lesson('2026-09-08T08:30:00+02:00', { subject: 'Anglais' })
     );
@@ -393,7 +393,7 @@ describe('carte prochain-cours', () => {
         state: 'off',
       },
     ]);
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).not.toContain('Des cours sont annulés aujourd’hui');
     expect(t).toContain('Anglais');
@@ -415,7 +415,7 @@ describe('carte prochain-cours', () => {
         state: 'on',
       },
     ]);
-    const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Des cours sont annulés aujourd’hui');
     expect(t).toContain('Anglais');
@@ -440,7 +440,7 @@ describe('carte prochain-cours', () => {
           state: 'on',
         },
       ]);
-      const el = await mountCard('pronote-ng-prochain-cours', { device_id: 'dev_enfant' }, hass);
+      const el = await mountCard('carnet-scolaire-prochain-cours', { device_id: 'dev_enfant' }, hass);
       const t = text(el);
       // La notice de journée apparaît bien...
       expect(t).toContain('Des cours sont annulés aujourd’hui');

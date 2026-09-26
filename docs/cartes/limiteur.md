@@ -19,7 +19,7 @@ n'est pas encore là — au lieu de conclure à une panne et de retenter.
 Comme les huit autres, elle se configure avec l'appareil de **l'enfant**.
 
 ```yaml
-type: custom:pronote-ng-limiteur
+type: custom:carnet-scolaire-limiteur
 device_id: <appareil de l'enfant>
 show_refresh: true
 ```
@@ -41,7 +41,7 @@ plus déroutant de l'intégration.
 Toutes les options renseignées, copiable tel quel :
 
 ```yaml
-type: custom:pronote-ng-limiteur
+type: custom:carnet-scolaire-limiteur
 device_id: <appareil de l'enfant>
 show_refresh: true
 refresh_tier: timetable
@@ -74,7 +74,7 @@ l'état brut plutôt que sur une clé technique.
 
 ## Le bouton de rafraîchissement
 
-Il appelle `pronote_ng.refresh`, qui **ne place aucune requête** : il
+Il appelle `carnet_scolaire.refresh`, qui **ne place aucune requête** : il
 relève une priorité auprès de l'ordonnanceur, dans la limite du budget.
 C'est écrit sous le bouton, parce que « rafraîchir » suggère le contraire.
 

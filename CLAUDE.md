@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run lint        # oxlint src test  (typeAware activé)
 npm run typecheck   # tsc --noEmit
 npm test            # vitest run
-npm run build       # vite build → dist/pronote-ng-cards.js
+npm run build       # vite build → dist/carnet-scolaire-cards.js
 npm run format      # prettier --write src test
 ```
 
@@ -51,11 +51,13 @@ retarder. Les commandes, elles, ne retardent pas — préférez-les.
 
 ## Ce que le projet ne fera jamais
 
-Ces contraintes viennent de l'intégration `pronote_ng` et priment sur toute considération de confort. `test/guards.test.ts` les rend **exécutables** : un test échoue si l'une est enfreinte.
+Ces contraintes viennent de l'intégration `carnet_scolaire` et priment sur toute considération de confort. `test/guards.test.ts` les rend **exécutables** : un test échoue si l'une est enfreinte.
 
 - **Jamais d'identifiant d'entité en dur.** Les identifiants dérivent du nom affiché de l'enfant : ils sont propres à chaque installation. Tout passe par les clés qualifiées et la résolution (voir ci-dessous).
 - **Six services à réponse sont hors d'atteinte, y compris leur nom en commentaire** : ceux qui rendent l'URL iCal, le bloc d'identité, le PDF d'emploi du temps, l'état du limiteur, les identifiants exportés, le numéro INE. L'URL iCal donne accès à l'emploi du temps complet d'un élève **sans aucun identifiant** — elle se traite comme un mot de passe. Ces données ne sont délibérément pas des états d'entités : ce sont des réponses de service, pour qu'aucune surface partageable ne les retienne.
-- **Quatre appels de service seulement, en deux listes closes**, garanties par le type dans `src/core/types.ts`. `AllowedCall` pour ceux qui agissent sans rien rendre : `pronote_ng.refresh`, `todo.update_item` et `select.select_option` (la bascule de mode de collecte, ajoutée le 10 septembre 2026). `AllowedResponseCall` pour le seul service à réponse : `pronote_ng.get_attachment_url`, ajouté le 24 septembre 2026 sur accord explicite du propriétaire, pour que l'adresse signée d'une pièce jointe ne soit plus publiée dans un attribut d'entité. Une carte ne déclenche **jamais** de collecte à l'affichage — le serveur PRONOTE sanctionne l'adresse IP, et le budget de requêtes est géré par un limiteur côté intégration. `refresh` ne place aucune requête : il relève une priorité auprès de l'ordonnanceur. `get_attachment_url` non plus : il signe un chemin à partir de l'instantané en mémoire, et ne s'appelle que d'un clic.
+- **Quatre appels de service seulement, en deux listes closes**, garanties par le type dans `src/core/types.ts`. `AllowedCall` pour ceux qui agissent sans rien rendre : `carnet_scolaire.refresh`, `todo.update_item` et `select.select_option` (la bascule de mode de collecte, ajoutée le 10 septembre 2026). `AllowedResponseCall` pour le seul service à réponse : `carnet_scolaire.get_attachment_url`, ajouté le 24 septembre 2026 sur accord explicite du propriétaire, pour que l'adresse signée d'une pièce jointe ne soit plus publiée dans un attribut d'entité. Une carte ne déclenche **jamais** de collecte à l'affichage — le serveur PRONOTE sanctionne l'adresse IP, et le budget de requêtes est géré par un limiteur côté intégration. `refresh` ne place aucune requête : il relève une priorité auprès de l'ordonnanceur. `get_attachment_url` non plus : il signe un chemin à partir de l'instantané en mémoire, et ne s'appelle que d'un clic.
+
+  Le 26 septembre 2026, le domaine de l'intégration est passé de `pronote_ng` à `carnet_scolaire`, sur décision explicite du propriétaire, en même temps que le renommage du projet en « Carnet scolaire ». Les quatre appels sont restés les mêmes, seul le préfixe a changé. La garde des six services interdits compare les noms sans le domaine, elle n'a donc rien eu à changer.
 
   Cette règle a dit « deux » pendant deux semaines après l'arrivée du troisième. Une liste écrite ici se tient à jour en même temps que le type et `test/guards.test.ts`, dans la même publication, ou elle ment.
 - **Ne jamais conseiller d'activer le journaliseur `pronotepy`.** Il y a **deux** sites de fuite, de natures différentes, et les deux sont des enfants de `pronotepy` — activer le parent les allume tous les deux. Vérifiés dans la source publique, pas rapportés :
@@ -64,7 +66,7 @@ Ces contraintes viennent de l'intégration `pronote_ng` et priment sur toute con
 
   Le second est le pire des deux, et pas parce qu'il est en clair. Il ne se déclenche que sur un chemin de décodage **raté** — c'est-à-dire précisément le jour où quelqu'un vient d'activer le DEBUG pour comprendre pourquoi une collecte échoue. La fuite attend exactement le moment où on la provoque.
 
-  Pour déboguer, uniquement `custom_components.pronote_ng: debug`. Les numéros de ligne sont volontairement absents de cette règle : ils bougent à chaque version de la dépendance, alors que les deux mécanismes, eux, sont stables et se retrouvent par recherche.
+  Pour déboguer, uniquement `custom_components.carnet_scolaire: debug`. Les numéros de ligne sont volontairement absents de cette règle : ils bougent à chaque version de la dépendance, alors que les deux mécanismes, eux, sont stables et se retrouvent par recherche.
 - **Aucune donnée réelle** — nom d'élève, d'établissement, de compte — dans le code, les tests, la documentation ou les messages de commit. Valeurs synthétiques : `demo.example.invalid`, `dev_enfant`, `sensor.abc_prochain_cours`.
 - **Une capture de l'instance réelle n'est publiable que si elle ne porte aucun libellé.** Dès qu'on y lit une matière, un horaire, une salle ou un professeur, c'est un SVG écrit à la main, dans l'idiome de `docs/assets/apercu.svg`, avec un `<title>`, un `<desc>` et une légende qui disent que l'illustration est synthétique. Le critère est **mécanique** exprès : « y a-t-il un libellé ? » se vérifie en ouvrant le fichier, là où « est-ce identifiant ? » demande un jugement, et un jugement se discute jusqu'à ce que quelqu'un se lasse.
 

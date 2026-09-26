@@ -1,8 +1,8 @@
-# Pronote NG — Cartes
+# Carnet scolaire — Cartes
 
 Une bibliothèque de dix cartes Lovelace pour afficher, dans un
 tableau de bord Home Assistant, les données scolaires collectées par
-l'intégration [Pronote NG](https://github.com/FiveElements/ha-pronote-ng) :
+l'intégration [Carnet scolaire](https://github.com/FiveElements/ha-carnet-scolaire) :
 emploi du temps, devoirs, notes, cantine, vie scolaire.
 
 Chaque carte se configure avec un seul réglage : l'appareil de

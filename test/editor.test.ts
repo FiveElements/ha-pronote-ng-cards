@@ -7,7 +7,7 @@ import { makeHass } from './fixtures/hass';
 import { mountCard, text } from './fixtures/mount';
 
 const SPEC: CardSpec = {
-  type: 'pronote-ng-test-editor',
+  type: 'carnet-scolaire-test-editor',
   name: 'Test',
   description: 'Carte de test',
   key: 'notes',
@@ -32,18 +32,18 @@ class TestEditor extends PronoteCardEditor {
   }
 }
 
-if (!customElements.get('pronote-ng-card-editor-test')) {
-  customElements.define('pronote-ng-card-editor-test', TestEditor);
+if (!customElements.get('carnet-scolaire-card-editor-test')) {
+  customElements.define('carnet-scolaire-card-editor-test', TestEditor);
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-card-editor-test': TestEditor;
+    'carnet-scolaire-card-editor-test': TestEditor;
   }
 }
 
 const mount = (config: Record<string, unknown>, hass: unknown) =>
-  mountCard('pronote-ng-card-editor-test', config, hass, { spec: SPEC });
+  mountCard('carnet-scolaire-card-editor-test', config, hass, { spec: SPEC });
 
 describe('PronoteCardEditor — diagnostic de résolution', () => {
   it('signale les clés trouvées et les clés introuvables', async () => {
@@ -125,13 +125,13 @@ describe('PronoteCardEditor — diagnostic de résolution', () => {
     let received: Translate | undefined;
     const SPEC_T: CardSpec = {
       ...SPEC,
-      type: 'pronote-ng-test-editor-t',
+      type: 'carnet-scolaire-test-editor-t',
       schema: (_config, t) => {
         received = t;
         return [];
       },
     };
-    await mountCard('pronote-ng-card-editor-test', { device_id: 'dev_enfant' }, makeHass([]), {
+    await mountCard('carnet-scolaire-card-editor-test', { device_id: 'dev_enfant' }, makeHass([]), {
       spec: SPEC_T,
     });
     expect(received).toBeTypeOf('function');
@@ -141,11 +141,11 @@ describe('PronoteCardEditor — diagnostic de résolution', () => {
   it("schema(config, t) reçoit t optionnel : une carte non migrée qui l'ignore continue de fonctionner", async () => {
     const SPEC_NO_T: CardSpec = {
       ...SPEC,
-      type: 'pronote-ng-test-editor-no-t',
+      type: 'carnet-scolaire-test-editor-no-t',
       schema: () => [{ name: 'legacy_field', selector: { text: {} } }],
     };
     const el = await mountCard(
-      'pronote-ng-card-editor-test',
+      'carnet-scolaire-card-editor-test',
       { device_id: 'dev_enfant' },
       makeHass([]),
       { spec: SPEC_NO_T }

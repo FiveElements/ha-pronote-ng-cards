@@ -13,9 +13,9 @@ body:
         elle lit `hass.states`, rien d'autre. Une proposition qui suppose une
         collecte à la demande (un bouton « recalculer », un rafraîchissement
         au survol) revient en réalité sur le budget de requêtes de
-        l'intégration `pronote_ng`, pas sur cette carte — voyez le [chapitre
+        l'intégration `carnet_scolaire`, pas sur cette carte — voyez le [chapitre
         sur la
-        cadence](https://fiveelements.github.io/ha-pronote-ng/GUIDE-UTILISATEUR/#8-r%C3%A9glages-et-cadence)
+        cadence](https://fiveelements.github.io/ha-carnet-scolaire/GUIDE-UTILISATEUR/#8-r%C3%A9glages-et-cadence)
         du dépôt sœur si vous voulez chiffrer vous-même.
 
         Ça ne veut pas dire non : ça veut dire que la question utile est
@@ -65,7 +65,7 @@ body:
       label: Savez-vous d'où viendrait la donnée
       description: >-
         Optionnel, et très utile si vous le savez. Le nom du capteur ou de
-        l'entité côté intégration `pronote_ng`, ou simplement l'endroit du
+        l'entité côté intégration `carnet_scolaire`, ou simplement l'endroit du
         tableau de bord actuel où l'information apparaît déjà, sous une autre
         forme. Si elle est déjà dans un attribut d'une entité existante,
         dites lequel.
@@ -90,7 +90,7 @@ body:
         - label: >-
             J'ai compris qu'une carte ne collecte jamais de donnée
             elle-même, et qu'une proposition qui en aurait besoin se discute
-            d'abord côté intégration `pronote_ng`.
+            d'abord côté intégration `carnet_scolaire`.
           required: true
         - label: >-
             Cette description ne contient aucun identifiant, nom d'élève ni

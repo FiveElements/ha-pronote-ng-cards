@@ -7,7 +7,7 @@ import type { MountableElement } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-evaluations': HTMLElement & MountableElement;
+    'carnet-scolaire-evaluations': HTMLElement & MountableElement;
   }
 }
 
@@ -51,7 +51,7 @@ const evals = (attributes: Record<string, unknown>, state = '2') =>
 describe('carte évaluations', () => {
   it('liste les évaluations, la plus récente en tête', async () => {
     const el = await mountCard(
-      'pronote-ng-evaluations',
+      'carnet-scolaire-evaluations',
       { device_id: 'dev_enfant' },
       evals({ items })
     );
@@ -64,7 +64,7 @@ describe('carte évaluations', () => {
 
   it('détaille les compétences et leur niveau, sans jamais les traduire', async () => {
     const el = await mountCard(
-      'pronote-ng-evaluations',
+      'carnet-scolaire-evaluations',
       { device_id: 'dev_enfant' },
       evals({ items })
     );
@@ -79,7 +79,7 @@ describe('carte évaluations', () => {
 
   it('retombe sur l’abréviation quand le niveau complet manque', async () => {
     const el = await mountCard(
-      'pronote-ng-evaluations',
+      'carnet-scolaire-evaluations',
       { device_id: 'dev_enfant' },
       evals({
         items: [
@@ -98,7 +98,7 @@ describe('carte évaluations', () => {
 
   it('masque le détail des compétences quand l’option est désactivée', async () => {
     const el = await mountCard(
-      'pronote-ng-evaluations',
+      'carnet-scolaire-evaluations',
       { device_id: 'dev_enfant', show_acquisitions: false },
       evals({ items })
     );
@@ -112,7 +112,7 @@ describe('carte évaluations', () => {
     // C'est le cas de la rentrée : la collecte fonctionne, il n'y a
     // simplement rien à montrer. Distinct de « pas encore collectée ».
     const el = await mountCard(
-      'pronote-ng-evaluations',
+      'carnet-scolaire-evaluations',
       { device_id: 'dev_enfant' },
       evals({ items: [] }, '0')
     );
@@ -123,7 +123,7 @@ describe('carte évaluations', () => {
 
   it('ne disparaît pas quand `items` n’est pas un tableau', async () => {
     const el = await mountCard(
-      'pronote-ng-evaluations',
+      'carnet-scolaire-evaluations',
       { device_id: 'dev_enfant' },
       evals({ items: { a: 1 } })
     );
@@ -132,7 +132,7 @@ describe('carte évaluations', () => {
 
   it('survit à une compétence nulle et à une évaluation sans date', async () => {
     const el = await mountCard(
-      'pronote-ng-evaluations',
+      'carnet-scolaire-evaluations',
       { device_id: 'dev_enfant' },
       evals({
         items: [
@@ -155,12 +155,12 @@ describe('carte évaluations', () => {
         unloaded: true,
       },
     ]);
-    const el = await mountCard('pronote-ng-evaluations', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-evaluations', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('pas encore collectée');
   });
 
   it('dit « introuvable » quand l’entité est absente de l’appareil', async () => {
-    const el = await mountCard('pronote-ng-evaluations', { device_id: 'dev_enfant' }, makeHass([]));
+    const el = await mountCard('carnet-scolaire-evaluations', { device_id: 'dev_enfant' }, makeHass([]));
     expect(text(el)).toContain('sensor:evaluations');
   });
 

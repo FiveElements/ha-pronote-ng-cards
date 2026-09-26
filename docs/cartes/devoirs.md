@@ -12,7 +12,7 @@ programme.*
 ## Configuration
 
 ```yaml
-type: custom:pronote-ng-devoirs
+type: custom:carnet-scolaire-devoirs
 device_id: <appareil de l'enfant>
 status: todo
 period: all
@@ -39,7 +39,7 @@ Les trois options les plus courantes, copiables telles quelles. Les autres
 leur section plus bas :
 
 ```yaml
-type: custom:pronote-ng-devoirs
+type: custom:carnet-scolaire-devoirs
 device_id: <appareil de l'enfant>
 status: todo
 period: from_tomorrow
@@ -61,7 +61,7 @@ le filtre « à faire », **1 647** avec « tous ».
 `max_lines` replie l'énoncé au nombre de lignes voulu :
 
 ```yaml
-type: custom:pronote-ng-devoirs
+type: custom:carnet-scolaire-devoirs
 device_id: <appareil de l'enfant>
 max_lines: 3
 ```
@@ -154,7 +154,7 @@ déplaît — et le serveur **gagne** sur votre table, donc une entrée qui
 double une couleur reçue ne fait plus rien.
 
 ```yaml
-type: custom:pronote-ng-devoirs
+type: custom:carnet-scolaire-devoirs
 device_id: <appareil de l'enfant>
 subject_colors:
   MATHEMATIQUES: '#1e88e5'
@@ -450,7 +450,7 @@ construction, avec sa pièce ouvrable : c'est arrivé le 10 septembre 2026, où
 
 **Avec une intégration récente, l'adresse d'un fichier n'est plus publiée
 nulle part.** La pastille est un bouton : au clic, la carte ouvre un onglet,
-demande l'adresse au service `pronote_ng.get_attachment_url`, et y dirige
+demande l'adresse au service `carnet_scolaire.get_attachment_url`, et y dirige
 l'onglet. Rien ne change à l'œil — la pastille reste soulignée.
 
 La raison est la sécurité, et c'est le propriétaire qui l'a tranchée : une

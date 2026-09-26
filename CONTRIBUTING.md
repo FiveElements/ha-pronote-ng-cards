@@ -1,13 +1,13 @@
-# Contribuer à Pronote NG — Cartes
+# Contribuer à Carnet scolaire — Cartes
 
 Merci de l'intérêt. Ce document dit comment travailler sur ce dépôt, et
 pourquoi certaines règles sont plus strictes qu'ailleurs : les cartes que ce
 dépôt distribue affichent des données qui proviennent d'un compte scolaire
 d'enfant, même si le code lui-même ne manipule aucun identifiant.
 
-Le dépôt s'appelle `ha-pronote-ng-cards` et distribue par HACS un greffon
-Lovelace pour l'intégration sœur **Pronote NG** (dépôt `ha-pronote-ng`,
-domaine Home Assistant `pronote_ng`).
+Le dépôt s'appelle `ha-carnet-scolaire-cards` et distribue par HACS un greffon
+Lovelace pour l'intégration sœur **Carnet scolaire** (dépôt `ha-carnet-scolaire`,
+domaine Home Assistant `carnet_scolaire`).
 
 ---
 
@@ -28,7 +28,7 @@ résoudre et s'afficher — elle ne déclenche jamais de collecte PRONOTE en
 s'affichant. Le type qui décrit ce qu'une carte peut faire n'autorise que
 deux appels de service, et aucun autre ne compile :
 
-- `pronote_ng.refresh`, et seulement sur action explicite de l'utilisateur
+- `carnet_scolaire.refresh`, et seulement sur action explicite de l'utilisateur
   — un bouton « Rafraîchir », jamais au montage ni au rendu. Il ne place
   aucune requête PRONOTE : il relève une priorité auprès de l'ordonnanceur.
 - `todo.update_item`, qui coche un devoir sur une entité `todo` de Home
@@ -54,7 +54,7 @@ Le journaliseur du module `pronotepy` écrit, lui, l'hexadécimal de chaque
 requête au niveau DEBUG, identifiants compris : ce dépôt ne le recommande
 **jamais**, dans sa documentation comme dans ses gabarits d'issue. Si un
 renseignement de diagnostic est utile, il ne nomme que
-`custom_components.pronote_ng`.
+`custom_components.carnet_scolaire`.
 
 ---
 
@@ -131,7 +131,7 @@ npm test
 npm run build
 ```
 
-`npm run build` produit `dist/pronote-ng-cards.js`. Ce fichier n'est **jamais
+`npm run build` produit `dist/carnet-scolaire-cards.js`. Ce fichier n'est **jamais
 committé** — `dist/` est dans `.gitignore` — c'est le workflow de
 publication qui le construit et l'attache à chaque *release*, et c'est ce
 fichier, et lui seul, que `hacs.json` déclare et que HACS installe.
@@ -153,7 +153,7 @@ discipline des trois états qu'une carte doit distinguer :
 | Vide | l'entité a un état, la donnée elle-même est vide | le vide est l'information ; message propre à la carte |
 
 Le détail est dans
-`docs/superpowers/specs/2026-09-08-cartes-pronote-ng-design.md`.
+`docs/superpowers/specs/2026-09-08-cartes-carnet-scolaire-design.md`.
 
 ---
 
@@ -185,7 +185,7 @@ Réservé aux mainteneurs.
 1. Fusionner sur `main`, workflows au vert.
 2. `git tag -a vX.Y.Z && git push origin vX.Y.Z`.
 
-Le workflow `Publication` construit `dist/pronote-ng-cards.js` et l'attache à
+Le workflow `Publication` construit `dist/carnet-scolaire-cards.js` et l'attache à
 la *release* créée pour le tag.
 
 ---
@@ -201,7 +201,7 @@ contiennent des identifiants.
 
 ## 9. Où lire la suite
 
-Le tout est publié sur <https://fiveelements.github.io/ha-pronote-ng-cards/>.
+Le tout est publié sur <https://fiveelements.github.io/ha-carnet-scolaire-cards/>.
 
 **Deux documents de contributeur ne sont pas sur le site**, délibérément — ils
 sont destinés à qui implémente ou relit une carte, non à qui l'installe :

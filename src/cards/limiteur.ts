@@ -29,8 +29,8 @@ const TONES: Record<string, 'ok' | 'warn' | 'problem'> = {
 };
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-limiteur',
-  name: 'Pronote NG — Limiteur',
+  type: 'carnet-scolaire-limiteur',
+  name: 'Carnet scolaire — Limiteur',
   description: "Budget d'appels, état du limiteur et prochaine collecte.",
   key: 'limiteur',
   // Les entités de diagnostic sont sur l'appareil de compte. Le socle suit

@@ -11,7 +11,7 @@ programme.*
 ## Configuration
 
 ```yaml
-type: custom:pronote-ng-prochain-cours
+type: custom:carnet-scolaire-prochain-cours
 device_id: <appareil de l'enfant>
 ```
 
@@ -31,7 +31,7 @@ active** : une option éteinte ne coûte aucun balayage de registre.
 Toutes les options renseignées, copiable tel quel :
 
 ```yaml
-type: custom:pronote-ng-prochain-cours
+type: custom:carnet-scolaire-prochain-cours
 device_id: <appareil de l'enfant>
 show_wake_up: true
 show_end_of_day: true

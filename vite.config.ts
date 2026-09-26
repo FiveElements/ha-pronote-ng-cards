@@ -5,7 +5,7 @@ export default defineConfig({
     lib: {
       entry: 'src/index.ts',
       formats: ['es'],
-      fileName: () => 'pronote-ng-cards.js',
+      fileName: () => 'carnet-scolaire-cards.js',
     },
     rolldownOptions: { external: [] },
     target: 'es2021',

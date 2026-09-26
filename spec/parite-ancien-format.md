@@ -37,14 +37,14 @@ Aucun identifiant relevé sur une instance réelle n'apparaît dans ce document,
 
 | Carte d'origine | Carte de ce dépôt | Note |
 | --- | --- | --- |
-| Emploi du temps | `pronote-ng-emploi-du-temps` | Correspondance directe. |
-| Devoirs | `pronote-ng-devoirs` | Directe. Coche conditionnelle — voir DEV-10. |
-| Notes | `pronote-ng-notes` | Section des dernières notes. |
-| Moyennes | `pronote-ng-notes` | **Fusion.** Sections moyenne et matières. Même famille d'entités, même période. |
-| Évaluations | `pronote-ng-evaluations` | Directe. |
-| Cantine | `pronote-ng-menu` | Directe. États vides et périmètre à écrire de zéro. |
-| Absences | `pronote-ng-vie-scolaire` | **Fusion** avec les retards. |
-| Retards | `pronote-ng-vie-scolaire` | Fusion bénéfique — voir VIE-7. |
+| Emploi du temps | `carnet-scolaire-emploi-du-temps` | Correspondance directe. |
+| Devoirs | `carnet-scolaire-devoirs` | Directe. Coche conditionnelle — voir DEV-10. |
+| Notes | `carnet-scolaire-notes` | Section des dernières notes. |
+| Moyennes | `carnet-scolaire-notes` | **Fusion.** Sections moyenne et matières. Même famille d'entités, même période. |
+| Évaluations | `carnet-scolaire-evaluations` | Directe. |
+| Cantine | `carnet-scolaire-menu` | Directe. États vides et périmètre à écrire de zéro. |
+| Absences | `carnet-scolaire-vie-scolaire` | **Fusion** avec les retards. |
+| Retards | `carnet-scolaire-vie-scolaire` | Fusion bénéfique — voir VIE-7. |
 | *aucune* | `eleve`, `prochain-cours`, `limiteur` | Sans équivalent d'origine. Aucune exigence de ce document ne les concerne. |
 
 Le module cible publie en outre des familles qu'aucune carte d'origine ne couvrait — actualités, messagerie, punitions et sanctions, équipe pédagogique, diagnostics du limiteur. Elles sortent du périmètre de ce document, qui part de l'inventaire de l'ancien format ; elles sont signalées là où elles complètent une famille existante.
@@ -82,7 +82,7 @@ S'appliquent à toutes les cartes. Vérifiables une fois pour le socle, sauf men
 
 # 2. Emploi du temps
 
-Carte cible `pronote-ng-emploi-du-temps`.
+Carte cible `carnet-scolaire-emploi-du-temps`.
 
 ## 2.1 Parité — reprises de l'ancienne carte
 
@@ -146,7 +146,7 @@ Faits publiés par le module cible qu'aucune règle d'origine ne couvre. Les six
 
 # 3. Devoirs
 
-Carte cible `pronote-ng-devoirs`.
+Carte cible `carnet-scolaire-devoirs`.
 
 ## 3.1 Contrat d'élément
 
@@ -185,7 +185,7 @@ Lu dans les constructeurs. Tous les champs sont présents, `null` signalant l'ab
 
 # 4. Notes et moyennes
 
-Carte cible `pronote-ng-notes`, fusion de deux cartes d'origine. Les deux familles lisent les mêmes entités et la même période.
+Carte cible `carnet-scolaire-notes`, fusion de deux cartes d'origine. Les deux familles lisent les mêmes entités et la même période.
 
 ## 4.1 Notes
 
@@ -275,7 +275,7 @@ Ni `min` ni `max` : les bornes de classe n'existent que sur les moyennes par mat
 
 # 5. Évaluations
 
-Carte cible `pronote-ng-evaluations`.
+Carte cible `carnet-scolaire-evaluations`.
 
 ## 5.1 Contrat d'élément
 
@@ -308,7 +308,7 @@ Carte cible `pronote-ng-evaluations`.
 
 # 6. Cantine
 
-Carte cible `pronote-ng-menu`. **La famille n'est pas modélisée comme les autres et le périmètre de l'ancienne carte n'existe pas dans la cible.** Les deux points sont à lire avant toute exigence.
+Carte cible `carnet-scolaire-menu`. **La famille n'est pas modélisée comme les autres et le périmètre de l'ancienne carte n'existe pas dans la cible.** Les deux points sont à lire avant toute exigence.
 
 ## 6.1 Contrat, et pourquoi il change tout
 
@@ -344,7 +344,7 @@ La forme est constante par conception, et la raison vaut d'être citée parce qu
 
 # 7. Vie scolaire
 
-Carte cible `pronote-ng-vie-scolaire`, fusion des cartes Absences et Retards. **Les deux natures ne sont pas symétriques dans la cible non plus** : ne pas lisser leurs différences.
+Carte cible `carnet-scolaire-vie-scolaire`, fusion des cartes Absences et Retards. **Les deux natures ne sont pas symétriques dans la cible non plus** : ne pas lisser leurs différences.
 
 ## 7.1 Contrats d'élément
 

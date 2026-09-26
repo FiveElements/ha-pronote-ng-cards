@@ -634,8 +634,8 @@ const withMeals = (
 };
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-journee',
-  name: 'Pronote NG — Vue journée',
+  type: 'carnet-scolaire-journee',
+  name: 'Carnet scolaire — Vue journée',
   description: 'La journée en grille : horaires, couleur de matière, annulations et repas.',
   key: 'journee',
   scope: 'child',

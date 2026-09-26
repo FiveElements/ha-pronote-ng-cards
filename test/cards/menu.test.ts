@@ -6,7 +6,7 @@ import { mountCard, text } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-menu': HTMLElement & {
+    'carnet-scolaire-menu': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
@@ -32,7 +32,7 @@ const menu = (state: string, attributes: Record<string, unknown> = {}) =>
 describe('carte menu', () => {
   it('rend les plats groupés par section', async () => {
     const el = await mountCard(
-      'pronote-ng-menu',
+      'carnet-scolaire-menu',
       { device_id: 'dev_enfant' },
       menu('4', {
         first_meal: ['Carottes râpées'],
@@ -51,7 +51,7 @@ describe('carte menu', () => {
 
   it('accepte une chaîne simple comme un tableau d’objets', async () => {
     const el = await mountCard(
-      'pronote-ng-menu',
+      'carnet-scolaire-menu',
       { device_id: 'dev_enfant' },
       menu('2', { main_meal: 'Gratin', dessert: [{ name: 'Compote' }] })
     );
@@ -62,7 +62,7 @@ describe('carte menu', () => {
 
   it('ignore un objet dont le nom n’est pas une chaîne, plutôt que d’afficher « null »', async () => {
     const el = await mountCard(
-      'pronote-ng-menu',
+      'carnet-scolaire-menu',
       { device_id: 'dev_enfant' },
       menu('1', { dessert: [{ name: null }, { name: 'Fruit' }] })
     );
@@ -72,14 +72,14 @@ describe('carte menu', () => {
   });
 
   it('dit « pas de menu publié » sur une liste vide, pas « indisponible »', async () => {
-    const el = await mountCard('pronote-ng-menu', { device_id: 'dev_enfant' }, menu('0', {}));
+    const el = await mountCard('carnet-scolaire-menu', { device_id: 'dev_enfant' }, menu('0', {}));
     const t = text(el);
     expect(t).toContain('Pas de menu publié');
     expect(t).not.toContain('pas encore collectée');
   });
 
   it('dit « pas encore collectée » quand l’entité est indisponible', async () => {
-    const el = await mountCard('pronote-ng-menu', { device_id: 'dev_enfant' }, menu('unavailable'));
+    const el = await mountCard('carnet-scolaire-menu', { device_id: 'dev_enfant' }, menu('unavailable'));
     expect(text(el)).toContain('pas encore collectée');
   });
 
@@ -90,7 +90,7 @@ describe('carte menu', () => {
   // pour une donnée qui n'existe pas.
   it('dit « pas de menu publié » sur un état inconnu mais `published: false`', async () => {
     const el = await mountCard(
-      'pronote-ng-menu',
+      'carnet-scolaire-menu',
       { device_id: 'dev_enfant' },
       menu('unknown', {
         published: false,
@@ -112,7 +112,7 @@ describe('carte menu', () => {
     // L'état reste `unknown` par construction : sans `attributeDriven`, le
     // socle écartait la carte et le menu n'était jamais affiché.
     const el = await mountCard(
-      'pronote-ng-menu',
+      'carnet-scolaire-menu',
       { device_id: 'dev_enfant' },
       menu('unknown', { published: true, main_meal: ['Poulet rôti'] })
     );
@@ -122,14 +122,14 @@ describe('carte menu', () => {
   it('dit « pas encore collectée » sur un état inconnu sans aucun attribut', async () => {
     // Rien n'est encore arrivé : ni `published`, ni les sept clés. C'est le
     // seul cas où cette carte reprend le message du socle à son compte.
-    const el = await mountCard('pronote-ng-menu', { device_id: 'dev_enfant' }, menu('unknown'));
+    const el = await mountCard('carnet-scolaire-menu', { device_id: 'dev_enfant' }, menu('unknown'));
     const t = text(el);
     expect(t).toContain('pas encore collectée');
     expect(t).not.toContain('Pas de menu publié');
   });
 
   it("dit « introuvable » quand l'entité manque", async () => {
-    const el = await mountCard('pronote-ng-menu', { device_id: 'dev_enfant' }, makeHass([]));
+    const el = await mountCard('carnet-scolaire-menu', { device_id: 'dev_enfant' }, makeHass([]));
     expect(text(el)).toContain('sensor:menu_today');
   });
 
@@ -144,7 +144,7 @@ describe('carte menu', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-menu',
+      'carnet-scolaire-menu',
       { device_id: 'dev_enfant', day: 'tomorrow' },
       hass
     );
@@ -155,7 +155,7 @@ describe('carte menu', () => {
 
   it("affiche un intitulé « Aujourd'hui » en tête quand day vaut today (ou est absent)", async () => {
     const el = await mountCard(
-      'pronote-ng-menu',
+      'carnet-scolaire-menu',
       { device_id: 'dev_enfant' },
       menu('1', { main_meal: 'Gratin' })
     );
@@ -163,7 +163,7 @@ describe('carte menu', () => {
   });
 
   it('affiche l’intitulé du jour même quand le menu est vide', async () => {
-    const el = await mountCard('pronote-ng-menu', { device_id: 'dev_enfant' }, menu('0', {}));
+    const el = await mountCard('carnet-scolaire-menu', { device_id: 'dev_enfant' }, menu('0', {}));
     expect(text(el)).toContain("Aujourd'hui");
   });
 

@@ -1,7 +1,7 @@
 import type { CardScope, EntityKey, PronoteCardConfig } from './types';
 import type { HomeAssistant } from './ha-types';
 
-export const PLATFORM = 'pronote_ng';
+export const PLATFORM = 'carnet_scolaire';
 
 /** Un appareil d'enfant est rattaché à un appareil de compte par via_device_id. */
 export function isChildDevice(hass: HomeAssistant, deviceId: string): boolean {

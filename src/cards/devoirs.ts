@@ -894,8 +894,8 @@ const groupOf = (
 };
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-devoirs',
-  name: 'Pronote NG — Devoirs',
+  type: 'carnet-scolaire-devoirs',
+  name: 'Carnet scolaire — Devoirs',
   description: 'Les devoirs à faire, avec échéance et matière.',
   key: 'devoirs',
   scope: 'child',
@@ -1132,7 +1132,7 @@ export const SPEC: CardSpec<Config> = {
       if (onglet) onglet.opener = null;
       let message: string;
       try {
-        const reponse = await ctx.callForResponse('pronote_ng.get_attachment_url', {
+        const reponse = await ctx.callForResponse('carnet_scolaire.get_attachment_url', {
           device_id: appareil,
           key: cle,
         });

@@ -51,8 +51,8 @@ interface Evaluation {
 const EVALUATIONS: EntityKey = 'sensor:evaluations';
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-evaluations',
-  name: 'Pronote NG — Évaluations',
+  type: 'carnet-scolaire-evaluations',
+  name: 'Carnet scolaire — Évaluations',
   description: 'Les évaluations par compétences, avec leur niveau de maîtrise.',
   key: 'evaluations',
   scope: 'child',

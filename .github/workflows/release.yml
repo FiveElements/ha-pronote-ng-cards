@@ -23,9 +23,9 @@ jobs:
       - run: npm run build
       - name: Vérifier que le bundle n'est pas vide et contient les cartes
         run: |
-          test -s dist/pronote-ng-cards.js
-          grep -q 'pronote-ng-prochain-cours' dist/pronote-ng-cards.js
+          test -s dist/carnet-scolaire-cards.js
+          grep -q 'carnet-scolaire-prochain-cours' dist/carnet-scolaire-cards.js
       - uses: softprops/action-gh-release@v3
         with:
-          files: dist/pronote-ng-cards.js
+          files: dist/carnet-scolaire-cards.js
           generate_release_notes: true

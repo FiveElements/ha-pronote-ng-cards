@@ -18,8 +18,8 @@ const NEXT: EntityKey = 'sensor:next_lesson';
 const PERIOD: EntityKey = 'sensor:current_period';
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-eleve',
-  name: 'Pronote NG — Élève',
+  type: 'carnet-scolaire-eleve',
+  name: 'Carnet scolaire — Élève',
   description: 'En-tête de synthèse : classe, état du jour, prochain cours.',
   key: 'eleve',
   scope: 'child',

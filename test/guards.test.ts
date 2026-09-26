@@ -53,7 +53,7 @@ const withoutAllowedCalls = (body: string): string =>
 describe("garde : aucun identifiant d'entité en dur", () => {
   /**
    * La liste des domaines est volontairement large, et non limitée à ceux que
-   * `pronote_ng` crée aujourd'hui. Une liste fermée sur six domaines laissait
+   * `carnet_scolaire` crée aujourd'hui. Une liste fermée sur six domaines laissait
    * passer `switch.quelque_chose` sans un mot : le jour où l'intégration crée
    * une entité dans un domaine de plus, la garde se tait au lieu de parler.
    */
@@ -127,7 +127,7 @@ describe("garde : aucun identifiant d'entité en dur", () => {
  * pas un substitut — la nuance a son importance, docs/limites.md l'explique.
  */
 const ALLOWED_CALLS = [
-  'pronote_ng.refresh',
+  'carnet_scolaire.refresh',
   'todo.update_item',
   // Ajouté le 10 septembre 2026 avec la carte « mode de collecte », sur
   // demande du propriétaire. La garde suit le type et ne le précède jamais :
@@ -146,7 +146,7 @@ const ALLOWED_CALLS = [
   // Il rend l'adresse signée d'une pièce jointe au moment du clic, pour que
   // l'intégration cesse de la publier dans un attribut d'entité. Il ne place
   // aucune requête PRONOTE.
-  'pronote_ng.get_attachment_url',
+  'carnet_scolaire.get_attachment_url',
 ];
 
 describe('garde : liste blanche des appels de service', () => {
