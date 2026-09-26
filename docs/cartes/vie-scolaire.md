@@ -12,7 +12,7 @@ courant.*
 ## Configuration
 
 ```yaml
-type: custom:pronote-ng-vie-scolaire
+type: custom:carnet-scolaire-vie-scolaire
 device_id: <appareil de l'enfant>
 sections:
   - absences
@@ -32,7 +32,7 @@ sections:
 Toutes les options renseignées, les trois sections comprises :
 
 ```yaml
-type: custom:pronote-ng-vie-scolaire
+type: custom:carnet-scolaire-vie-scolaire
 device_id: <appareil de l'enfant>
 sections:
   - absences

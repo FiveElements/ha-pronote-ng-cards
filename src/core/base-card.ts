@@ -129,7 +129,7 @@ function usable(timeZone: string | undefined): timeZone is string {
  * une garde qu'ils ne devraient pas partager. Le remède complet est une
  * entité de diagnostic côté intégration, qui n'existe pas.
  */
-const GUARD_PREFIX = 'pronote-ng-cards:refreshed-at:';
+const GUARD_PREFIX = 'carnet-scolaire-cards:refreshed-at:';
 
 const readGuard = (deviceId: string | undefined): number => {
   if (!deviceId) return 0;
@@ -223,7 +223,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
     }
 
     static getConfigElement(): HTMLElement {
-      const el = document.createElement('pronote-ng-card-editor') as HTMLElement & {
+      const el = document.createElement('carnet-scolaire-card-editor') as HTMLElement & {
         spec?: CardSpec;
       };
       el.spec = spec;
@@ -473,7 +473,7 @@ export function makeCardClass(spec: CardSpec): CustomElementConstructor {
           writeGuard(config.device_id, armedAt);
           try {
             await callService(
-              'pronote_ng.refresh',
+              'carnet_scolaire.refresh',
               {
                 // `device_id` est un CHAMP du service, pas une CIBLE, et
                 // c'est toute la difference. `services.yaml` le declare sous

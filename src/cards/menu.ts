@@ -39,8 +39,8 @@ const dishes = (value: unknown): string[] => {
 const keyFor = (c: Config): EntityKey => (c.day === 'tomorrow' ? TOMORROW : TODAY);
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-menu',
-  name: 'Pronote NG — Cantine',
+  type: 'carnet-scolaire-menu',
+  name: 'Carnet scolaire — Cantine',
   description: 'Le menu du jour ou du lendemain, plat par plat.',
   key: 'menu',
   scope: 'child',

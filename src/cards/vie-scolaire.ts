@@ -139,8 +139,8 @@ function byDateAscending<T>(items: T[], dateOf: (item: T) => string | undefined)
 }
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-vie-scolaire',
-  name: 'Pronote NG — Vie scolaire',
+  type: 'carnet-scolaire-vie-scolaire',
+  name: 'Carnet scolaire — Vie scolaire',
   description: 'Absences, retards et punitions, avec leur détail.',
   key: 'vie_scolaire',
   scope: 'child',

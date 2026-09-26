@@ -33,34 +33,34 @@ title: Enfant Un
 sections:
   - type: grid
     cards:
-      - type: custom:pronote-ng-eleve
+      - type: custom:carnet-scolaire-eleve
         device_id: <appareil de l'enfant>
-      - type: custom:pronote-ng-prochain-cours
+      - type: custom:carnet-scolaire-prochain-cours
         device_id: <appareil de l'enfant>
 
   - type: grid
     cards:
-      - type: custom:pronote-ng-emploi-du-temps
+      - type: custom:carnet-scolaire-emploi-du-temps
         device_id: <appareil de l'enfant>
         range: today
-      - type: custom:pronote-ng-menu
+      - type: custom:carnet-scolaire-menu
         device_id: <appareil de l'enfant>
 
   - type: grid
     cards:
-      - type: custom:pronote-ng-devoirs
+      - type: custom:carnet-scolaire-devoirs
         device_id: <appareil de l'enfant>
 
   - type: grid
     cards:
-      - type: custom:pronote-ng-notes
+      - type: custom:carnet-scolaire-notes
         device_id: <appareil de l'enfant>
-      - type: custom:pronote-ng-evaluations
+      - type: custom:carnet-scolaire-evaluations
         device_id: <appareil de l'enfant>
 
   - type: grid
     cards:
-      - type: custom:pronote-ng-vie-scolaire
+      - type: custom:carnet-scolaire-vie-scolaire
         device_id: <appareil de l'enfant>
 ```
 
@@ -93,20 +93,20 @@ title: Les jours qui viennent
 sections:
   - type: grid
     cards:
-      - type: custom:pronote-ng-journee
+      - type: custom:carnet-scolaire-journee
         device_id: <appareil de l'enfant>
         day_offset: 0
 
   - type: grid
     cards:
-      - type: custom:pronote-ng-journee
+      - type: custom:carnet-scolaire-journee
         device_id: <appareil de l'enfant>
         day_offset: 1
         show_nav: false
 
   - type: grid
     cards:
-      - type: custom:pronote-ng-journee
+      - type: custom:carnet-scolaire-journee
         device_id: <appareil de l'enfant>
         day_offset: 2
         show_nav: false
@@ -195,7 +195,7 @@ ne déclare d'options de grille. Dans une vue `sections`, c'est donc à vous de
 donner la largeur, et l'emploi du temps de la semaine veut la largeur complète :
 
 ```yaml
-- type: custom:pronote-ng-emploi-du-temps
+- type: custom:carnet-scolaire-emploi-du-temps
   device_id: <appareil de l'enfant>
   range: week
   grid_options:
@@ -313,6 +313,6 @@ temps, ce qui est une bonne nouvelle — mais en haut, ça se lit comme une pann
   identifiant d'entité
 - [Ce que ces cartes ne feront jamais](limites.md) — ce qui est volontairement
   absent
-- [Afficher les données](https://fiveelements.github.io/ha-pronote-ng/AFFICHER-LES-DONNEES/)
+- [Afficher les données](https://fiveelements.github.io/ha-carnet-scolaire/AFFICHER-LES-DONNEES/)
   — côté intégration : les cartes intégrées de Home Assistant, pour ce que ces
   cartes ne couvrent pas

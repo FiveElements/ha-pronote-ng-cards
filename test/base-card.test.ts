@@ -11,7 +11,7 @@ import { makeHass } from './fixtures/hass';
 import { mountCard, text } from './fixtures/mount';
 
 const SPEC: CardSpec = {
-  type: 'pronote-ng-test',
+  type: 'carnet-scolaire-test',
   name: 'Test',
   description: 'Carte de test',
   key: 'test',
@@ -26,7 +26,7 @@ const SPEC: CardSpec = {
 // de test ne peut couvrir les deux logiques (toutes obligatoires / au moins
 // une) avec le même schéma de clés.
 const SPEC_ANY: CardSpec = {
-  type: 'pronote-ng-test-any',
+  type: 'carnet-scolaire-test-any',
   name: 'Test requiresAny',
   description: 'Carte de test — requiresAny',
   key: 'test',
@@ -44,7 +44,7 @@ const btnOf = (el: Element) => el.shadowRoot?.querySelector('button.refresh-btn'
 const mountRefreshCard = (hass: ReturnType<typeof makeHass>) =>
   mountCard(
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- SPEC_REFRESH (plus bas) est enregistrée dynamiquement ; ce fichier de test n'augmente pas HTMLElementTagNameMap pour cette balise supplémentaire.
-    'pronote-ng-test-refresh' as 'pronote-ng-test',
+    'carnet-scolaire-test-refresh' as 'carnet-scolaire-test',
     { device_id: 'dev_enfant' },
     hass
   );
@@ -61,7 +61,7 @@ const probeRefresh = (hass: ReturnType<typeof makeHass>): void => {
     entity_id: 'sensor.abc_refresh_probe',
     device_id: 'dev_enfant',
     labels: [],
-    platform: 'pronote_ng',
+    platform: 'carnet_scolaire',
     translation_key: 'refresh_probe',
     has_entity_name: true,
   };
@@ -85,8 +85,8 @@ interface TestCardElement extends HTMLElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-test': TestCardElement;
-    'pronote-ng-test-any': TestCardElement;
+    'carnet-scolaire-test': TestCardElement;
+    'carnet-scolaire-test-any': TestCardElement;
   }
 }
 
@@ -105,13 +105,13 @@ describe('PronoteCardBase — les trois états', () => {
         state: '2026-09-08T08:30:00+02:00',
       },
     ]);
-    const el = await mountCard('pronote-ng-test', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-test', { device_id: 'dev_enfant' }, hass);
     expect(el.shadowRoot?.querySelector('.ok')).not.toBeNull();
   });
 
   it('dit « entité absente » et nomme la clé attendue', async () => {
     const hass = makeHass([]);
-    const el = await mountCard('pronote-ng-test', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-test', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('sensor:next_lesson');
     expect(el.shadowRoot?.querySelector('.ok')).toBeNull();
   });
@@ -122,7 +122,7 @@ describe('PronoteCardBase — les trois états', () => {
     // registre. hass.entities change d'identité ; hass.states aussi, pour une
     // entité qui n'était même pas dans l'ancien this.resolved (elle en était
     // absente). Si shouldUpdate ignore le registre, ce test échoue.
-    const el = await mountCard('pronote-ng-test', { device_id: 'dev_enfant' }, makeHass([]));
+    const el = await mountCard('carnet-scolaire-test', { device_id: 'dev_enfant' }, makeHass([]));
     expect(text(el)).toContain('sensor:next_lesson');
     expect(el.shadowRoot?.querySelector('.ok')).toBeNull();
 
@@ -149,7 +149,7 @@ describe('PronoteCardBase — les trois états', () => {
         state: 'unavailable',
       },
     ]);
-    const el = await mountCard('pronote-ng-test', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-test', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('pas encore collectée');
   });
 
@@ -162,18 +162,18 @@ describe('PronoteCardBase — les trois états', () => {
         unloaded: true,
       },
     ]);
-    const el = await mountCard('pronote-ng-test', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-test', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('pas encore collectée');
     expect(text(el)).not.toContain('introuvable');
   });
 
   it('demande de choisir un enfant sans device_id', async () => {
-    const el = await mountCard('pronote-ng-test', {}, makeHass([]));
+    const el = await mountCard('carnet-scolaire-test', {}, makeHass([]));
     expect(text(el)).toContain('Choisissez un enfant');
   });
 
   it("affiche « cet appareil n'existe plus » quand device_id est inconnu du registre", async () => {
-    const el = await mountCard('pronote-ng-test', { device_id: 'dev_disparu' }, makeHass([]));
+    const el = await mountCard('carnet-scolaire-test', { device_id: 'dev_disparu' }, makeHass([]));
     expect(text(el)).toContain("n'existe plus");
   });
 
@@ -187,7 +187,7 @@ describe('PronoteCardBase — les trois états', () => {
       last_updated: '2026-09-08T07:00:00+00:00',
     };
     const el = await mountCard(
-      'pronote-ng-test',
+      'carnet-scolaire-test',
       { device_id: 'dev_enfant', entities: { 'sensor:next_lesson': 'sensor.override' } },
       hass
     );
@@ -195,14 +195,14 @@ describe('PronoteCardBase — les trois états', () => {
   });
 
   it('valide la présence du champ type', () => {
-    const el = document.createElement('pronote-ng-test');
+    const el = document.createElement('carnet-scolaire-test');
     expect(() => el.setConfig({})).toThrow();
   });
 
   it('rend dans la langue de Home Assistant, pas en français par défaut', async () => {
     // Monte une carte dont l'entité requise est absente, en italien : le message
     // « donnée pas encore collectée / introuvable » doit venir du catalogue italien.
-    const el = await mountCard('pronote-ng-test', { device_id: 'dev_enfant' }, makeHass([], 'it'));
+    const el = await mountCard('carnet-scolaire-test', { device_id: 'dev_enfant' }, makeHass([], 'it'));
     const out = text(el);
     expect(out).toContain('Entità non trovata su questo dispositivo:');
     expect(out).not.toContain('Entité introuvable');
@@ -210,7 +210,7 @@ describe('PronoteCardBase — les trois états', () => {
 
   describe('requiresAny', () => {
     it('aucune des clés ne résout → « entité absente »', async () => {
-      const el = await mountCard('pronote-ng-test-any', { device_id: 'dev_enfant' }, makeHass([]));
+      const el = await mountCard('carnet-scolaire-test-any', { device_id: 'dev_enfant' }, makeHass([]));
       expect(text(el)).toContain('sensor:a');
       expect(text(el)).toContain('sensor:b');
       expect(el.shadowRoot?.querySelector('.ok')).toBeNull();
@@ -220,16 +220,16 @@ describe('PronoteCardBase — les trois états', () => {
       const hass = makeHass([
         { key: 'sensor:a', entity_id: 'sensor.abc_a', device: 'dev_enfant', state: 'unavailable' },
       ]);
-      const el = await mountCard('pronote-ng-test-any', { device_id: 'dev_enfant' }, hass);
+      const el = await mountCard('carnet-scolaire-test-any', { device_id: 'dev_enfant' }, hass);
       expect(text(el)).toContain('pas encore collectée');
     });
   });
 
   it('getConfigElement crée un éditeur porteur de la spec de la carte', () => {
-    const ctor = customElements.get('pronote-ng-test');
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- `getConfigElement` est un statique propre aux cartes Pronote NG, absent de l'interface DOM générique CustomElementConstructor.
+    const ctor = customElements.get('carnet-scolaire-test');
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- `getConfigElement` est un statique propre aux cartes Carnet scolaire, absent de l'interface DOM générique CustomElementConstructor.
     const el = (ctor as unknown as { getConfigElement(): HTMLElement }).getConfigElement();
-    expect(el.tagName.toLowerCase()).toBe('pronote-ng-card-editor');
+    expect(el.tagName.toLowerCase()).toBe('carnet-scolaire-card-editor');
   });
 });
 
@@ -240,7 +240,7 @@ describe('RenderCtx — la promesse de sécurité de docs/limites.md est vraie c
     // cette correction. `npm run typecheck` échoue si la ligne suivante ne
     // déclenche plus d'erreur (directive @ts-expect-error inutilisée).
     const spec: CardSpec = {
-      type: 'pronote-ng-test-hassview',
+      type: 'carnet-scolaire-test-hassview',
       name: 'Test',
       description: 'Carte de test',
       key: 'test',
@@ -254,12 +254,12 @@ describe('RenderCtx — la promesse de sécurité de docs/limites.md est vraie c
         return html``;
       },
     };
-    expect(spec.type).toBe('pronote-ng-test-hassview');
+    expect(spec.type).toBe('carnet-scolaire-test-hassview');
   });
 
   it('ctx.callService refuse à la compilation un appel hors de la liste close AllowedCall', () => {
     const spec: CardSpec = {
-      type: 'pronote-ng-test-allowedcall',
+      type: 'carnet-scolaire-test-allowedcall',
       name: 'Test',
       description: 'Carte de test',
       key: 'test',
@@ -268,18 +268,18 @@ describe('RenderCtx — la promesse de sécurité de docs/limites.md est vraie c
       optional: () => [],
       schema: () => [],
       render: (ctx) => {
-        // @ts-expect-error 'light.turn_on' n'appartient pas à AllowedCall (types.ts) : seuls pronote_ng.refresh et todo.update_item le sont.
+        // @ts-expect-error 'light.turn_on' n'appartient pas à AllowedCall (types.ts) : seuls carnet_scolaire.refresh et todo.update_item le sont.
         void ctx.callService('light.turn_on');
         return html``;
       },
     };
-    expect(spec.type).toBe('pronote-ng-test-allowedcall');
+    expect(spec.type).toBe('carnet-scolaire-test-allowedcall');
   });
 
   it('expose ctx.language et ctx.timeZone comme commodités dérivées de hass', async () => {
     let captured: RenderCtx | undefined;
     const spec: CardSpec = {
-      type: 'pronote-ng-test-lang',
+      type: 'carnet-scolaire-test-lang',
       name: 'Test',
       description: 'Carte de test',
       key: 'test',
@@ -296,7 +296,7 @@ describe('RenderCtx — la promesse de sécurité de docs/limites.md est vraie c
     const hass = makeHass([], 'it');
     await mountCard(
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- ce spec est enregistré ci-dessus ; ce fichier de test n'augmente pas HTMLElementTagNameMap pour cette balise supplémentaire.
-      'pronote-ng-test-lang' as 'pronote-ng-test',
+      'carnet-scolaire-test-lang' as 'carnet-scolaire-test',
       { device_id: 'dev_enfant' },
       hass
     );
@@ -307,7 +307,7 @@ describe('RenderCtx — la promesse de sécurité de docs/limites.md est vraie c
 
 describe('ctx.refresh — chemin d’échec et horodatage', () => {
   const SPEC_REFRESH: CardSpec = {
-    type: 'pronote-ng-test-refresh',
+    type: 'carnet-scolaire-test-refresh',
     name: 'Test',
     description: 'Carte de test — refresh',
     key: 'test',
@@ -339,7 +339,7 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
     globalThis.localStorage?.clear();
   });
 
-  const CLE_GARDE = 'pronote-ng-cards:refreshed-at:dev_enfant';
+  const CLE_GARDE = 'carnet-scolaire-cards:refreshed-at:dev_enfant';
 
   it('pose refreshedAt avant l’appel : le bouton se grise dès le clic, avant même la résolution du service', async () => {
     const hass = makeHass([]);
@@ -482,7 +482,7 @@ describe('ctx.refresh — chemin d’échec et horodatage', () => {
 
 describe('spec.tickMs — minuterie déclarative pour les rendus qui dépendent de Date.now()', () => {
   const SPEC_TICK: CardSpec = {
-    type: 'pronote-ng-test-tick',
+    type: 'carnet-scolaire-test-tick',
     name: 'Test',
     description: 'Carte de test — tick',
     key: 'test',
@@ -500,7 +500,7 @@ describe('spec.tickMs — minuterie déclarative pour les rendus qui dépendent 
 
   it('ne pose aucun intervalle quand spec.tickMs est absent', async () => {
     const setSpy = vi.spyOn(globalThis, 'setInterval');
-    await mountCard('pronote-ng-test', { device_id: 'dev_enfant' }, withNextLessonEntity());
+    await mountCard('carnet-scolaire-test', { device_id: 'dev_enfant' }, withNextLessonEntity());
     expect(setSpy).not.toHaveBeenCalled();
     setSpy.mockRestore();
   });
@@ -510,7 +510,7 @@ describe('spec.tickMs — minuterie déclarative pour les rendus qui dépendent 
     const clearSpy = vi.spyOn(globalThis, 'clearInterval');
     const el = await mountCard(
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- SPEC_TICK est enregistrée ci-dessus ; ce fichier de test n'augmente pas HTMLElementTagNameMap pour cette balise supplémentaire.
-      'pronote-ng-test-tick' as 'pronote-ng-test',
+      'carnet-scolaire-test-tick' as 'carnet-scolaire-test',
       { device_id: 'dev_enfant' },
       withNextLessonEntity()
     );
@@ -532,7 +532,7 @@ describe('spec.tickMs — minuterie déclarative pour les rendus qui dépendent 
     try {
       const el = await mountCard(
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- SPEC_TICK est enregistrée ci-dessus ; ce fichier de test n'augmente pas HTMLElementTagNameMap pour cette balise supplémentaire.
-        'pronote-ng-test-tick' as 'pronote-ng-test',
+        'carnet-scolaire-test-tick' as 'carnet-scolaire-test',
         { device_id: 'dev_enfant' },
         withNextLessonEntity()
       );
@@ -588,7 +588,7 @@ describe('resolveTimeZone', () => {
 
 describe('rendu qui lève', () => {
   const SPEC_THROWS: CardSpec = {
-    type: 'pronote-ng-test-throws',
+    type: 'carnet-scolaire-test-throws',
     name: 'Test exception',
     description: 'Carte de test — render qui lève',
     key: 'test',
@@ -607,7 +607,7 @@ describe('rendu qui lève', () => {
     try {
       const el = await mountCard(
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- SPEC_THROWS est enregistrée juste au-dessus ; ce fichier de test n'augmente pas HTMLElementTagNameMap pour cette balise supplémentaire.
-        'pronote-ng-test-throws' as 'pronote-ng-test',
+        'carnet-scolaire-test-throws' as 'carnet-scolaire-test',
         { device_id: 'dev_enfant' },
         withNextLessonEntity()
       );
@@ -624,9 +624,9 @@ describe('rendu qui lève', () => {
 describe('defineCard', () => {
   it('enregistre la carte dans window.customCards', () => {
     const cards = window.customCards ?? [];
-    expect(cards.some((c) => c.type === 'pronote-ng-test')).toBe(true);
+    expect(cards.some((c) => c.type === 'carnet-scolaire-test')).toBe(true);
   });
   it('enregistre aussi l’éditeur', () => {
-    expect(customElements.get('pronote-ng-card-editor')).toBeDefined();
+    expect(customElements.get('carnet-scolaire-card-editor')).toBeDefined();
   });
 });

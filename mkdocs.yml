@@ -1,6 +1,6 @@
-site_name: Pronote NG — Cartes
-site_url: https://fiveelements.github.io/ha-pronote-ng-cards/
-repo_url: https://github.com/FiveElements/ha-pronote-ng-cards
+site_name: Carnet scolaire — Cartes
+site_url: https://fiveelements.github.io/ha-carnet-scolaire-cards/
+repo_url: https://github.com/FiveElements/ha-carnet-scolaire-cards
 theme:
   name: material
   language: fr

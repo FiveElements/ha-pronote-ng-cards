@@ -6,7 +6,7 @@ import { mountCard, text } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-limiteur': HTMLElement & {
+    'carnet-scolaire-limiteur': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
@@ -29,7 +29,7 @@ const compte = (key: string, entity_id: string, state: string, attributes = {}) 
 describe('carte limiteur', () => {
   it("résout les entités de compte depuis le device_id de l'enfant", async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('Nominal');
   });
 
@@ -44,7 +44,7 @@ describe('carte limiteur', () => {
         tiers_due: ['marks'],
       }),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Bridé');
     expect(t).toContain('120');
@@ -55,7 +55,7 @@ describe('carte limiteur', () => {
 
   it("n'affiche pas les connexions du jour quand l'entité est absente", async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).not.toContain('Connexions depuis minuit');
   });
 
@@ -64,7 +64,7 @@ describe('carte limiteur', () => {
       compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
       compte('sensor:logins_today', 'sensor.cpt_connexions', '3'),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Connexions depuis minuit');
     expect(t).toContain('3');
@@ -72,7 +72,7 @@ describe('carte limiteur', () => {
 
   it("n'affiche pas l'âge de la session quand l'entité est absente", async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).not.toContain('Âge de la session');
   });
 
@@ -82,7 +82,7 @@ describe('carte limiteur', () => {
       // La forme RÉELLE : l'âge de la session est publié en SECONDES.
       compte('sensor:session_age', 'sensor.cpt_age', '2700', { unit_of_measurement: 's' }),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Âge de la session');
     // La mise en forme, pas la valeur brute : « 45 min », jamais « 2700 » nu.
@@ -97,7 +97,7 @@ describe('carte limiteur', () => {
       // plausible pour n'alerter personne.
       compte('sensor:session_age', 'sensor.cpt_age', '1743', { unit_of_measurement: 's' }),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('29 min');
     expect(t).not.toContain('22 h');
@@ -108,7 +108,7 @@ describe('carte limiteur', () => {
       compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
       compte('sensor:session_age', 'sensor.cpt_age', '42', { unit_of_measurement: 'quinzaines' }),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('42 quinzaines');
     // Surtout pas une conversion inventée.
@@ -117,7 +117,7 @@ describe('carte limiteur', () => {
 
   it("n'affiche pas la durée de vie de la session quand l'entité est absente", async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).not.toContain('Durée de vie de la session');
   });
 
@@ -131,7 +131,7 @@ describe('carte limiteur', () => {
         unit_of_measurement: 'min',
       }),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Durée de vie de la session');
     // La mise en forme, pas la valeur brute : « 2 h 15 », jamais « 135 » nu.
@@ -140,7 +140,7 @@ describe('carte limiteur', () => {
 
   it("n'affiche pas de mention de bridage quand `binary_sensor:throttled` est absente", async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).not.toContain('Collectes bridées');
   });
 
@@ -149,7 +149,7 @@ describe('carte limiteur', () => {
       compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal'),
       compte('binary_sensor:throttled', 'binary_sensor.cpt_bride', 'on'),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('Nominal');
     expect(t).toContain('Collectes bridées');
@@ -160,7 +160,7 @@ describe('carte limiteur', () => {
       compte('sensor:limiter_state', 'sensor.cpt_etat', 'throttled'),
       compte('binary_sensor:throttled', 'binary_sensor.cpt_bride', 'on'),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     // La pastille porte déjà l'information : positif sur elle...
     expect(t).toContain('Bridé');
@@ -176,7 +176,7 @@ describe('carte limiteur', () => {
         opened_at: '2026-09-08T06:00:00+02:00',
       }),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     // L'absence seule passerait sur un rendu entièrement vide : on l'apparie
     // à une assertion positive prouvant que la carte a bien rendu autre chose.
@@ -186,7 +186,7 @@ describe('carte limiteur', () => {
 
   it("retombe sur l'état brut pour un état que le catalogue ne connaît pas encore", async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'maintenance')]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     // Ni la clé technique manquante...
     expect(t).not.toContain('limiteur.state_maintenance');
@@ -196,16 +196,16 @@ describe('carte limiteur', () => {
 
   it("n'affiche pas le bouton de rafraîchissement quand show_refresh n'est pas posé", async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     expect(el.shadowRoot?.querySelector('button')).toBeNull();
   });
 
-  it('appelle pronote_ng.refresh sur clic et non au montage', async () => {
+  it('appelle carnet_scolaire.refresh sur clic et non au montage', async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
     const spy = vi.fn().mockResolvedValue(undefined);
     hass.callService = spy;
     const el = await mountCard(
-      'pronote-ng-limiteur',
+      'carnet-scolaire-limiteur',
       { device_id: 'dev_enfant', show_refresh: true },
       hass
     );
@@ -226,7 +226,7 @@ describe('carte limiteur', () => {
     // avant fusion dans les donnees, et le service rejetait chaque clic avec
     // « value should be a string at 'device_id' ». Le test passait, parce
     // qu'il recopiait ce que la carte envoyait.
-    expect(spy).toHaveBeenCalledWith('pronote_ng', 'refresh', { device_id: 'dev_enfant' }, undefined);
+    expect(spy).toHaveBeenCalledWith('carnet_scolaire', 'refresh', { device_id: 'dev_enfant' }, undefined);
   });
 
   it("n'appelle pas le service quand la configuration n'a pas de device_id", async () => {
@@ -238,7 +238,7 @@ describe('carte limiteur', () => {
     const spy = vi.fn().mockResolvedValue(undefined);
     hass.callService = spy;
     const el = await mountCard(
-      'pronote-ng-limiteur',
+      'carnet-scolaire-limiteur',
       { entities: { 'sensor:limiter_state': 'sensor.cpt_etat' }, show_refresh: true },
       hass
     );
@@ -257,12 +257,12 @@ describe('carte limiteur', () => {
     expect(button?.disabled).toBe(false);
   });
 
-  it('transmet le palier choisi à pronote_ng.refresh', async () => {
+  it('transmet le palier choisi à carnet_scolaire.refresh', async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
     const spy = vi.fn().mockResolvedValue(undefined);
     hass.callService = spy;
     const el = await mountCard(
-      'pronote-ng-limiteur',
+      'carnet-scolaire-limiteur',
       { device_id: 'dev_enfant', show_refresh: true, refresh_tier: 'marks' },
       hass
     );
@@ -276,7 +276,7 @@ describe('carte limiteur', () => {
     // recopie l'hypothese du code au lieu de la contredire ne protege de
     // rien. La forme se verifie dans `services.py` de l'integration.
     expect(spy).toHaveBeenCalledWith(
-      'pronote_ng',
+      'carnet_scolaire',
       'refresh',
       { device_id: 'dev_enfant', tiers: ['marks'] },
       // Le quatrieme argument, la CIBLE, vaut undefined : ce service ne
@@ -290,7 +290,7 @@ describe('carte limiteur', () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
     hass.callService = vi.fn().mockRejectedValue(new Error('échec simulé'));
     const el = await mountCard(
-      'pronote-ng-limiteur',
+      'carnet-scolaire-limiteur',
       { device_id: 'dev_enfant', show_refresh: true },
       hass
     );
@@ -308,7 +308,7 @@ describe('carte limiteur', () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'nominal')]);
     hass.callService = vi.fn().mockResolvedValue(undefined);
     const el = await mountCard(
-      'pronote-ng-limiteur',
+      'carnet-scolaire-limiteur',
       { device_id: 'dev_enfant', show_refresh: true },
       hass
     );
@@ -325,12 +325,12 @@ describe('carte limiteur', () => {
 
   it('dit « pas encore collectée » quand l’entité est indisponible', async () => {
     const hass = makeHass([compte('sensor:limiter_state', 'sensor.cpt_etat', 'unavailable')]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('pas encore collectée');
   });
 
   it("dit « introuvable » quand l'entité manque", async () => {
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, makeHass([]));
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, makeHass([]));
     expect(text(el)).toContain('sensor:limiter_state');
   });
 
@@ -343,7 +343,7 @@ describe('carte limiteur', () => {
         tiers_due: 'marks',
       }),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('aucun');
   });
 
@@ -360,7 +360,7 @@ describe('carte limiteur', () => {
         overdue_by: 2280,
       }),
     ]);
-    const el = await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass);
     const t = text(el);
     expect(t).toContain('static');
     expect(t).toContain('en retard de 38 min');
@@ -376,7 +376,7 @@ describe('carte limiteur', () => {
       }),
     ]);
     expect(
-      text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass))
+      text(await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass))
     ).toContain('en échec : static');
   });
 
@@ -392,7 +392,7 @@ describe('carte limiteur', () => {
         failing: { static: 2 },
       }),
     ]);
-    const t = text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass));
+    const t = text(await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass));
     expect(t).toContain('en échec : static');
     // Une seule occurrence : celle que porte l'échec.
     expect(t.match(/static/g)).toHaveLength(1);
@@ -408,7 +408,7 @@ describe('carte limiteur', () => {
         failing: { static: 2 },
       }),
     ]);
-    const t = text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass));
+    const t = text(await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass));
     expect(t).toContain('marks');
     expect(t).toContain('en échec : static');
   });
@@ -422,7 +422,7 @@ describe('carte limiteur', () => {
         tiers_due: ['marks'],
       }),
     ]);
-    const t = text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass));
+    const t = text(await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass));
     expect(t).not.toContain('en retard de');
     expect(t).not.toContain('en échec');
     expect(t).toContain('marks');
@@ -438,7 +438,7 @@ describe('carte limiteur', () => {
         failing: ['static'],
       }),
     ]);
-    const t = text(await mountCard('pronote-ng-limiteur', { device_id: 'dev_enfant' }, hass));
+    const t = text(await mountCard('carnet-scolaire-limiteur', { device_id: 'dev_enfant' }, hass));
     expect(t).not.toContain('en échec');
     expect(t).toContain('marks');
   });

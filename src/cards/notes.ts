@@ -117,8 +117,8 @@ const sectionsOf = (c: Config): Section[] =>
   c.sections && c.sections.length > 0 ? c.sections : ['average', 'latest', 'subjects'];
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-notes',
-  name: 'Pronote NG — Notes',
+  type: 'carnet-scolaire-notes',
+  name: 'Carnet scolaire — Notes',
   description: 'Moyennes, dernières notes et moyennes par matière.',
   key: 'notes',
   scope: 'child',

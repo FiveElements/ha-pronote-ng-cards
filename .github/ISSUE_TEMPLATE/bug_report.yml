@@ -28,13 +28,13 @@ body:
         le fichier de diagnostic de l'intégration est fait pour être joint
         ici : les identifiants y sont rédigés.
 
-        *Paramètres → Appareils et services → Pronote NG → ⋯ → Télécharger
+        *Paramètres → Appareils et services → Carnet scolaire → ⋯ → Télécharger
         les diagnostics*
 
   - type: input
     id: cards_version
     attributes:
-      label: Version des cartes Pronote NG
+      label: Version des cartes Carnet scolaire
       description: HACS, ou le champ `version` affiché dans `hacs.json`.
       placeholder: "0.0.3"
     validations:
@@ -67,7 +67,7 @@ body:
       label: Quelle carte
       description: >-
         Le `type` déclaré dans la configuration YAML de la carte.
-      placeholder: "custom:pronote-ng-next-lesson-card"
+      placeholder: "custom:carnet-scolaire-next-lesson-card"
     validations:
       required: true
 

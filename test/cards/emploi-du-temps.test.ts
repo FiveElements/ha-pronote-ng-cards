@@ -6,7 +6,7 @@ import { mountCard, text } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-emploi-du-temps': HTMLElement & {
+    'carnet-scolaire-emploi-du-temps': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
@@ -86,7 +86,7 @@ const dayWithInClass = (state: string) =>
 describe('carte emploi-du-temps', () => {
   it('liste les cours par ordre chronologique avec heure et salle, quel que soit leur ordre en entrée', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', show_rooms: true },
       day({ lessons })
     );
@@ -117,7 +117,7 @@ describe('carte emploi-du-temps', () => {
       },
     ];
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({ lessons: mixed })
     );
@@ -127,7 +127,7 @@ describe('carte emploi-du-temps', () => {
 
   it('barre un cours annulé sans le retirer', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({ lessons })
     );
@@ -137,7 +137,7 @@ describe('carte emploi-du-temps', () => {
 
   it('signale un cours annulé via `status` même sans `canceled`', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({
         lessons: [
@@ -162,7 +162,7 @@ describe('carte emploi-du-temps', () => {
     // rendait comme des cours parfaitement ordinaires — elle masquait
     // l'information au lieu de la signaler.
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({
         lessons: [
@@ -188,7 +188,7 @@ describe('carte emploi-du-temps', () => {
     // drapeau et le motif ne disent pas la même chose, et le motif est ce
     // qu'un parent veut lire.
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({
         lessons: [
@@ -210,7 +210,7 @@ describe('carte emploi-du-temps', () => {
 
   it('ne dit pas deux fois « annulé » quand `status` ne dit rien de plus', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({
         lessons: [
@@ -233,7 +233,7 @@ describe('carte emploi-du-temps', () => {
 
   it('signale les contrôles', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({ lessons })
     );
@@ -288,7 +288,7 @@ describe('carte emploi-du-temps', () => {
 
   it('n’affiche aucune pastille de tête de journée quand `test_today` et `outing_today` sont absents, mais affiche bien la journée', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       dayWithFlags({})
     );
@@ -303,7 +303,7 @@ describe('carte emploi-du-temps', () => {
 
   it('signale un contrôle en tête de journée quand `test_today` vaut `on`', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       dayWithFlags({ test: 'on' })
     );
@@ -314,7 +314,7 @@ describe('carte emploi-du-temps', () => {
 
   it('signale une sortie en tête de journée quand `outing_today` vaut `on`', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       dayWithFlags({ outing: 'on' })
     );
@@ -325,7 +325,7 @@ describe('carte emploi-du-temps', () => {
 
   it('n’affiche aucune pastille de tête de journée quand les deux capteurs valent `off`', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       dayWithFlags({ test: 'off', outing: 'off' })
     );
@@ -342,7 +342,7 @@ describe('carte emploi-du-temps', () => {
     // portent déjà leurs propres attributs `test` et `outing`, qui situent
     // l'information au bon endroit dans tous les modes.
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', range: 'week' },
       makeHass([
         {
@@ -368,7 +368,7 @@ describe('carte emploi-du-temps', () => {
 
   it('dit « aucun cours » sur une liste vide', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({ lessons: [] }, '0')
     );
@@ -384,7 +384,7 @@ describe('carte emploi-du-temps', () => {
     'ignore un attribut `lessons` qui est %s plutôt qu’un tableau exploitable, sans faire disparaître la carte',
     async (_label, malformed) => {
       const el = await mountCard(
-        'pronote-ng-emploi-du-temps',
+        'carnet-scolaire-emploi-du-temps',
         { device_id: 'dev_enfant' },
         day({ lessons: malformed }, '1')
       );
@@ -396,7 +396,7 @@ describe('carte emploi-du-temps', () => {
 
   it('dit « pas encore collectée » quand l’entité est indisponible', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({}, 'unavailable')
     );
@@ -405,7 +405,7 @@ describe('carte emploi-du-temps', () => {
 
   it("dit « introuvable » quand l'entité manque", async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       makeHass([])
     );
@@ -426,7 +426,7 @@ describe('carte emploi-du-temps', () => {
   it('marque « en cours » le créneau qui contient l’instant donné', async () => {
     testClock.now = '2026-09-08T08:30:00+02:00';
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({ lessons })
     );
@@ -436,7 +436,7 @@ describe('carte emploi-du-temps', () => {
   it('ne surligne aucun créneau quand `in_class` vaut `off`, même à une heure de cours', async () => {
     testClock.now = '2026-09-08T08:30:00+02:00';
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       dayWithInClass('off')
     );
@@ -449,7 +449,7 @@ describe('carte emploi-du-temps', () => {
   it('surligne normalement quand `in_class` vaut `on`', async () => {
     testClock.now = '2026-09-08T08:30:00+02:00';
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       dayWithInClass('on')
     );
@@ -461,7 +461,7 @@ describe('carte emploi-du-temps', () => {
   it('ne fabrique aucun surlignage quand `in_class` vaut `on` hors de tout créneau', async () => {
     testClock.now = '2026-09-08T18:00:00+02:00';
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       dayWithInClass('on')
     );
@@ -475,7 +475,7 @@ describe('carte emploi-du-temps', () => {
   it('ne marque aucun créneau hors des heures de cours, tout en affichant bien les cours du jour', async () => {
     testClock.now = '2026-09-08T18:00:00+02:00';
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant' },
       day({ lessons })
     );
@@ -498,7 +498,7 @@ describe('carte emploi-du-temps', () => {
       },
     ]);
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', range: 'week' },
       hass
     );

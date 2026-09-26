@@ -226,7 +226,7 @@ vingt-trois pièces :
 | forme | compte | ce que c'est |
 |---|---|---|
 | `https://hôte/...` | 7 | une pièce de type **lien**, chez un tiers |
-| `/api/pronote_ng/attachment/<empreinte>?authSig=<jeton>` | 16 | une pièce de type **fichier**, relayée par l'intégration |
+| `/api/carnet_scolaire/attachment/<empreinte>?authSig=<jeton>` | 16 | une pièce de type **fichier**, relayée par l'intégration |
 
 La seconde est **enracinée**, donc `new URL(valeur)` sans base **lève**. Une
 carte qui traite cette exception comme un refus écarte silencieusement les
@@ -286,7 +286,7 @@ publie) :
 
 `key` est l'empreinte que l'intégration calcule sur l'identifiant du devoir et
 celui de la pièce ; elle n'ouvre rien seule. L'adresse d'un `local` se demande
-à `pronote_ng.get_attachment_url` (entrée `device_id` + `key`, réponse
+à `carnet_scolaire.get_attachment_url` (entrée `device_id` + `key`, réponse
 `{url, expires_at}`), au clic, et elle expire en cinq minutes. Deux refus
 typés, portés par `translation_key` dans l'erreur : `attachment_not_collected`
 et `attachment_unknown`.

@@ -66,8 +66,8 @@ const TEST_TODAY: EntityKey = 'binary_sensor:test_today';
 const OUTING_TODAY: EntityKey = 'binary_sensor:outing_today';
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-emploi-du-temps',
-  name: 'Pronote NG — Emploi du temps',
+  type: 'carnet-scolaire-emploi-du-temps',
+  name: 'Carnet scolaire — Emploi du temps',
   description: 'Les cours du jour, du lendemain ou de la semaine.',
   key: 'emploi_du_temps',
   scope: 'child',

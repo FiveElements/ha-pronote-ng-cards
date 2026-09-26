@@ -6,7 +6,7 @@ import { mountCard, text } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-mode-collecte': HTMLElement & {
+    'carnet-scolaire-mode-collecte': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
@@ -61,7 +61,7 @@ const boutons = (el: HTMLElement) =>
   }));
 
 const monter = (config: Record<string, unknown>, hass: unknown) =>
-  mountCard('pronote-ng-mode-collecte', { device_id: 'dev_enfant', ...config }, hass);
+  mountCard('carnet-scolaire-mode-collecte', { device_id: 'dev_enfant', ...config }, hass);
 
 describe('carte mode de collecte — la lecture, qui marche déjà', () => {
   it("résout l'entité de compte depuis le device_id de l'enfant", async () => {

@@ -1,9 +1,9 @@
 {
-  "name": "ha-pronote-ng-cards",
+  "name": "ha-carnet-scolaire-cards",
   "version": "0.0.37",
   "private": true,
   "type": "module",
-  "description": "Cartes Lovelace pour l'intégration Home Assistant Pronote NG",
+  "description": "Cartes Lovelace pour l'intégration Home Assistant Carnet scolaire",
   "license": "MIT",
   "engines": {
     "node": ">=22"

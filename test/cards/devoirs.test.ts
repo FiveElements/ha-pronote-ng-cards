@@ -8,7 +8,7 @@ import type { HomeAssistant } from '../../src/core/ha-types';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-devoirs': HTMLElement & MountableElement;
+    'carnet-scolaire-devoirs': HTMLElement & MountableElement;
   }
 }
 
@@ -87,7 +87,7 @@ const taille = (options: {
 }): number => {
   const { size } = SPEC;
   if (typeof size !== 'function') throw new Error('size doit etre une fonction');
-  return size({ type: 'custom:pronote-ng-devoirs', device_id: 'dev_enfant', ...options });
+  return size({ type: 'custom:carnet-scolaire-devoirs', device_id: 'dev_enfant', ...options });
 };
 
 /** Un seul devoir, dont on choisit l'enonce. Echeance lointaine : pas de retard. */
@@ -240,7 +240,7 @@ describe('carte devoirs', () => {
 
   it('nomme la prochaine échéance depuis le calendrier, que le filtre masque', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', filter: 'todo' },
       withCalendar({ items }, nextEvent)
     );
@@ -255,7 +255,7 @@ describe('carte devoirs', () => {
     // Le moment où cette ligne sert le plus : rien à rendre dans la fenêtre
     // demandée, mais une échéance existe plus loin.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', filter: 'todo' },
       withCalendar({ items: [] }, nextEvent)
     );
@@ -266,7 +266,7 @@ describe('carte devoirs', () => {
 
   it('tait la prochaine échéance avec le filtre « tous », où la liste montre déjà tout', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', filter: 'all' },
       makeHass([
         {
@@ -292,7 +292,7 @@ describe('carte devoirs', () => {
 
   it('ne dit rien quand le calendrier n’a aucun évènement à venir', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', filter: 'todo' },
       withCalendar({ items }, {})
     );
@@ -302,7 +302,7 @@ describe('carte devoirs', () => {
   });
 
   it('liste les devoirs avec matière et énoncé', async () => {
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hw({ items }));
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hw({ items }));
     const t = text(el);
     expect(t).toContain('Maths');
     expect(t).toContain('Exercices 4 à 7');
@@ -311,7 +311,7 @@ describe('carte devoirs', () => {
 
   it('respecte limit', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', limit: 1 },
       hw({ items })
     );
@@ -322,7 +322,7 @@ describe('carte devoirs', () => {
 
   it('dit « rien à faire » sur une liste vide', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: [] }, '0')
     );
@@ -333,7 +333,7 @@ describe('carte devoirs', () => {
 
   it('dit « pas encore collectée » quand l’entité est indisponible', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({}, 'unavailable')
     );
@@ -341,7 +341,7 @@ describe('carte devoirs', () => {
   });
 
   it("dit « introuvable » quand l'entité manque", async () => {
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, makeHass([]));
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, makeHass([]));
     expect(text(el)).toContain('sensor:homework_todo');
   });
 
@@ -349,7 +349,7 @@ describe('carte devoirs', () => {
 
   it("ne casse pas le rendu quand l'attribut items est un objet", async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: {} })
     );
@@ -358,7 +358,7 @@ describe('carte devoirs', () => {
 
   it("ne casse pas le rendu quand l'attribut items est une chaîne", async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: 'x' })
     );
@@ -367,7 +367,7 @@ describe('carte devoirs', () => {
 
   it('ignore un élément null dans le tableau items sans lever', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: [null, items[0]] })
     );
@@ -380,7 +380,7 @@ describe('carte devoirs', () => {
     'rend la case à cocher quand supported_features=%i porte UPDATE_TODO_ITEM',
     async (features) => {
       const el = await mountCard(
-        'pronote-ng-devoirs',
+        'carnet-scolaire-devoirs',
         { device_id: 'dev_enfant' },
         withTodoList({ items }, features)
       );
@@ -390,7 +390,7 @@ describe('carte devoirs', () => {
 
   it('ne rend aucune case quand supported_features=2 (DELETE_TODO_ITEM, pas UPDATE_TODO_ITEM)', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       withTodoList({ items }, 2)
     );
@@ -400,7 +400,7 @@ describe('carte devoirs', () => {
 
   it("ne rend aucune case à cocher si l'écriture n'est pas activée", async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       withTodoList({ items }, 0)
     );
@@ -417,7 +417,7 @@ describe('carte devoirs', () => {
     try {
       const hass = withTodoList({ items }, 4);
       hass.callService = vi.fn<HomeAssistant['callService']>(() => new Promise(() => {}));
-      const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+      const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
       const box = el.shadowRoot?.querySelector('input');
       expect(box).not.toBeNull();
       if (box) {
@@ -438,7 +438,7 @@ describe('carte devoirs', () => {
     const hass = withTodoList({ items }, 4);
     const spy = vi.fn().mockResolvedValue(undefined);
     hass.callService = spy;
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
     const box = el.shadowRoot?.querySelector('input');
     expect(box).not.toBeNull();
     if (box) {
@@ -462,7 +462,7 @@ describe('carte devoirs', () => {
     const hass = withTodoList({ items: dup }, 4);
     const spy = vi.fn().mockResolvedValue(undefined);
     hass.callService = spy;
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
     const boxes = el.shadowRoot?.querySelectorAll('input');
     expect(boxes?.length).toBe(2);
     const second = boxes?.[1];
@@ -487,7 +487,7 @@ describe('carte devoirs', () => {
     const hass = withTodoList({ items: done }, 4);
     const spy = vi.fn().mockResolvedValue(undefined);
     hass.callService = spy;
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
     const box = el.shadowRoot?.querySelector('input');
     expect(box?.checked).toBe(true);
     if (box) {
@@ -507,7 +507,7 @@ describe('carte devoirs', () => {
     const todo = [{ id: 'h1', subject: 'Maths', description: 'X', due: '2026-09-09', done: false }];
     const hass = withTodoList({ items: todo }, 4);
     hass.callService = vi.fn().mockRejectedValue(new Error('échec'));
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
     const box = el.shadowRoot?.querySelector('input');
     expect(box?.checked).toBe(false);
     if (box) {
@@ -537,7 +537,7 @@ describe('carte devoirs', () => {
         attributes: {},
       },
     ]);
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
     expect(text(el)).toContain('en retard');
     // Une pastille pour le bandeau d'en-tête, une pour la ligne en retard.
     expect(el.shadowRoot?.querySelectorAll('.chip.problem').length).toBe(2);
@@ -572,7 +572,7 @@ describe('carte devoirs', () => {
     ];
 
     const rien = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: futur }, '1', capteurEteint)
     );
@@ -581,7 +581,7 @@ describe('carte devoirs', () => {
     expect(text(rien)).toContain('Maths');
 
     const uneSeule = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: passe }, '1', capteurEteint)
     );
@@ -598,7 +598,7 @@ describe('carte devoirs', () => {
       { id: 'h3', subject: 'Histoire', description: 'C' },
     ];
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: mixed })
     );
@@ -626,7 +626,7 @@ describe('carte devoirs', () => {
       { id: 'h3', subject: 'Maths', description: 'C', due: '2026-09-10' },
     ];
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', group_by: 'subject' },
       hw({ items: bySubject })
     );
@@ -643,7 +643,7 @@ describe('carte devoirs', () => {
     // antérieure à ce champ — d'où les deux champs, volontairement
     // divergents, dans cette fixture.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({
         items: [
@@ -667,7 +667,7 @@ describe('carte devoirs', () => {
     // Forme réelle : l'intégration recopie le HTML du serveur. La carte
     // affichait les balises et les entités à l'écran.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({
         items: [
@@ -742,7 +742,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
     // l'échéance passe ensuite. Aucun capteur de bandeau dans cette fixture,
     // donc toute pastille vient forcément d'une LIGNE.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: [passeFait, passeAFaire] })
     );
@@ -757,7 +757,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
     // Compter les pastilles ne suffit pas : une pastille posée sur la
     // mauvaise ligne donnerait le même compte. On regarde donc OÙ elle est.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: [passeFait, passeAFaire] })
     );
@@ -775,7 +775,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
     // suit `binary_sensor:homework_overdue`, qui porte le compte de l'élève
     // entier, pas celui de la fenêtre affichée.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: [passeFait] }, '1', [
         {
@@ -799,7 +799,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
 
   it('explique pourquoi rien ne s’affiche quand limit vaut zéro', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', limit: 0 },
       hw({ items })
     );
@@ -819,7 +819,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
     // où elles servent le plus : la carte ne montre aucun devoir, donc tout ce
     // qui reste doit porter.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', limit: 0 },
       withCalendarEtRetard({ items })
     );
@@ -834,12 +834,12 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
     // Les deux rendent zéro devoir ; ils ne disent pas la même chose, et
     // c'est tout l'objet de la correction.
     const zero = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', limit: 0 },
       hw({ items })
     );
     const vide = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: [] }, '0')
     );
@@ -850,7 +850,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
 
   it('ne déclenche pas la garde pour une limite négative, qui veut dire « tout »', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', limit: -1 },
       hw({ items })
     );
@@ -863,7 +863,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
 
   it('ne répète pas l’échéance en fin de ligne quand elle titre déjà le groupe', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', group_by: 'date' },
       hw({ items })
     );
@@ -889,7 +889,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
      * l'échéance ne disparaît pas.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', group_by: 'subject' },
       hw({ items })
     );
@@ -916,7 +916,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
       (['date', 'subject'] as const).map(async (group_by) => ({
         group_by,
         el: await mountCard(
-          'pronote-ng-devoirs',
+          'carnet-scolaire-devoirs',
           { device_id: 'dev_enfant', group_by },
           hw({ items })
         ),
@@ -941,7 +941,7 @@ describe('carte devoirs — le lot du 10 septembre 2026', () => {
     // vrai : groupée par échéance, chaque ligne sans retard aurait posé une
     // boîte vide dans la tête du bloc.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', group_by: 'date' },
       hw(
         {
@@ -1056,7 +1056,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
 
   it('n’emballe rien sans l’option : les configurations existantes ne bougent pas', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: unDevoir(ENONCE_LONG) }, '1')
     );
@@ -1067,7 +1067,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
 
   it('replie un énoncé qui dépasse, et lui transmet le nombre de lignes', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 2 },
       hw({ items: unDevoir(ENONCE_LONG) }, '1')
     );
@@ -1082,7 +1082,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
     // Le point qui rend le dispositif acceptable : un lecteur d'écran et une
     // recherche dans la page trouvent tout. Seule la peinture est coupée.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 2 },
       hw({ items: unDevoir(ENONCE_LONG) }, '1')
     );
@@ -1095,7 +1095,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
     // s'annonce à un lecteur d'écran comme du contenu caché, et il irait
     // chercher ce qui n'existe pas.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 3 },
       hw({ items: unDevoir(ENONCE_COURT) }, '1')
     );
@@ -1117,7 +1117,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
     ].join('\n');
     expect(liste.length).toBeLessThan(80);
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 3 },
       hw({ items: unDevoir(liste) }, '1')
     );
@@ -1130,7 +1130,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
     const montes = await Promise.all(
       ['trois', null, -2, 0].map((max_lines) =>
         mountCard(
-          'pronote-ng-devoirs',
+          'carnet-scolaire-devoirs',
           { device_id: 'dev_enfant', max_lines },
           hw({ items: unDevoir(ENONCE_LONG) }, '1')
         )
@@ -1146,7 +1146,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
     // Une fraction dans `-webkit-line-clamp` n'a pas de sens, et le champ
     // vient d'un YAML écrit à la main.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 2.9 },
       hw({ items: unDevoir(ENONCE_LONG) }, '1')
     );
@@ -1159,7 +1159,7 @@ describe('carte devoirs — la hauteur annoncée et l’énoncé repliable', () 
 
   it('replie chaque devoir séparément, selon SA longueur', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 2 },
       hw(
         {
@@ -1193,7 +1193,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     // n'affichait que « en retard ». Le chiffre est le seul élément qui dise
     // s'il faut s'en occuper ce soir.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       avecCapteurRetard({ count: 4 })
     );
@@ -1204,7 +1204,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     // Les quatre traductions emploient une locution invariable exprès : une
     // seule forme doit servir tous les comptes.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       avecCapteurRetard({ count: 1 })
     );
@@ -1214,7 +1214,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
   it('retombe sur le libellé nu quand l’intégration ne publie pas le compte', async () => {
     // Une intégration antérieure à l'attribut ne doit pas perdre le bandeau.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       avecCapteurRetard({})
     );
@@ -1226,7 +1226,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     // l'intégration. La carte n'a pas à la répéter : elle montre le bandeau,
     // qui suit l'état, sans le chiffre qui le démentirait.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       avecCapteurRetard({ count: 0 })
     );
@@ -1236,7 +1236,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
 
   it('ignore un compte qui n’est pas un nombre', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       avecCapteurRetard({ count: 'quatre' })
     );
@@ -1248,7 +1248,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     // CE devoir est en retard de quatre, ce qui ne veut rien dire. Le compte
     // porte sur l'élève, la pastille de ligne sur la date du devoir.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       avecCapteurRetard({ count: 4 }, [
         { id: 'h1', subject: 'Maths', description_text: 'Passé', due: '2020-01-01', done: false },
@@ -1272,7 +1272,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
 
   it('nomme les pièces jointes d’un devoir', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: DEUX_PIECES }, '1')
     );
@@ -1289,7 +1289,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
 
   it('accorde le libellé au nombre de pièces', async () => {
     const une = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: [{ ...DEUX_PIECES[0], attachments: ['fiche-revision.pdf'] }] }, '1')
     );
@@ -1299,7 +1299,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
 
   it('n’affiche aucune ligne quand le devoir n’a pas de pièce', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1319,7 +1319,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     // Une version future qui passerait à des objets ferait sinon afficher
     // « [object Object] », et une chaîne vide un séparateur solitaire.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         { items: [{ ...DEUX_PIECES[0], attachments: [{ url: 'x' }, '', '   ', 'vrai.pdf'] }] },
@@ -1335,7 +1335,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
 
   it('n’affiche pas de ligne quand aucune pièce n’est utilisable', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: [{ ...DEUX_PIECES[0], attachments: [{ url: 'x' }, ''] }] }, '1')
     );
@@ -1345,7 +1345,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
 
   it('se tait quand show_attachments vaut faux', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', show_attachments: false },
       hw({ items: DEUX_PIECES }, '1')
     );
@@ -1363,7 +1363,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
       3
     );
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 2 },
       hw({ items: [{ ...DEUX_PIECES[0], description_text: long }] }, '1')
     );
@@ -1378,7 +1378,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     // `listRow` teste la présence de `secondary` : un devoir sans énoncé
     // mais avec une pièce ne doit pas la perdre au passage.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         { items: [{ id: 'h1', subject: 'Maths', due: '2099-01-01', attachments: ['seule.pdf'] }] },
@@ -1395,7 +1395,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
     // ouvrir. Inviter à cliquer sur ce qui ne répond pas est pire que de
     // n'afficher qu'un nom.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: DEUX_PIECES }, '1')
     );
@@ -1413,7 +1413,7 @@ describe('carte devoirs — le compte des retards et les pièces jointes', () =>
      * cible de clic — ce qu'un nom précédé d'un tiret n'était pas.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: DEUX_PIECES }, '1')
     );
@@ -1447,7 +1447,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
 
   it('rend une vraie liste, un élément par pièce', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: devoirAvecPieces(['fiche.pdf', 'corrige.pdf']) }, '1')
     );
@@ -1468,7 +1468,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
      * répond à ça, sans coûter la ligne que le libellé visible coûtait.
      */
     const deux = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: devoirAvecPieces(['a.pdf', 'b.pdf']) }, '1')
     );
@@ -1476,7 +1476,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
     // Et surtout : il ne s'écrit plus, sinon la ligne serait revenue.
     expect(piecesJointes(deux)?.textContent).not.toContain('Pièces jointes');
     const une = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: devoirAvecPieces(['a.pdf']) }, '1')
     );
@@ -1488,7 +1488,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
     // L'état réel : des noms. Aucun `a` ne doit apparaître, sinon la carte
     // proposerait d'ouvrir ce qu'elle ne peut pas ouvrir.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: devoirAvecPieces(['fiche-revision.pdf', 'chanson.mp3']) }, '1')
     );
@@ -1501,7 +1501,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
 
   it('ouvre la pièce quand l’intégration publie son adresse', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1528,7 +1528,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
 
   it('accepte une chaîne qui est elle-même une adresse, et la nomme lisiblement', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         { items: devoirAvecPieces(['https://demo.example.invalid/pj/le%20corrig%C3%A9.pdf']) },
@@ -1555,7 +1555,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
      * document sans demander d'identifiant.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1575,7 +1575,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
 
   it('lit les variantes de nom de champ qu’une intégration écrit naturellement', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1596,7 +1596,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
 
   it('dérive un nom quand l’objet n’en porte pas', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: devoirAvecPieces([{ url: 'https://demo.example.invalid/pj/sujet.pdf' }]) }, '1')
     );
@@ -1622,7 +1622,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
      * qui suit prend le relais et dit ce que ce changement coûte.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1657,7 +1657,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
      * diagnosticable. Une régression bruyante vaut mieux qu'une silencieuse.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: devoirAvecPieces([{ name: 'ailleurs.pdf', url: '/pronote/piece.pdf' }]) }, '1')
     );
@@ -1670,7 +1670,7 @@ describe('carte devoirs — la liste des pièces jointes et son lien', () => {
 
   it('écarte une pièce qui ne donne ni nom ni adresse utilisable', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1704,7 +1704,7 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
 
   it('ouvre la pièce dont le nom figure dans la liste des liens', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1736,7 +1736,7 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
      * de `attachments` est celui que PRONOTE envoie.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1760,7 +1760,7 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
     // Le cas courant, et le seul qui existait avant : une semaine sans lien
     // rend cette liste vide, ce qui n'est pas une panne.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: devoirDeuxListes(['fiche.pdf', 'schema.png'], []) }, '1')
     );
@@ -1776,7 +1776,7 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
      * deux résultats — elle est donc ajoutée à la fin plutôt que jetée.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1799,7 +1799,7 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
     // Cette valeur vient du serveur et atteint un attribut `href`.
     // L'intégration filtre déjà, ce verrou est le second.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1831,7 +1831,7 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
      * lignes pour une information qu'on lit une fois.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1869,7 +1869,7 @@ describe('carte devoirs — les pièces ouvrables, adressées à part', () => {
      * portera une clé unique, il tombera, et ce sera la bonne nouvelle.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw(
         {
@@ -1905,7 +1905,7 @@ describe('carte devoirs — l’ordre à l’intérieur d’un groupe de matièr
 
   it('trie par échéance à l’intérieur de chaque matière', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', group_by: 'subject' },
       hw({
         items: [
@@ -1935,7 +1935,7 @@ describe('carte devoirs — l’ordre à l’intérieur d’un groupe de matièr
      * est exactement l'inverse de ce qu'on veut voir en premier.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', group_by: 'subject' },
       hw({
         items: [
@@ -1973,7 +1973,7 @@ describe('carte devoirs — l’ordre à l’intérieur d’un groupe de matièr
       { id: 'h4', subject: 'Anglais', description: 'D', due: '2026-09-11' },
     ];
     const suedois = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', group_by: 'subject' },
       makeHass(
         [
@@ -1998,7 +1998,7 @@ describe('carte devoirs — l’ordre à l’intérieur d’un groupe de matièr
     // Appariement positif : la même liste en français donne l'autre ordre,
     // donc c'est bien la langue qui décide et non un hasard de tri.
     const francais = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', group_by: 'subject' },
       hw({ items: matieres }, '4')
     );
@@ -2060,7 +2060,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
      * mais sous `limit: 0`, c'est-à-dire le chemin qui gardait le bandeau.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', filter: 'tomorrow' },
       videPlusRetard(4, 'on')
     );
@@ -2073,7 +2073,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
     // Appariement négatif : le bandeau suit l'état du capteur, il n'est pas
     // une décoration de l'état vide.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', filter: 'tomorrow' },
       videPlusRetard(0, 'off')
     );
@@ -2095,7 +2095,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
      * fichier : le chemin d'une pièce PRONOTE finit sans nom.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({
         items: [
@@ -2121,7 +2121,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
     // pastilles pour un seul document.
     const meme = 'https://demo.example.invalid/pj/JETON/link?Session=1';
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({
         items: [
@@ -2158,7 +2158,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
       }),
       'America/Martinique'
     );
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
     const t = titres(el);
     expect(t.length).toBe(1);
     expect(t[0]).toContain('10');
@@ -2179,7 +2179,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
      */
     testClock.now = '2026-09-10T12:00:00Z';
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       dansLeFuseau(
         hw({
@@ -2201,7 +2201,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
     // notion de retard, seulement l'avoir recalée d'un jour.
     testClock.now = '2026-09-10T12:00:00Z';
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       dansLeFuseau(
         hw({
@@ -2230,7 +2230,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
       }),
       'America/Martinique'
     );
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
     expect(titres(el)[0]).toContain('10');
   });
 
@@ -2247,7 +2247,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
      */
     const troisLignes = 'Un.\nDeux.\nTrois.';
     const juste = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 3 },
       hw({ items: [{ id: 'h1', subject: 'Maths', description_text: troisLignes }] })
     );
@@ -2256,7 +2256,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
     expect(text(juste)).toContain('Trois.');
 
     const uneDePlus = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 3 },
       hw({
         items: [{ id: 'h1', subject: 'Maths', description_text: troisLignes + '\nQuatre.' }],
@@ -2277,7 +2277,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
      */
     const long = 'Phrase de vingt caractères et quelques, répétée. '.repeat(12);
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 2 },
       hw({ items: [{ id: 'h1', subject: 'Maths', description_text: long }] })
     );
@@ -2296,7 +2296,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
 
   it('n’émet aucune bascule quand rien n’est replié', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', max_lines: 5 },
       hw({ items: [{ id: 'h1', subject: 'Maths', description_text: 'Court.' }] })
     );
@@ -2312,7 +2312,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
      * d'un jour au suivant et traversait les vingt énoncés en linéaire.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({
         items: [
@@ -2338,7 +2338,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
      * l'énoncé existait et était lisible.
      */
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({
         items: [
@@ -2358,7 +2358,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
 
   it('ne rend la note des fichiers qu’une fois, même sur plusieurs devoirs', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({
         items: [
@@ -2373,7 +2373,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
 
   it('se tait quand toutes les pièces s’ouvrent', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({
         items: [
@@ -2395,7 +2395,7 @@ describe('carte devoirs — la deuxième vague d’audit du 10 septembre 2026', 
 
 const avecAdresse = async (url: unknown, nom = 'sujet.pdf') =>
   mountCard(
-    'pronote-ng-devoirs',
+    'carnet-scolaire-devoirs',
     { device_id: 'dev_enfant' },
     hw({ items: devoirDeuxListes([nom], [{ name: nom, url }]) }, '1')
   );
@@ -2430,7 +2430,7 @@ describe('carte devoirs — l’élargissement du filtre d’adresses', () => {
     '.eyJwYXRoIjoiL2FwaS9zeW50aGV0aXF1ZSIsImlhdCI6MTc4OTAwMDAwMCwiZXhwIjoxNzg5MDQzMjAwfQ' +
     '.bGFfc2lnbmF0dXJlX2NpX2Rlc3NvdXNfZXN0X3N5bnRoZXRpcXVlX3Bhc191bmVfdnJhaWU';
   const CHEMIN_SIGNE =
-    '/api/pronote_ng/attachment/0123456789abcdef/a1b2c3d4e5f60718?authSig=' + SIGNATURE;
+    '/api/carnet_scolaire/attachment/0123456789abcdef/a1b2c3d4e5f60718?authSig=' + SIGNATURE;
 
   /** L'origine de l'instance telle que la fixture la publie. */
   const ORIGINE_INSTANCE = new URL(makeHass().hassUrl?.() ?? '').origin;
@@ -2471,9 +2471,9 @@ describe('carte devoirs — l’élargissement du filtre d’adresses', () => {
   it('garde le fragment d’un chemin enraciné sans sortir du chemin', async () => {
     // Un fragment n'est pas un segment de chemin : les deux points ne
     // remontent nulle part.
-    const el = await avecAdresse('/api/pronote_ng/attachment/abc#/../..');
+    const el = await avecAdresse('/api/carnet_scolaire/attachment/abc#/../..');
     const href = liensPieces(el)[0]?.getAttribute('href') ?? '';
-    expect(new URL(href).pathname).toBe('/api/pronote_ng/attachment/abc');
+    expect(new URL(href).pathname).toBe('/api/carnet_scolaire/attachment/abc');
     expect(new URL(href).origin).toBe(ORIGINE_INSTANCE);
   });
 
@@ -2508,7 +2508,7 @@ describe('carte devoirs — l’élargissement du filtre d’adresses', () => {
       ...hw({ items: devoirDeuxListes(['sujet.pdf'], [{ name: 'sujet.pdf', url: CHEMIN_SIGNE }]) }, '1'),
       hassUrl: undefined,
     };
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, sansUrl);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, sansUrl);
     expect(liensPieces(el).length).toBe(0);
     // Appariement positif : la pièce est rendue, et la carte dit pourquoi.
     expect(pastillesPieces(el).length).toBe(1);
@@ -2530,7 +2530,7 @@ describe('carte devoirs — l’élargissement du filtre d’adresses', () => {
       ),
       hassUrl: undefined,
     };
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, sansUrl);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, sansUrl);
     expect(liensPieces(el).length).toBe(1);
   });
 
@@ -2546,7 +2546,7 @@ describe('carte devoirs — l’élargissement du filtre d’adresses', () => {
   const REFUSEES: [string, string][] = [
     ['//evil.example/x', 'une autorité déguisée en chemin'],
     ['/' + String.fromCharCode(92) + 'evil.example/x', 'la barre oblique inverse normalisée'],
-    ['api/pronote_ng/attachment/abc', 'sans barre oblique initiale : quelle base ?'],
+    ['api/carnet_scolaire/attachment/abc', 'sans barre oblique initiale : quelle base ?'],
     ['javascript:alert(1)', 'exécution dans la page de l’utilisateur'],
     ['JaVaScRiPt:alert(1)', 'le schéma est insensible à la casse'],
     ['java' + String.fromCharCode(9) + 'script:alert(1)', 'la tabulation est ôtée du schéma'],
@@ -2577,7 +2577,7 @@ describe('carte devoirs — l’élargissement du filtre d’adresses', () => {
 
   it('annonce encore l’impossibilité pour une pièce sans adresse', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant' },
       hw({ items: devoirDeuxListes(['a.pdf', 'b.pdf'], [{ name: 'a.pdf', url: CHEMIN_SIGNE }]) }, '1')
     );
@@ -2641,7 +2641,7 @@ describe('carte devoirs — l’état et l’échéance, deux filtres indépenda
   /** Les libellés visibles, dans l'ordre de `DEVOIRS`. */
   const visibles = async (config: Record<string, unknown>): Promise<string[]> => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', ...config },
       troisCapteurs()
     );
@@ -2664,7 +2664,7 @@ describe('carte devoirs — l’état et l’échéance, deux filtres indépenda
     vi.useFakeTimers();
     try {
       const el = await mountCard(
-        'pronote-ng-devoirs',
+        'carnet-scolaire-devoirs',
         { device_id: 'dev_enfant', status: 'todo', period: 'from_tomorrow' },
         troisCapteurs()
       );
@@ -2762,7 +2762,7 @@ describe('carte devoirs — l’état et l’échéance, deux filtres indépenda
   it('dit « aucun devoir sur cette période » quand la période est vide', async () => {
     testClock.now = '2026-12-24T12:00:00Z';
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', status: 'all', period: 'week' },
       troisCapteurs()
     );
@@ -2773,7 +2773,7 @@ describe('carte devoirs — l’état et l’échéance, deux filtres indépenda
   });
 
   it('propose les deux filtres dans le formulaire, et plus l’ancien', () => {
-    const noms = SPEC.schema({ type: 'custom:pronote-ng-devoirs' }).map((champ) => champ.name);
+    const noms = SPEC.schema({ type: 'custom:carnet-scolaire-devoirs' }).map((champ) => champ.name);
     expect(noms).toContain('status');
     expect(noms).toContain('period');
     expect(noms).not.toContain('filter');
@@ -2829,7 +2829,7 @@ const monter = async (
 ): Promise<HTMLElement & MountableElement> => {
   const hass = hw({ items: devoirAvecRefs(refs, links) }, '1');
   hass.callService = service;
-  return mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+  return mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
 };
 
 describe('carte devoirs — l’adresse d’un fichier se demande au clic', () => {
@@ -2841,7 +2841,7 @@ describe('carte devoirs — l’adresse d’un fichier se demande au clic', () =
    */
   const CLE = '0123456789abcdef';
   const CHEMIN =
-    '/api/pronote_ng/attachment/entree_synthetique/' + CLE + '?authSig=jeton.synthetique';
+    '/api/carnet_scolaire/attachment/entree_synthetique/' + CLE + '?authSig=jeton.synthetique';
   const ORIGINE_INSTANCE = new URL(makeHass().hassUrl?.() ?? '').origin;
 
   const LOCALE = [{ name: 'sujet.pdf', kind: 'local', key: CLE }];
@@ -2878,7 +2878,7 @@ describe('carte devoirs — l’adresse d’un fichier se demande au clic', () =
     });
 
     expect(service).toHaveBeenCalledWith(
-      'pronote_ng',
+      'carnet_scolaire',
       'get_attachment_url',
       { device_id: 'dev_enfant', key: CLE },
       undefined,
@@ -2987,7 +2987,7 @@ describe('carte devoirs — l’adresse d’un fichier se demande au clic', () =
       { items: devoirDeuxListes(['sujet.pdf'], [{ name: 'sujet.pdf', url: CHEMIN }]) },
       '1'
     );
-    const el = await mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant' }, hass);
+    const el = await mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant' }, hass);
     expect(liensPieces(el).map((a) => a.getAttribute('href'))).toEqual([
       ORIGINE_INSTANCE + CHEMIN,
     ]);

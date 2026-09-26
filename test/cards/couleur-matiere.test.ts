@@ -50,27 +50,27 @@ import { mountCard } from '../fixtures/mount';
 
 declare global {
   interface HTMLElementTagNameMap {
-    'pronote-ng-emploi-du-temps': HTMLElement & {
+    'carnet-scolaire-emploi-du-temps': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
     };
-    'pronote-ng-devoirs': HTMLElement & {
+    'carnet-scolaire-devoirs': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
     };
-    'pronote-ng-notes': HTMLElement & {
+    'carnet-scolaire-notes': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
     };
-    'pronote-ng-prochain-cours': HTMLElement & {
+    'carnet-scolaire-prochain-cours': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
     };
-    'pronote-ng-evaluations': HTMLElement & {
+    'carnet-scolaire-evaluations': HTMLElement & {
       setConfig(c: unknown): void;
       hass: unknown;
       readonly updateComplete: Promise<unknown>;
@@ -216,12 +216,12 @@ const deuxDevoirs = (): ReturnType<typeof makeHass> =>
   ]);
 
 const monter = async (): Promise<HTMLElement> =>
-  mountCard('pronote-ng-devoirs', { device_id: 'dev_enfant', filter: 'todo' }, deuxDevoirs());
+  mountCard('carnet-scolaire-devoirs', { device_id: 'dev_enfant', filter: 'todo' }, deuxDevoirs());
 
 describe('code couleur des matières — emploi du temps', () => {
   it('reprend la couleur de chaque créneau', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', range: 'today' },
       withLessons([
         {
@@ -246,7 +246,7 @@ describe('code couleur des matières — emploi du temps', () => {
 
   it('réserve la gouttière sans la colorer quand le créneau n’a pas de couleur', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', range: 'today' },
       withLessons([
         {
@@ -273,7 +273,7 @@ describe('code couleur des matières — emploi du temps', () => {
 
   it('ignore une couleur que le serveur n’a pas écrite en hexadécimal', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', range: 'today' },
       withLessons([
         {
@@ -327,7 +327,7 @@ describe('code couleur des matières — devoirs', () => {
     // LIGNE : redire la matière à chaque ligne la disait deux fois, vingt
     // fois sur vingt sur une instance.
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', filter: 'todo', group_by: 'subject' },
       deuxDevoirs()
     );
@@ -422,7 +422,7 @@ describe('code couleur des matières — devoirs', () => {
 describe('code couleur des matières — moyennes par matière', () => {
   it('colore les moyennes et laisse les autres lignes alignées', async () => {
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['average', 'subjects'] },
       makeHass([
         {
@@ -496,7 +496,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
     // distinguerait « j'ai mal écrit la matière » de « cette matière n'a pas
     // de couleur ».
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', range: 'today', subject_colors: TABLE },
       withLessons(COURS)
     );
@@ -507,7 +507,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
     // Le repli marche dans les deux sens : une table écrite avec les accents
     // de PRONOTE contre un libellé que le serveur enverrait sans.
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       {
         device_id: 'dev_enfant',
         range: 'today',
@@ -524,7 +524,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
     // reste le repli des matières que le serveur ne colore pas — donc rien à
     // supprimer ce jour-là.
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', range: 'today', subject_colors: TABLE },
       withLessons([{ ...COURS[0], background_color: '#fb8c00' }])
     );
@@ -537,7 +537,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
     // valide et se voit quand même refuser -- accepter une famille de
     // syntaxes prendrait tout l'analyseur CSS comme frontière de confiance.
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       {
         device_id: 'dev_enfant',
         range: 'today',
@@ -551,7 +551,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
 
   it('colore les devoirs depuis la table', async () => {
     const el = await mountCard(
-      'pronote-ng-devoirs',
+      'carnet-scolaire-devoirs',
       { device_id: 'dev_enfant', filter: 'todo', subject_colors: TABLE },
       makeHass([
         {
@@ -582,7 +582,7 @@ describe('code couleur des matières — la table de l’utilisateur', () => {
 
   it('colore les moyennes par matière depuis la table', async () => {
     const el = await mountCard(
-      'pronote-ng-notes',
+      'carnet-scolaire-notes',
       { device_id: 'dev_enfant', sections: ['subjects'], subject_colors: TABLE },
       makeHass([
         {
@@ -673,7 +673,7 @@ const troisEvaluations = (): ReturnType<typeof makeHass> =>
 describe('code couleur des matières — prochain cours', () => {
   it('reprend la couleur publiée par le serveur', async () => {
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant' },
       prochain({ subject: 'Maths', classroom: 'B12', background_color: '#1e88e5' })
     );
@@ -684,7 +684,7 @@ describe('code couleur des matières — prochain cours', () => {
 
   it('colore depuis la table, sans casse ni accents', async () => {
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant', subject_colors: PALETTE },
       prochain({ subject: 'mathematiques' })
     );
@@ -694,7 +694,7 @@ describe('code couleur des matières — prochain cours', () => {
 
   it('réserve la gouttière des lignes qui ne portent pas de matière', async () => {
     const el = await mountCard(
-      'pronote-ng-prochain-cours',
+      'carnet-scolaire-prochain-cours',
       { device_id: 'dev_enfant', subject_colors: PALETTE },
       prochain({ subject: 'MATHEMATIQUES', classroom: 'B12', teachers: ['M. X'] })
     );
@@ -710,7 +710,7 @@ describe('code couleur des matières — prochain cours', () => {
 describe('code couleur des matières — évaluations', () => {
   it('colore la matière et réserve la gouttière des compétences', async () => {
     const el = await mountCard(
-      'pronote-ng-evaluations',
+      'carnet-scolaire-evaluations',
       { device_id: 'dev_enfant', subject_colors: PALETTE },
       troisEvaluations()
     );
@@ -724,7 +724,7 @@ describe('code couleur des matières — évaluations', () => {
 
   it('reprend la couleur du serveur quand elle existe', async () => {
     const el = await mountCard(
-      'pronote-ng-evaluations',
+      'carnet-scolaire-evaluations',
       { device_id: 'dev_enfant', show_acquisitions: false },
       makeHass([
         {
@@ -758,7 +758,7 @@ describe('code couleur des matières — le dièse facultatif', () => {
     // invalide dans un attribut `style`, et rien ne distinguait l'oubli du
     // dièse d'une matière sans couleur.
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', range: 'today', subject_colors: { MATHEMATIQUES: '1e88e5' } },
       withLessons(UN_COURS)
     );
@@ -767,7 +767,7 @@ describe('code couleur des matières — le dièse facultatif', () => {
 
   it('accepte aussi la forme courte sans dièse', async () => {
     const el = await mountCard(
-      'pronote-ng-emploi-du-temps',
+      'carnet-scolaire-emploi-du-temps',
       { device_id: 'dev_enfant', range: 'today', subject_colors: { MATHEMATIQUES: 'f80' } },
       withLessons(UN_COURS)
     );
@@ -781,7 +781,7 @@ describe('code couleur des matières — le dièse facultatif', () => {
     const rendus = await Promise.all(
       invalides.map(async (invalide) =>
         mountCard(
-          'pronote-ng-emploi-du-temps',
+          'carnet-scolaire-emploi-du-temps',
           { device_id: 'dev_enfant', range: 'today', subject_colors: { MATHEMATIQUES: invalide } },
           withLessons(UN_COURS)
         )

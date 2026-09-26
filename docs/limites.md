@@ -19,7 +19,7 @@ Le type qui décrit ce qu'une carte peut faire n'autorise que quatre
 appels de service, en deux listes fermées — tenter d'en passer un autre
 ne compile pas. Trois agissent sans rien rendre :
 
-- `pronote_ng.refresh`, qui ne place aucune requête PRONOTE : il
+- `carnet_scolaire.refresh`, qui ne place aucune requête PRONOTE : il
   relève une priorité auprès de l'ordonnanceur (détail plus bas) ;
 - `todo.update_item`, qui coche un devoir sur une entité `todo` de
   Home Assistant — sans rapport avec le limiteur ni avec les données
@@ -32,7 +32,7 @@ ne compile pas. Trois agissent sans rien rendre :
 Un seul rend une réponse, et il a son propre type pour qu'aucun des
 trois autres ne puisse en demander une :
 
-- `pronote_ng.get_attachment_url`, qui rend l'adresse d'une pièce jointe
+- `carnet_scolaire.get_attachment_url`, qui rend l'adresse d'une pièce jointe
   de type fichier **au moment du clic**. Il existe pour une raison de
   sécurité : cette adresse ouvre le document sans identifiant, et tant
   qu'elle était publiée dans un attribut d'entité, elle finissait dans
@@ -75,7 +75,7 @@ requête, identifiants compris. Pour déboguer, activez uniquement :
 ```yaml
 logger:
   logs:
-    custom_components.pronote_ng: debug
+    custom_components.carnet_scolaire: debug
 ```
 
 ## Le déclenchement de collectes
@@ -84,7 +84,7 @@ Aucune carte ne provoque de collecte en s'affichant. Le serveur PRONOTE
 sanctionne l'adresse IP, et tout le budget de requêtes est géré par un
 limiteur côté intégration.
 
-La carte « limiteur » propose un bouton qui appelle `pronote_ng.refresh`.
+La carte « limiteur » propose un bouton qui appelle `carnet_scolaire.refresh`.
 Ce service ne place aucun appel : il relève une priorité auprès de
 l'ordonnanceur. Un boost est plafonné à un par palier et par intervalle,
 et le bouton se grise en conséquence — cliquer plus n'obtient pas plus.
@@ -112,7 +112,7 @@ précis** pour une clé donnée, en contournant entièrement la résolution.
 période close :
 
 ```yaml
-type: custom:pronote-ng-notes
+type: custom:carnet-scolaire-notes
 device_id: <appareil de l'enfant>
 entities:
   sensor:grades: sensor.<enfant>_notes_2

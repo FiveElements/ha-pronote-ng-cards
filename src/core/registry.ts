@@ -16,11 +16,11 @@ declare global {
   }
 }
 
-const DOCS = 'https://fiveelements.github.io/ha-pronote-ng-cards/';
+const DOCS = 'https://fiveelements.github.io/ha-carnet-scolaire-cards/';
 
 export function defineCard(spec: CardSpec): void {
-  if (!customElements.get('pronote-ng-card-editor')) {
-    customElements.define('pronote-ng-card-editor', PronoteCardEditor);
+  if (!customElements.get('carnet-scolaire-card-editor')) {
+    customElements.define('carnet-scolaire-card-editor', PronoteCardEditor);
   }
   if (!customElements.get(spec.type)) {
     customElements.define(spec.type, makeCardClass(spec));

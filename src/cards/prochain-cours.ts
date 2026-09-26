@@ -51,8 +51,8 @@ const teachersOf = (value: unknown): string => {
 };
 
 export const SPEC: CardSpec<Config> = {
-  type: 'pronote-ng-prochain-cours',
-  name: 'Pronote NG — Prochain cours',
+  type: 'carnet-scolaire-prochain-cours',
+  name: 'Carnet scolaire — Prochain cours',
   description: 'Le prochain cours : matière, heure, salle, professeur.',
   key: 'prochain_cours',
   scope: 'child',

@@ -11,7 +11,7 @@ ordinaires.*
 ## Configuration
 
 ```yaml
-type: custom:pronote-ng-menu
+type: custom:carnet-scolaire-menu
 device_id: <appareil de l'enfant>
 day: today
 ```
@@ -27,7 +27,7 @@ day: today
 L'unique option de cette carte :
 
 ```yaml
-type: custom:pronote-ng-menu
+type: custom:carnet-scolaire-menu
 device_id: <appareil de l'enfant>
 day: tomorrow
 ```
