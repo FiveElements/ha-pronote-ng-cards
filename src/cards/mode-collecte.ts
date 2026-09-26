@@ -1,5 +1,5 @@
 import { html, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx } from '../core/types';
 import { chip, listRow } from '../core/ui/parts';
 
 /**
@@ -65,7 +65,7 @@ import { chip, listRow } from '../core/ui/parts';
  * gagne une troisième entrée. Ce n'est pas un détail d'implémentation : ce
  * type est ce qui rend vraie une phrase de `docs/limites.md`.
  */
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   /**
    * L'avertissement sous les boutons. Affiché par défaut.
    *

@@ -1,10 +1,10 @@
 import { html, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx } from '../core/types';
 import { durationToMinutes, formatDuration, formatRelative, formatTime } from '../core/format';
 import { chip, listRow } from '../core/ui/parts';
 import { listAttr } from '../core/list';
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   show_refresh?: boolean;
   refresh_tier?: string;
 }

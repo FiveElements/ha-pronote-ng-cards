@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { html } from 'lit';
-import { PronoteCardEditor } from '../src/core/editor';
+import { CarnetCardEditor } from '../src/core/editor';
 import { localize } from '../src/localize';
 import type { CardSpec, Translate } from '../src/core/types';
 import { makeHass } from './fixtures/hass';
@@ -23,7 +23,7 @@ const SPEC: CardSpec = {
  * de les lire depuis l'extérieur par une conversion de type qui contourne
  * TypeScript.
  */
-class TestEditor extends PronoteCardEditor {
+class TestEditor extends CarnetCardEditor {
   labelFor(name: string): string {
     return this.computeLabel({ name, selector: {} });
   }
@@ -45,7 +45,7 @@ declare global {
 const mount = (config: Record<string, unknown>, hass: unknown) =>
   mountCard('carnet-scolaire-card-editor-test', config, hass, { spec: SPEC });
 
-describe('PronoteCardEditor — diagnostic de résolution', () => {
+describe('CarnetCardEditor — diagnostic de résolution', () => {
   it('signale les clés trouvées et les clés introuvables', async () => {
     const hass = makeHass([
       { key: 'sensor:next_lesson', entity_id: 'sensor.abc_pc', device: 'dev_enfant' },

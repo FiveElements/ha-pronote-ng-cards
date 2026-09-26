@@ -18,7 +18,7 @@ body:
 
         Ne collez pas non plus :
 
-        * un identifiant ou un mot de passe PRONOTE ;
+        * un identifiant ou un mot de passe PRONOTE ou EcoleDirecte ;
         * le nom de votre enfant, celui de l'établissement, ou une capture
           d'écran où ils apparaissent ;
         * un identifiant d'entité complet — remplacez la partie qui nomme
@@ -133,7 +133,7 @@ body:
       label: Console du navigateur
       description: >-
         F12 → Console, en rechargeant le tableau de bord. Une carte ne voit
-        jamais d'identifiant PRONOTE : cette console peut se coller sans
+        jamais d'identifiant PRONOTE ni EcoleDirecte : cette console peut se coller sans
         précaution particulière.
       render: text
 

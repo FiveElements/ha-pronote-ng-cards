@@ -1,12 +1,12 @@
 import { html, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx, Translate } from '../core/types';
 import { formatDayLabel, formatDuration, formatTime, parseTimestamp } from '../core/format';
 import { chip, emptyState, listRow } from '../core/ui/parts';
 import { latestFirst, listAttr, sortedBy } from '../core/list';
 
 type Section = 'absences' | 'delays' | 'punishments';
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   sections?: Section[];
   limit?: number;
 }

@@ -1,11 +1,11 @@
 import { html, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx } from '../core/types';
 import { emptyState, listRow } from '../core/ui/parts';
 import { subjectAccent } from '../core/subject-color';
 import { latestFirst, listAttr, sortedBy } from '../core/list';
 import { formatDayLabel, parseTimestamp } from '../core/format';
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   limit?: number;
   show_acquisitions?: boolean;
   /**

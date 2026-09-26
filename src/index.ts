@@ -30,4 +30,4 @@ defineCard(EVALUATIONS);
 defineCard(JOURNEE);
 
 export { defineCard };
-export type { CardSpec, RenderCtx, PronoteCardConfig, EntityKey } from './core/types';
+export type { CardSpec, RenderCtx, CarnetCardConfig, EntityKey } from './core/types';

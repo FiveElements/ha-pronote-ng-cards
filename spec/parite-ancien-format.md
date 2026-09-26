@@ -2,7 +2,7 @@
 
 Document de contributeur. Destiné à qui implémente ou relit une carte, non à qui l'installe.
 
-**Objet.** Les huit cartes de `lovelace-pronote` sont déjà couvertes par les neuf cartes de ce dépôt. Ce document a donc deux moitiés, et il faut les lire différemment :
+**Objet.** Les huit cartes de l'ancien format sont déjà couvertes par les neuf cartes de ce dépôt. Ce document a donc deux moitiés, et il faut les lire différemment :
 
 - **Parité** — les fonctionnalités des anciennes cartes, réécrites contre le format réel. Colonne *Parité* à remplir : `couvert`, `manquant`, ou `écarté` avec sa raison.
 - **Exploitation** — ce que le nouveau format publie et que l'ancien ne pouvait pas connaître. Ce n'est pas de la parité : c'est ce qu'une carte perdrait à se contenter de reproduire l'ancienne.

@@ -1,5 +1,5 @@
 import { html, type TemplateResult } from 'lit';
-import type { CardSpec, EntityKey, PronoteCardConfig, RenderCtx, Translate } from '../core/types';
+import type { CardSpec, EntityKey, CarnetCardConfig, RenderCtx, Translate } from '../core/types';
 import { formatGrade } from '../core/format';
 import { emptyState, listRow } from '../core/ui/parts';
 import { latestFirst, listAttr } from '../core/list';
@@ -7,7 +7,7 @@ import { subjectAccent } from '../core/subject-color';
 
 type Section = 'average' | 'latest' | 'subjects' | 'report_card';
 
-interface Config extends PronoteCardConfig {
+interface Config extends CarnetCardConfig {
   sections?: Section[];
   limit?: number;
   /**

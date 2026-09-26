@@ -12,7 +12,7 @@ export type CardScope = 'child' | 'account';
 /** Signature de la fonction de traduction telle que consommée par les primitives d'affichage. */
 export type Translate = (path: string, vars?: Record<string, string | number>) => string;
 
-export interface PronoteCardConfig {
+export interface CarnetCardConfig {
   type: string;
   device_id?: string;
   title?: string;
@@ -92,7 +92,7 @@ export type AllowedCall =
  */
 export type AllowedResponseCall = Call<'carnet_scolaire', 'get_attachment_url'>;
 
-export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
+export interface RenderCtx<C extends CarnetCardConfig = CarnetCardConfig> {
   /** Vue en lecture : `callService` n'y figure pas (voir `HassView`). */
   hass: HassView;
   config: C;
@@ -156,7 +156,7 @@ export interface RenderCtx<C extends PronoteCardConfig = PronoteCardConfig> {
   setCursor(value: number): void;
 }
 
-export interface CardSpec<C extends PronoteCardConfig = PronoteCardConfig> {
+export interface CardSpec<C extends CarnetCardConfig = CarnetCardConfig> {
   /** Nom de l'élément personnalisé, sans le préfixe 'custom:'. */
   type: string;
   name: string;
